@@ -1,0 +1,84 @@
+---
+title: Setting up Supabase and Next.js authentication with MakerKit
+label: Auth Overview
+position: 0
+description: 'MakerKit uses Supabase Authentication to allow access to your Next.js application using oAuth providers and email/password.'
+---
+
+MakerKit uses Supabase to manage authentication within your application.
+
+By default, every kit comes with the following built-in authentication methods:
+- **Email/Password** - we added, by default, the traditional way of signing in
+- **Third Party Providers** - we also added by default Google Auth sign-in
+- **Email Links**
+- **Phone Number**
+- **Email OTP**
+
+You're free to add (or remove) any of the methods supported by Supabase's
+Authentication: we will see how.
+
+This documentation will help you with the following:
+ - **Setup** - setting up your Supabase project
+ - **SSR** - use SSR to persist your users' authentication, adding new
+providers
+ - **Customization** - an overview of how MakerKit works so that you can adapt
+it to your own application's needs
+
+## Configuration
+
+The way you want your users to authenticate can be driven via configuration.
+
+If you open the global configuration at `src/configuration.ts`, you'll find
+the `auth` object:
+
+```tsx title="configuration.ts"
+import type { Provider } from '@supabase/gotrue-js/src/lib/types';
+
+auth: {
+  requireEmailConfirmation: false,
+  providers: {
+    emailPassword: true,
+    phoneNumber: false,
+    emailLink: false,
+    oAuth: ['google'] as Provider[],
+  },
+}
+```
+
+As you can see, the `providers` object can be configured to only display the
+auth methods we want to use.
+
+1. For example, by setting both `phoneNumber` and `emailLink` to `true`, the
+authentication pages will display the `Email Link` authentication
+ and the `Phone Number` authentication forms.
+2. Instead, by setting `emailPassword` to `false`, we will remove the
+`email/password` form from the authentication and user profile pages.
+
+<Alert type={'warn'}>
+  <Alert.Heading>
+    Enable and Configure Authentication Methods in Supabase
+  </Alert.Heading>
+
+  Remember that you will always need to enable and configure the authentication
+  methods you want to use in your Supabase project. Failure to do so means that your users will not be able to sign in.
+</Alert>
+
+## Requiring Email Verification
+
+This setting needs to match what you have set up in Supabase. If you require email confirmation before your users can sign in, you will have to flip the following flag in your configuration:
+
+```ts
+auth: {
+  requireEmailConfirmation: false,
+}
+```
+
+When the flag is set to `true`, the user will not be redirected to the onboarding flow, but will instead see a successful alert asking them to confirm their email. After confirmation, they will be able to sign in.
+
+When the flag is set to `false`, the application will redirect them directly to the onboarding flow.
+
+## Emails sent by Supabase
+
+Supabase spins up an [InBucket](http://localhost:54324/) instance where all the emails are sent: this is where you can find emails related to password reset, sign-in links, and email verifications.
+
+To access the InBucket instance, you can go to the following URL: [http://localhost:54324/](http://localhost:54324/). Save this URL, you will use it very often.

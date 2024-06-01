@@ -1,0 +1,75 @@
+---
+title: Clone the MakerKit SaaS boilerplate repository
+label: Clone the repository
+position: 2
+description: 'Learn how to clone the MakerKit repository'
+---
+
+If you have bought a license for MakerKit, you have access to all the
+repositories built by the MakerKit team. In this document, we will learn how
+to fetch and install the codebase.
+
+### Requirements
+
+To get started with the Remix and Firebase SaaS template, we need to ensure
+you install the required software.
+
+- Node.js (LTS recommended)
+- Git
+- Docker (optional but recommended)
+
+### Cloning the repository
+
+To get the codebase on your local machine, clone the repository with the
+following command:
+
+```
+git clone git@github.com:makerkit/remix-firebase-saas-kit.git my-saas
+```
+
+The command above clones the repository in the folder `my-saas` which
+you can rename it with the name of your project.
+
+### Initializing Git
+
+Now, run the following commands for:
+
+1. Moving into the folder
+2. Adding the remote to your own Git repository (if you haven't created a Git repository yet, you can do it later on)
+3. Adding the original Makerkit repository as "upstream" so we can fetch updates from the main repository:
+
+```
+cd my-saas
+git remote rm origin
+git remote add origin <your-git-repository>
+git remote add upstream git@github.com:makerkit/next-firebase-saas-kit.git
+git add .
+git commit -a -m "Initial Commit"
+```
+
+In this way, to fetch updates (after committing your files), simply run:
+
+```
+git pull upstream main
+```
+
+If it doesn't work, try with:
+
+```
+git pull upstream main --allow-unrelated-histories
+```
+
+You'll likely run into conflicts when running this command, so carefully choose the changes (sorry!).
+
+### Installing the Node dependencies
+
+Finally, we can install the NodeJS dependencies with `npm`:
+
+```
+npm i
+```
+
+While the application code is fully working, we now need to set up your Firebase
+project.
+
+So let's jump on to the next step!

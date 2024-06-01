@@ -1,0 +1,159 @@
+---
+title: Structure your Makerkit Application
+label: Structure your Application
+position: 7
+description: 'Learn how to structure your application with additional entities and business logic'
+canonical: '/docs/next-supabase/application-structure'
+---
+
+In the previous section, we learned the fundamentals of Makerkit's architecture and the application layers.
+
+In this section, we learn how to structure your application in practical terms with an example. For example, your application has an entity "events": how do we add this entity to a Makerkit application?
+
+<Alert type='info'>
+NB: entities rarely (or never) get added to "core". Business domain is added to "components" and "lib".
+</Alert>
+
+In short, this is how we add a new entity to the application:
+
+1. First, we add a new folder to `lib`. If the entity is "event", we add `lib/events`.
+2. Then, we add the components of the `event` domain to `(app)/events/components`
+3. Finally, we add the pages of the `event` domain to `(app)/events`
+
+```txt title="Structure"
+- app
+  - lib
+    - events
+      - types
+        - event-model.ts
+        - ...
+      - hooks
+        - use-fetch-events.ts
+        - use-create-event.ts
+        - ...
+      - utils
+        - create-event-model.ts
+
+  - app
+    - dashboard
+    - events
+      components
+        - events
+          - EventsContainerComponent.tsx
+          - ...
+      - page.tsx
+      - [event].tsx
+```
+
+NB: In the Next.js App Directory, you can also add the `lib` folders within the `app` folder. For example, you can add `app/dashboard/[organization]/events/lib` instead of `lib/events`.
+
+### 1) Adding the entity's business domain
+
+We will add various business logic units in the `lib/events` folder, such as types, custom hooks, API calls, factories, functions, utilities, etc.
+
+#### Types
+
+First, we define a type `EventModel` at `lib/events/types/event-model.ts`:
+
+```tsx title="lib/events/types/event-model.ts"
+export interface EventModel {
+  name: string;
+  description: string;
+}
+```
+
+#### Custom Hooks
+
+For example, let's write a custom hook that retrieves a list of "events" from a Postgres table.
+
+We create a file at `lib/events/hooks/use-fetch-events.ts` with the following content:
+
+```tsx title="src/lib/events/hooks/use-fetch-events.ts"
+
+export function useFetchEvents(
+  organizationId: number
+) {
+  const client = useSupabase();
+  const key = [`events`, organizationId];
+
+  return useQuery(key, async () => {
+    const { data, error } client
+      .from('events')
+      .select('*')
+      .eq('organization_id', organizationId);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  })
+}
+```
+
+Good! We have a way to fetch our events, but we have to use it somewhere: to do so, let's create a component `EventsListContainer`. 
+
+<Alert type='warn'>
+  NB: remember to update add the required Row Level Security policies to protect your tables.
+</Alert>
+
+### 2) Components
+
+As said before, we add React components that belong to the "events" domain to `components/events`. 
+
+In the component below, we will fetch a list of events with `useFetchEvents`:
+
+```tsx title="components/events/EventsListContainer.tsx"
+import { useFetchEvents } from '~/lib/events/hooks/use-fetch-events';
+import Alert from `~/core/ui/Alert`;
+
+const EventsListContainer: React.FC = () => {
+  const { data: events, isLoading, error } = useFetchEvents();
+
+  if (isLoading) {
+    return <p>Loading Events...</p>
+  }
+
+  if (error) {
+    return (
+      <Alert type='error'>
+        Ops, we encountered an error!
+      </Alert>
+    );
+  }
+
+  return (
+    <div>
+      {events.map(event => {
+        return (
+          <div key={event.name}>
+            <p>{event.name}</p>
+            <p>{event.description}</p>;
+          </div>
+        );
+      })}
+    </div>
+  )
+};
+
+export default EventsListContainer;
+```
+
+### 3) Routes
+
+Finally, we can add the events component `EventsListContainer` to a page. To
+do so, let's create a page component at `app/dashboard/[organization]/events/page.tsx`:
+
+```tsx title="app/dashboard/[organization]/events/page.tsx"
+import EventsListContainer from '~/app/dashboard/[organization]/events/components/EventsListContainer';
+
+const EventsPage: React.FC = () => {
+  return (
+     <EventsListContainer />
+  );
+};
+
+export default EventsPage;
+```
+
+🎉 That's it! We have now built a nicely structured "events" domain.

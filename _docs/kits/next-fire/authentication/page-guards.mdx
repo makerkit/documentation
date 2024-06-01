@@ -1,0 +1,103 @@
+---
+title: Protect your Next.js application's pages with Guards
+label: Page Guards
+position: 8
+description: 'Page Guards allow you to protect certain routes from
+unauthorized access. This docs explain how MakerKit makes the process of
+protecting your Next.js pages easy and quick.'
+---
+
+MakerKit provides various utilities that allow you to restrict access to
+certain pages or API according to factors such as sign-in state, role,
+membership plan, etc.
+
+## Protecting Next.js Pages
+
+To protect against access to certain pages, we can use the function
+`withAppProps`. This function is a server-side props handler that will take
+care of checking the following conditions:
+
+- if the user is signed in - otherwise will be redirected back to the sign
+in page (this is customizable)
+- if the user is onboarded - otherwise will be redirected back to the
+onboarding
+- if the page they are trying to access requires a particular membership plan
+
+Assuming you want to protect the `Dashboard` page, it will be as easy as:
+
+```tsx
+import { withAppProps } from '~/lib/props/with-app-props';
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  return await withAppProps(ctx);
+}
+```
+
+You will likely want to add additional logic or additional props
+to be sent to the page. In this case, you can partially evaluate
+`withAppProps` and extend the props with other information:
+
+```tsx
+import { withAppProps } from '~/lib/props/with-app-props';
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  const { props: appProps } =
+    await withAppProps(ctx);
+
+  const data = await getDataFromDb();
+
+  return {
+    props: {
+      ...appProps,
+      data,
+    }
+  };
+}
+```
+This handler takes the following parameters:
+
+```tsx
+const DEFAULT_OPTIONS = {
+  redirectPath: configuration.paths.signIn,
+  locale: 'en',
+  localeNamespaces: <string[]>[],
+  requirePlans: <string[]>[],
+}
+```
+
+- `redirectPath`: by default, we redirect the user to the signIn page when
+they're not authenticated
+- `redirectPath`: by default, we use the `en` locale
+- `localeNamespaces`: additional namespaces you want to add to the route
+- `requirePlans`: a list of Stripe price IDs that you may want to require to
+access this page. If you require more complex logic, it's best to handle it
+separately
+
+## Makerkit's default page guards
+
+### withAppProps
+
+The page guard `withAppProps` is ideal for internal pages of your application, i.e. the pages that require that the user is authenticated and that have an active account; i.e. they went past the onboarding:
+
+This page guard will:
+- ensure the user is authenticated
+- ensure the user created an account after the onboarding flow
+- ensure the user belongs to an organization
+
+### withAuthProps
+
+The page guard `withAuthProps` will disallow users from entering authentication routes (sign-in, sign-up, password-reset) while they are authenticated:
+
+This page guard will:
+- ensure the user is not authenticated before granting access to pages that **require the user not to be authenticated**
+
+### withTranslationProps
+
+The page guard `withTranslationProps` is used by default by the other guards and is used to load the translations before rendering the page. Use this as the default guard for static pages that do not have any authentication requirement:
+
+This page guard will:
+- ensure the translations are loaded onto the page being rendered

@@ -1,0 +1,64 @@
+---
+label: "Section"
+title: "Section Component"
+position: 1
+description: "Section component. Organizes content into sections."
+---
+
+The Section component is used to organize content into sections. It is composed of a SectionHeader and SectionBody component.
+
+In the kits, it used across the Settings pages to organize content into sections.
+
+```tsx
+import { Section, SectionHeader, SectionBody } from '~/core/ui/Section';
+import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
+import { Button } from '~/core/ui/Button';
+
+<Section>
+  <SectionHeader
+    title={'Your Details'}
+    description={`Please enter your details below.`}
+  />
+
+  <SectionBody className={'space-y-4'}>
+    <TextFieldLabel>
+      Name
+      <TextFieldInput />
+    </TextFieldLabel>
+
+    <TextFieldLabel>
+      Surname
+      <TextFieldInput />
+    </TextFieldLabel>
+
+    <Button>
+      Save
+    </Button>
+  </SectionBody>
+</Section>
+```
+
+<DemoContainer contentStyle={{ padding: '1em' }}>
+  <Section.Section>
+    <Section.SectionHeader
+      title={'Your Details'}
+      description={`Please enter your details below.`}
+    />
+
+    <Section.SectionBody className={'space-y-4'}>
+      <TextField.Label>
+        Name
+        <TextField.Input />
+      </TextField.Label>
+
+      <TextField.Label>
+        Surname
+        <TextField.Input />
+      </TextField.Label>
+
+      <Button>
+        Save
+      </Button>
+    </Section.SectionBody>
+  </Section.Section>
+</DemoContainer>

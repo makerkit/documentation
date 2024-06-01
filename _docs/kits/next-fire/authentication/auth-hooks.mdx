@@ -1,0 +1,40 @@
+---
+title: Authentication React Hooks
+label: Custom React Hooks
+position: 10
+description: 'Reference for the authentication React hooks'
+---
+
+Makerkit provides a set of React hooks to help you manage authentication in your React application. These hooks are an addition to the ones provided by `reactfire`.
+
+## useUserSession
+
+This hook returns the current user session. It contains the user's auth data from Firebase, and its data record from Firestore. Basically, it wraps the `UserSessionContext` value.
+
+```tsx
+import { useUserSession } from "~/core/hooks/use-user-session";
+
+const userSession = useUserSession();
+```
+
+## useUserId
+
+This hook returns the current user's ID.
+
+```tsx
+import { useUserId } from "~/core/hooks/use-user-id";
+
+const userId = useUserId();
+```
+
+## useCreateServerSideSession
+
+This hook returns a function that can be used to create a server-side session. It is useful for creating a session when a user logs in, or when a user is created.
+
+You shouldn't be needing this unless you're customizing the authentication flow.
+
+```tsx
+import { useCreateServerSideSession } from "~/core/hooks/use-create-server-side-session";
+
+const [sessionRequest, { loading, error }] = useCreateServerSideSession();
+```

@@ -1,0 +1,67 @@
+---
+title: "Adding pages to the marketing site of your Makerkit Next.js Firebase project"
+label: Adding Pages
+position: 3
+description: "Learn how to add new pages to the marketing site of your Makerkit Next.js Firebase project."
+---
+
+To add a new page to the marketing site of your Next.js project, you can create a new page in the `pages` directory and using the required `getStaticProps` function.
+
+By "marketing site", we mean the public pages of your project, such as the homepage, the about page, the contact page, etc.
+
+<div>
+  <Alert type={'warn'}>
+    <div>
+      Use the below code only for public pages accessible by everyone, such as the homepage, the about page, the contact page, etc.
+    </div>
+  </Alert>
+</div>
+
+### Adding a new page to the marketing site
+
+For example, if you want to add a page at `/about`, you can create a new file at `pages/about.tsx` with the following content:
+
+```tsx
+import type { GetStaticPropsContext } from "next";
+import { withTranslationProps } from '~/lib/props/with-translation-props';
+
+function AboutPage() {
+  return <div>About page</div>;
+}
+
+export function getStaticProps(ctx: GetStaticPropsContext) {
+  return withTranslationProps(ctx);
+}
+```
+
+The `withTranslationProps` function is required to make sure that the page is translated correctly.
+
+### Adding basic layout components
+
+If you want to add a basic layout to your page, you can use the `SiteHeader` and `Footer` components:
+
+```tsx
+import type { GetStaticPropsContext } from "next";
+import { withTranslationProps } from '~/lib/props/with-translation-props';
+
+import Footer from '~/components/Footer';
+import SiteHeader from '~/components/SiteHeader';
+import Layout from '~/core/ui/Layout';
+import Container from '~/core/ui/Container';
+
+function AboutPage() {
+  return (
+    <Layout>
+      <SiteHeader />
+      <Container>
+        <div>About page</div>
+      </Container>
+      <Footer />
+    </Layout>
+  );
+}
+
+export function getStaticProps(ctx: GetStaticPropsContext) {
+  return withTranslationProps(ctx);
+}
+```

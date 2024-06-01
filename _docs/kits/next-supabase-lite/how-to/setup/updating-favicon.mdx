@@ -1,0 +1,36 @@
+---
+title: "Updating the favicons of your Makerkit site"
+label: Updating the Favicons
+position: 4
+description: "Learn how to update the favicons of your Makerkit landing pages"
+---
+
+If you have a logo for your company, you can easily update the favicons of your Makerkit applications. Favicons are the small icons that appear in the browser tab of your website.
+
+### Where to find the favicons
+
+Favicons are stored at `public/assets/images/favicon`. You can replace the existing files with your own images. If you keep the same names and sizes, then you don't need to update the code.
+
+### How to generate favicons
+
+If you do, I suggest to generate them using any o the online favicon generator, and then dropping the resulting images in the `public/assets/images/favicon` folder.
+
+If you have different sizes and names, then you need to update the code to reflect these changes.
+
+## How to update the favicons in Makerkit
+
+This code is stored in the root layout:
+
+```tsx title="app/layout.tsx"
+icons: {
+  icon: '/assets/images/favicon/favicon.ico',
+  shortcut: '/shortcut-icon.png',
+  apple: '/assets/images/favicon/apple-touch-icon.png',
+  other: {
+    rel: 'apple-touch-icon-precomposed',
+    url: '/apple-touch-icon-precomposed.png'
+  },
+}
+```
+
+Update the paths to match your new favicons.

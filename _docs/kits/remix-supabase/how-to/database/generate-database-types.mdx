@@ -1,0 +1,15 @@
+---
+title: "How to generate your Supabase Database types"
+label: "Generating Database Types"
+position: 2
+description: "Learn how to generate your Supabase Database types using the typegen command"
+---
+
+When you change your Database schema, you need to also remember to update the Typescript types that the Supabase Client can use to strong-type your queries and mutations.
+
+Following a change in the schema, you need to do two things:
+
+1. **Reset the Database**: if you have changed the schema manually, e.g. updating the SQL code, you need to either reset or restart your Supabase instance. You can do so using the command `npm run supabase:db:reset`
+2. **Generate the new type definitions**: now, you can run the command `npm run typegen` to generate the types. The generated file will be available at `src/database.types.ts`
+
+That's it! Always remember to update your schema types after changing your database schema.

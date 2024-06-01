@@ -1,0 +1,29 @@
+---
+title: withCsrf
+label: withCsrf
+position: 12
+description: 'The "withCsrf" is a utility function that help you protect API endpoints from CSRF attacks.'
+---
+
+The `withCsrf` function is used to protect API endpoints from CSRF attacks. It will return a `403` error if the CSRF token is invalid.
+
+```ts {10}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withCsrf } from '~/core/middleware/with-csrf';
+
+export default function owner(req: NextApiRequest, res: NextApiResponse) {
+  const handler = withPipe(
+    withCsrf(),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```

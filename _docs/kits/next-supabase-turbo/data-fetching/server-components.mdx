@@ -1,0 +1,43 @@
+---
+title: "Fetching data from Server Components"
+label: "Server Components"
+position: 3
+---
+
+Server Components are the primary way we fetch and render data in the Next.js Supabase SaaS kit. 
+
+When you create a new page and want to fetch some data, Server Components are the perfect place where to fetch it: it is done when you render your page (which means one less round-trip) and the data is streamed to the client (so it's very fast).
+
+In Next.js, every component is a Server Component, unless you specify `use client`, which converts it to a client component. Client components are also server-rendered, however they're also rendered on the client. Server Components are only rendered on the server - so we can use data-fetching methods (using Supabase, in our case) and fetch all the required data for a particular layout or page.
+
+For example, let's assume we have a page that displayes a list of tasks from a `tasks` table. This is a Next.js page, and therefore a Server Component. This means, it runs on the server and on the server only, and we can use to fetch data and render it streamed to the client. The client will never run the React code in this component: it will receive it and render it.
+
+```tsx
+export default async function TasksPage() {}
+```
+
+Let's now fetch some data from Supabase. To do so, we use the server component client.
+
+```tsx
+const supabase = getSupabaseServerComponentClient();
+
+const { data, error } = await supabase.from('tasks').select('*');
+```
+
+Now, let's put it all together:
+
+```tsx
+export default async function TasksPage() {
+  const supabase = getSupabaseServerComponentClient();
+
+  const { data, error } = await supabase.from('tasks').select('*');
+
+  if (error) {
+    return <p>Error :(</p>;
+  }
+
+  return <TasksList data={data}>
+}
+```
+
+As you can see, we are fetching data and rendering it in `TasksList`. All on the server.

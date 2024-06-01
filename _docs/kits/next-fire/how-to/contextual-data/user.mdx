@@ -1,0 +1,96 @@
+---
+title: "Fetching the signed in User"
+label:  "Fetching the signed in User"
+position: 0
+description: "Learn how to fetch the signed in user from the backend and frontend."
+---
+
+There are several ways to fetch the signed in user, depending on the use-case.
+
+## Fetching the signed in user from the backend
+
+To do so, use the function `getLoggedInUser` where you have access to the request object, such as in a Next.js API route, or `getServerSideProps` function.
+
+```tsx
+import { GetServerSidePropsContext } from "next";
+import { getLoggedInUser } from '~/core/firebase/admin/auth/get-logged-in-user';
+
+async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const user = await getLoggedInUser(ctx);
+
+  return {
+    props: {
+      user,
+    },
+  };
+}
+```
+
+Alternatively, you can use the `withAuthedUser` middleware to make sure that the API handler is only called when the user is signed in:
+
+```tsx
+import { NextApiRequest,NextApiResponse } from "next";
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const user = req.firebaseUser;
+  // ...
+}
+
+export default withPipe(withAuthedUser, handler);
+```
+
+The `firebaseUser` property is added to the request object by the `withAuthedUser` middleware. If the user is not signed in, the middleware will return a 401 response.
+
+## Fetching the signed in user from the frontend
+
+The `withAppProps` middleware used in the gated app pages makes sure that the current signed in user is passed from the backend to the frontend.
+
+### Getting the user Session with "useUserSession"
+
+To retrieve the signed in user from the frontend, you can use the `useUserSession` hook:
+
+```tsx
+import { useUserSession } from '~/core/hooks/use-user-session';
+
+const userSession = useUserSession();
+```
+
+The `userSession` objects contains the following properties:
+
+```ts
+interface UserSession {
+  auth: AuthUser | undefined;
+  data: UserData | undefined;
+}
+```
+
+1. **Auth State**: The `auth` property contains the user's authentication data, such as the user ID, email, and so on.
+2. **Firestore Data**:  The `data` property contains the user's Firestore record. By default, we do not add any data to the user's Firestore record - but it's assumed you will allow users to store additional data in their Firestore record.
+
+This is a React hook and can only be used inside a React component.
+
+### Getting the user ID with "useUserId"
+
+To retrieve the signed in user ID from the frontend, you can use the `useUserId` hook:
+
+```tsx
+import { useUserId } from '~/core/hooks/use-user-id';
+
+const userId = useUserId();
+```
+
+This is a React hook and can only be used inside a React component.
+
+### Getting the user role within the organization with "useUserRole"
+
+To retrieve the signed in user role of the current organization from the frontend, you can use the `useUserRole` hook:
+
+```tsx
+import { useUserRole } from '~/core/hooks/use-user-role';
+
+const role = useUserRole();
+```
+
+This is a React hook and can only be used inside a React component.

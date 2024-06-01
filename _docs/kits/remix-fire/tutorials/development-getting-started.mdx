@@ -1,0 +1,167 @@
+---
+title: "Development: adding custom features"
+label: "Development: adding custom features"
+position: 8
+description: "Learn how to get started developing new features in your app"
+---
+
+It's time to work on our application's value proposition: adding and tracking tasks! This is likely the most exciting part for you because **it's where you get to change things and add your SaaS features to the template**.
+
+### Folder Structure
+
+Before getting started, let's take a look at the default page structure of the boilerplate is the following.
+
+```txt
+├── routes
+  └── root.tsx
+  └── auth.tsx
+  └── invite.tsx
+
+  └── __app.tsx
+  └── __site.tsx
+
+  └── onboarding
+      └── index.tsx
+
+  __site
+    └── auth.tsx
+      └── faq.tsx
+      └── pricing.tsx
+
+  └── __auth
+    └── link.tsx
+    └── password-reset.tsx
+    └── sign-in.tsx
+    └── sign-up.tsx
+
+  └── invite
+    └── $code.tsx
+
+  └── __app
+    └── dashboard
+      └── index.tsx
+
+    └── settings
+      └── organization
+        └── members
+          └── index.tsx
+          └── invite.tsx
+
+      └── profile
+        └── index.tsx
+        └── email.tsx
+        └── password.tsx
+        └── authentication.tsx
+
+      └── subscription
+
+  └── index.tsx
+```
+
+The routes are split in the following way:
+
+1. The website's pages are placed under `__site`
+2. The auth pages are placed under `__auth`
+3. The internal pages (behind auth) pages are placed under `__app`
+
+Some pages in the "middle" are placed outside `__app`, such as the Invites page and the Onboarding flow. These require custom handling.
+
+### Setting the application's Home Page
+
+By default, the application's home page is `/dashboard`; every time the user
+logs in, they're redirected to the page `src/routes/__app/dashboard/index.tsx`.
+
+You can update the above by setting the application's home page path at `configuration.paths.appHome`.
+
+Unless you want to change the application's home page, **you can skip this section**, but it's good to know.
+
+### Demo: Tasks Application
+
+Our demo application will be a simple tasks management application. We will be able to create tasks, list them, mark them as completed, and delete them.
+
+Here is a quick demo of what we will build:
+
+<Video src="/assets/images/posts/tasks-demo.mp4" />
+
+### Routing: Adding the Tasks Pages
+
+Ok, so we want to add three pages to our application:
+
+1. **List**: A page to list all our tasks
+2. **New Task**: Another page to create a new task
+3. **Task**: A page specific to the selected task
+
+To create these two pages, we will create a folder named `tasks` at `src/routes/__app/tasks.`
+
+In the folder `src/routes/__app/tasks` we will create three `Page Components`:
+
+1. **List Page**: we create a page `index.tsx`, which is accessible at the path `/tasks`
+2. **New Task Page**: we create a page `new.tsx`, which is accessible at the path `/tasks/new`
+3. **Task Page**: we create a page `$id.tsx`, which is accessible at the path
+`/tasks/<taskID>` where `taskID` is a dynamic variable that refers to the actual ID of the task
+
+```txt
+├── routes
+  └──__app
+    └── tasks
+    └── index.tsx
+    └── new.tsx
+    └── $id.tsx
+```
+
+### Adding Functionalities to your application
+
+To add new functionalities to your application (in our case, tasks management), usually, you'd need the following things:
+
+1. Add a new page, and the links to it
+2. Add the components of the domain and import them into the pages
+3. Add data-fetching and writing to this domain's entities
+
+The above are the things we will do in the following few sections. To clarify further the conventions of this boilerplate, here is what you should know:
+
+1. First, we want to define our data model
+2. Once we're happy with the data model, we can create our Firestore hooks to write new tasks and then fetch the ones we created
+3. Then, we import and use our hooks within the components
+4. Finally, we add the components to the pages
+
+### Adding page links to the Navigation Menu
+
+To update the navigation menu, we need to update the `NAVIGATION_CONFIG`
+object in `src/navigation-config.tsx`.
+
+```ts
+const NAVIGATION_CONFIG = {
+  items: [
+    {
+      label: 'common:dashboardTabLabel',
+      path: configuration.paths.appHome,
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+    },
+    {
+      label: 'common:settingsTabLabel',
+      path: '/settings',
+      Icon: ({ className }: { className: string }) => {
+        return <Cog8ToothIcon className={className} />;
+      },
+    },
+  ],
+};
+```
+
+To add a new link to the header menu, we can add the following item in the `NAVIGATION_CONFIG` object:
+
+```tsx
+{
+  label: 'common:tasksTabLabel',
+  path: '/tasks',
+  Icon: ({ className }: { className: string }) => {
+    return <Squares2X2Icon className={className} />;
+  },
+},
+```
+
+The result will be similar to the images below:
+
+<Image src="/assets/images/posts/sidebar-layout-link.webp" width="1280" height="984" />

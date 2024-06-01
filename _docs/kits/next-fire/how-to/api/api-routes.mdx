@@ -1,0 +1,127 @@
+---
+title: "Adding API Routes"
+label: "Adding API Routes"
+position: 0
+description: ""
+---
+
+API routes are a way to create a custom API endpoint for your application. You can use API routes to create RESTful endpoints that return JSON data.
+
+Adding an API route to a Makerkit application is no different than any other Next.js (Pages Router) project. Let's see how.
+
+## Creating an API Route
+
+To create an API route, create a file inside the `pages/api` directory. The file name will be the path name of the API route. For example, if you create a file called `hello.ts` inside the `pages/api` directory, it will be accessible at `/api/hello`.
+
+Here's an example of an API route that returns a JSON response:
+
+```ts title="pages/api/hello.ts"
+import { NextApiRequest, NextApiResponse } from "next";
+
+export default (req: NextApiRequest, res: NextApiResponse) => {
+  res.status(200).json({ text: 'Hello' })
+}
+```
+
+This is kinda simple, right? Let's see how we can use this API route in our application.
+
+### Protecting API Routes
+
+It's very likely that you want to ensure only authenticated users can access your API routes. To do that, you can use the `withAuthedUser` utility to wrap your API route handler.
+
+```ts title="pages/api/hello.ts"
+import { NextApiRequest, NextApiResponse } from "next";
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+
+function helloWorldHandler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withAuthedUser(
+  helloWorldHandler
+);
+```
+
+When using the `withAuthedUser` HOC, the `req.firebaseUser` object will be available in your API route handler. This object contains the user's information from their Firebase Auth account.
+
+You can use this object to retrieve data from your database, or to perform other actions, based on the user's information.
+
+#### Using a Pipe for API Routes
+
+We can pipe multiple middlewares together to create a pipeline for our API routes. For example, we can use the `withAuthedUser` middleware to ensure only authenticated users can access our API routes, and then use the `withCsrf` middleware to ensure only users with a specific role can access the API route.
+
+```ts title="pages/api/hello.ts" {14-18}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withPipe } from '~/core/middleware/with-pipe';
+
+function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withMethodsGuard(['GET', 'POST']),
+  helloWorldHandler,
+);
+```
+
+### Checking CSRF Tokens
+
+You can use the `withCsrf` HOC to ensure only users with a valid CSRF token can access your API routes.
+
+The CSRF token must be sent in the `x-csrf-token` header of the request. If the token is not present, or if it's invalid, the request will be rejected.
+
+```ts title="pages/api/hello.ts" {18}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withPipe } from '~/core/middleware/with-pipe';
+import withCsrf from "./with-csrf";
+
+function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withMethodsGuard(['POST']),
+  withCsrf(),
+  helloWorldHandler,
+);
+```
+
+If you pass the CSRF token in different ways, you can pass a function to the `withCsrf` HOC to retrieve the token from the request.
+
+```tsx title="pages/api/hello.ts" {12}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withPipe } from '~/core/middleware/with-pipe';
+import withCsrf from "./with-csrf";
+
+function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  await withCsrf(req, () => req.body.csrfToken);
+
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withMethodsGuard(['POST']),
+  helloWorldHandler,
+);
+```

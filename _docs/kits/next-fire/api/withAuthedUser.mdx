@@ -1,0 +1,30 @@
+---
+title: withAuthedUser
+label: withAuthedUser
+position: 10
+description: 'The "withAuthedUser" is a utility function that help you load the authenticated user from the request.'
+---
+
+The `withAuthedUser` function is used to require authentication to access an API endpoint. It will return a `401` error if the user is not authenticated.
+
+```ts {12}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```

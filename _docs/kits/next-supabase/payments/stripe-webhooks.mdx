@@ -1,0 +1,180 @@
+---
+title: How Makerkit handles Stripe Webhooks
+label: Stripe Webhooks
+position: 1
+description: 'Learn how MakerKit handles Stripe Webhooks in your application'
+---
+
+Makerkit handles five webhooks from Stripe and stores "just enough" data into the organization's entity to function correctly.
+
+The Stripe's webhooks topics are defined here at `app/core/stripe/stripe-webhooks.enum.ts`:
+
+```tsx
+export enum StripeWebhooks {
+  Completed = 'checkout.session.completed',
+  SubscriptionDeleted = 'customer.subscription.deleted',
+  SubscriptionUpdated = 'customer.subscription.updated',
+}
+```
+
+To handle webhooks, we created an API route at `app/api/stripe/webhook.ts`.
+
+This route is responsible for:
+
+1. Validating that the webhook is coming from Stripe
+2. Routing the webhook to its handler
+
+## Validating Stripe's Webhooks
+
+To validate the webhook, we do the following:
+1. get the header 'stripe-signature'
+2. create a Stripe instance
+3. get the raw body
+4. call `constructEvent` to validate and build an event object sent by Stripe. When this fails, it will throw an error
+
+```tsx
+const signature = req.headers['stripe-signature'];
+
+// verify signature header is not missing
+if (!signature) {
+  return throwBadRequestException(res);
+}
+
+const rawBody = await getRawBody(req);
+const stripe = await getStripeInstance();
+
+const event = stripe.webhooks.constructEvent(
+  rawBody,
+  signature,
+  webhookSecretKey
+);
+```
+
+## Handling Stripe's Webhooks
+
+After validating the webhook, we can now handle the webhook type relative to its topic:
+
+```tsx
+switch (event.type) {
+  case StripeWebhooks.Completed: {
+    // handle completed
+  }
+
+  case StripeWebhooks.AsyncPaymentSuccess: {
+     // handle async payment success
+  }
+}
+```
+
+As described above, we handle 5 events:
+
+1. `Completed`: the checkout session was completed (but payment may not have arrived yet if it's asynchronous)
+2. `SubscriptionDeleted`: the subscription was deleted by the customer
+3. `SubscriptionUpdated`: the subscription was updated by the customer
+
+### Checkout Completed
+
+When a user completes the checkout session, we create the `subscription` object on the currently connected user's organization.
+
+The subscription's object has the following interface:
+
+```tsx
+export interface OrganizationSubscription {
+  id: string;
+  priceId: string;
+
+  status: Stripe.Subscription.Status;
+  currency: string | null;
+  cancelAtPeriodEnd: boolean;
+
+  interval: string | null;
+  intervalCount: number | null;
+
+  createdAt: UnixTimestamp;
+  periodStartsAt: UnixTimestamp;
+  periodEndsAt: UnixTimestamp;
+  trialStartsAt: UnixTimestamp | null;
+  trialEndsAt: UnixTimestamp | null;
+}
+```
+
+This interface is added to the `Organization` object.
+
+### Subscription Updated
+
+When a subscription is updated, we rebuild the subscription object and update it in the organization's Database row.
+
+### Subscription Deleted
+
+When a subscription is deleted, we simply remove it from the organization entity.
+
+## Adding additional webhooks
+
+If you want to add additional webhooks, you can do so by adding a new case in the switch statement.
+
+For example, if you want to handle the `customer.subscription.trial_will_end` event, you can do so by adding the following case:
+
+```tsx
+case 'customer.subscription.trial_will_end': {
+  // handle trial will end
+}
+```
+
+## Adding additional data to the subscription object
+
+If you want to add additional data to the subscription object, you can do so by adding the data to the `OrganizationSubscription` interface.
+
+For example, if you want to add the `quantity` property to the subscription object, you can do so by adding the following property to the interface:
+
+```tsx
+export interface OrganizationSubscription {
+  // ...
+  quantity: number | null;
+}
+```
+
+Then you will update the `subscription` table in the PostgreSQL database to add the `quantity` column.
+
+Finally, you can add the data to the subscription object using the `subscriptionMapper` function:
+
+```tsx
+function subscriptionMapper(
+  subscription: Stripe.Subscription
+): SubscriptionRow {
+  const lineItem = subscription.items.data[0];
+  const price = lineItem.price;
+  const priceId = price.id;
+  const interval = price?.recurring?.interval ?? null;
+  const intervalCount = price?.recurring?.interval_count ?? null;
+
+  const row: Partial<SubscriptionRow> = {
+    // custom props
+    quantity: lineItem.quantity,
+
+    // default props
+    price_id: priceId,
+    currency: subscription.currency,
+    status: subscription.status ?? 'incomplete',
+    interval,
+    interval_count: intervalCount,
+    cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+    created_at: subscription.created ? toISO(subscription.created) : undefined,
+    period_starts_at: subscription.current_period_start
+      ? toISO(subscription.current_period_start)
+      : undefined,
+    period_ends_at: subscription.current_period_end
+      ? toISO(subscription.current_period_end)
+      : undefined,
+  };
+
+  if (subscription.trial_start) {
+    row.trial_starts_at = toISO(subscription.trial_start);
+  }
+
+  if (subscription.trial_end) {
+    row.trial_ends_at = toISO(subscription.trial_end);
+  }
+
+  return row as SubscriptionRow;
+}
+```

@@ -1,0 +1,87 @@
+---
+title: "Input Fields"
+label: "Text Field"
+description: "Text field input for forms. Collect text-based data from users"
+position: 1
+---
+
+The `TextField` component is a wrapper around the native `input` element. It provides a consistent styling and layout for text-based inputs. It can be combined with the `Label` and `Hint` components to create a complete form field.
+
+### Basic TextField
+
+The simplest usage of the `TextField` component is to use it as a wrapper around the native `input` element.
+
+```tsx
+import { TextFieldInput } from '~/core/ui/TextField';
+
+<TextFieldInput
+  placeholder="Enter your name"
+/>
+```
+
+<DemoContainer>
+  <TextField.Input
+    className='max-w-sm'
+    placeholder="Enter your name"
+  />
+</DemoContainer>
+
+### TextField with Label
+
+You can wrap the `TextFieldInput` component with the `TextFieldLabel` component to create a form field with a label.
+
+```tsx
+import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
+
+<TextFieldLabel>
+  Name
+  <TextFieldInput
+    placeholder="Enter your name"
+  />
+</TextFieldLabel>
+```
+
+<DemoContainer>
+  <TextField.Label className='max-w-sm'>
+    Name
+    <TextField.Input
+      placeholder="Enter your name"
+    />
+  </TextField.Label>
+</DemoContainer>
+
+### TextField with Label and Hint
+
+You can add a hint to the `TextFieldLabel` component to provide additional information to the user.
+
+```tsx
+import { 
+  TextFieldInput, 
+  TextFieldLabel, 
+  TextFieldHint 
+} from '~/core/ui/TextField';
+
+<TextFieldLabel>
+  Name
+  <TextFieldInput
+    placeholder="Enter your name"
+  />
+
+  <TextFieldHint> 
+    This is a hint
+  </TextFieldHint>
+</TextFieldLabel>
+```
+
+<DemoContainer>
+  <TextField.Label className='max-w-sm'>
+    Name
+    <TextField.Input
+      placeholder="Enter your name"
+    />
+
+    <TextField.Hint>
+      This is a hint
+    </TextField.Hint>
+  </TextField.Label>
+</DemoContainer>

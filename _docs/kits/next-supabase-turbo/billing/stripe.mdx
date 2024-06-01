@@ -1,0 +1,62 @@
+---
+label: "Stripe"
+title: "Configuring Stripe Billing"
+description: "Learn how to configure Stripe in the Makerkit Next.js Supabase SaaS Kit"
+position: 2
+---
+
+Stripe is the default billing provider in both the local config and the DB, so you don't need to set these values if you want to use Stripe.
+
+For Stripe, you'll need to set the following environment variables:
+
+```bash
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+```
+
+While the `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is public and can be added anywhere - **please do not add the secret keys** to the `.env` file.
+
+During development, you can place them in `.env.local` as it's not committed to the repository. In production, you can set them in the environment variables of your hosting provider.
+
+## Stripe CLI
+
+To run the Stripe CLI - which allows you to listen to Stripe events straight to your own localhost - you can use the following command:
+
+```bash
+pnpm run stripe:listen
+```
+
+**The first time you set it up, you are required to sign in**. This is a one-time process. Once you sign in, you can use the CLI to listen to Stripe events.
+
+**Please sign in and then re-run the command**. Now, you can listen to Stripe events.
+
+## Configuring the Stripe Customer Portal
+
+Stripe requires you to set up the Customer Portal so that users can manage their billing information, invoices and plan settings from there.
+
+<Image src='/assets/images/docs/stripe-customer-portal.webp' width="2712" height="1870" />
+
+1. Please make sure to enable the setting that lets users switch plans
+2. Configure the behavior of the cancellation according to your needs
+
+## Setting Production Webhooks in Stripe
+
+When going to production, you will need to set the webhook URL and the events you want to listen to in Stripe.
+
+The webhook path is `/api/billing/webhook`. If your app is hosted at `https://myapp.com` then you need to enter `https://myapp.com/api/billing/webhook`.
+
+Makerkit needs the following events to work:
+
+1. `checkout.session.completed`
+2. `customer.subscription.updated`
+3. `customer.subscription.deleted`
+
+Only if you're using one-off payments, please add:
+
+1. `checkout.session.async_payment_failed`
+2. `checkout.session.async_payment_succeeded`
+
+If your application needs more events, please add them, [but remember to handle them](billing-webhooks).
+
+You can [handle additional events](billing-webhooks) by adding the required handlers in the `api/billing/webhook/route.ts` file.

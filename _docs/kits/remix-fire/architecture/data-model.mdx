@@ -1,0 +1,124 @@
+---
+title: The MakerKit Data Model for your SaaS project built with Remix and Firebase
+label: Data Model
+position: 8
+description: 'Learn how MakerKit
+defines the model of your SaaS application with Remix and Firebase'
+tags:
+- saas
+---
+
+MakerKit's data model is voluntarily as simple as possible, with a limited
+set of assumptions.
+
+MakerKit is not supposed to be a finite product but a solid foundation on which it is quick to get started and build your SaaS product.
+
+To summarize, the Firestore model contains three main entities: `users`, `organizations`, and `invites`.
+
+1. **Users**: a Firestore representation of the authentication database. In fact, to store data about users, we need to create a user record within our `/users` collection in Firestore
+2. **Organizations**: Organizations are groups of users. Here, we store the list of members that belong to the organizations and everything that needs to be shared between the users: for example, templates, settings, integrations, and so on.
+3. **Invites**: invites are a sub-collection of organizations used to store invitations that users can accept.
+
+<Image src="/assets/images/docs/data-model.webp" width="1775" height="2436" />
+
+## Users
+
+Users are, of course, foundational to any application.
+
+If a user signed in using Firebase Authentication, it merely means we have verified their credentials, not that they have an account.
+
+We have to create an additional collection to store a user's data, such as:
+- settings
+- the memberships they belong to
+- any other information which is not possible to update using their Authentication record (profile photo, name, email, and sign-in providers)
+
+We only store the user's organizations as an object on the `users` collections by default.
+
+The Firestore model looks like something similar:
+
+```
+- users
+  - [userId]:
+    - ... user data
+```
+
+We store the relationships between users and organizations within the
+`Organizations` collection.
+
+## Organizations
+
+`Organizations` are groups of users.
+
+If the name doesn't suit your domain, don't worry: you can always change the terminology using the localization files.
+
+A user can belong to one or many organizations: each organization lists its members in an object, similar to what we do with `users`.
+
+Below is what the `Organizations` schema looks like:
+
+```
+- organizations
+  - [organizationId]
+      - name
+      - timezone
+      - members
+        - [memberId]
+          - role
+          - user // this is a Firestore reference
+  }
+```
+
+Of course, we can assign a `name` to every organization and a `timezone` property (before you realize you're going to need it).
+
+We define each membership by the user ID. Each membership contains the following information:
+
+- the user role
+- the user reference to `/users/[userId]`
+
+Thus, we store the role in both collections to reduce the number of reads when we query the project members: we need to keep them in sync.
+
+### User Roles
+
+By default, MakerKit defines three roles: Owner (can be only one), Admin, and Member.
+
+This enum is hierarchical and associated with a number:
+
+```tsx
+enum MembershipRole {
+  Member,    // 0
+  Admin,     // 1
+  Owner      // 2
+}
+```
+
+An Admin can do anything a member can do, and an Owner can do anything an Admin can.
+
+### Invites
+
+To create an invite to join an organization, we use a new collection
+`invites` placed below an `organization` document: for example,
+`/organizations/1/invites/1`.
+
+The invite's interface is also straightforward:
+
+```tsx
+interface MembershipInvite {
+  code: string;
+  email: string;
+  role: MembershipRole;
+  expiresAt: number;
+
+  organization: {
+    id: string;
+    name: string;
+  };
+}
+```
+
+- the `email` property represents the email of the user invited. The application supports users signing up with a different email: you have to change this if you wish to disallow it
+- the `role` is the assigned role, which cannot be `Owner`
+- the `code` property is the unique identifier from which the user can access
+the invite through a link
+- the `expiresAt` property is the Unix timestamp when the invite will
+expire. By default, it's going to be one week
+- the `organization` object duplicates some valuable data from its
+parent (which saves us from rereading the document)

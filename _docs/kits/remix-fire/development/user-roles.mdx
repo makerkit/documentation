@@ -1,0 +1,61 @@
+---
+title: "Extend User Roles"
+label: User Roles
+position: 9
+---
+
+The MakerKit Starter has three default roles:
+
+```tsx
+export enum MembershipRole {
+  Member,
+  Admin,
+  Owner,
+}
+```
+
+We use an `enum`, but you can convert this to an object if you need more granular permissions.
+
+The permissions are hierarchical, which means that if we had a role with a lower level (`Readonly`), we would add it before `Member`:
+
+```tsx
+export enum MembershipRole {
+  Readonly,
+  Member,
+  Admin,
+  Owner,
+}
+```
+
+When writing permissions between users, we can check if the user performing the action has a greater role than the target user.
+
+You can extend the role above easily by adding your own, for example:
+
+```tsx
+export enum MembershipRole {
+  Readonly,
+  AccountManager,
+  Owner,
+}
+```
+
+Afterward, remember to add the name and descriptions of these roles in the translations file `common.json`:
+
+```json
+"roles": {
+  "owner": {
+    "label": "Owner",
+    "description": "Can change any setting, invite new members and manage billing"
+  },
+  "accountmanager": {
+    "label": "Account Manager",
+    "description": "Can change some settings, invite members, perform disruptive actions"
+  },
+  "readonly": {
+    "label": "Readonly",
+    "description": "Can only read information"
+  }
+}
+```
+
+Learn more about [using user roles in your permissions system](/docs/permissions).

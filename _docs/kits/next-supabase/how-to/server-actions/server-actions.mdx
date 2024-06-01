@@ -1,0 +1,123 @@
+---
+title: "Server Actions"
+label: "Server Actions"
+position: 0
+description: "Learn how to write a server action in your Next.js Supabase SaaS application"
+---
+
+Makerkit makes extensive use of Next.js Server Actions to mutate data in your Supabase database.
+
+Server Actions are a powerful feature of Next.js that allow you to write server-side code that we can call from the client-side. This is useful for a number of reasons:
+1. We don't need to write any API routes to handle our server-side logic
+2. We can tell Next.js to revalidate our data after a server action has been called, thus refreshing our data on the client-side
+3. We can easily call them just like any other function in our code
+
+<Alert>
+  This page is important to explain how we can handle Supabase mutations in the next sections.
+</Alert>
+
+## Creating a Server Action
+
+To create a server action, we need to create a separate file marked with the `use server` directive at the top of the file. This tells Next.js that this file contains a server action that we can call from the client-side.
+
+```tsx
+'use server';
+
+export async function handleFormSubmit(
+  formData: FormData
+) {
+  // Do something with the form data
+}
+```
+
+## Calling a Server Action
+
+Calling a server action can be done in several ways
+
+1. Calling it from a form submit handler
+2. Calling it from a button click handler
+3. Calling it imperatively as a function
+
+### Calling it from a form submit handler
+
+Let's assume we defined our server actions in a file called `actions.ts`:
+
+```tsx
+'use server';
+
+export async function createPostAction(
+  formData: FormData
+) {
+  // Do something with the form data
+}
+```
+
+We can call this server action from a form submit handler like so:
+
+```tsx
+<form action={createPostAction}>
+  <div className='flex flex-col space-y-4'>
+    <h2 className='text-lg font-semibold'>Create a new Post</h2>
+
+    <Label className='flex flex-col space-y-1.5'>
+      <span>Title</span>
+      <Input name='title' placeholder='Ex. The best Next.js libraries' required />
+    </Label>
+
+    <Label className='flex flex-col space-y-1.5'>
+      <span>Description</span>
+      <Input />
+    </Label>
+
+    <SubmitButton />
+  </div>
+</form>
+```
+
+### Calling it from a button click handler
+
+We can also call a server action from a button click handler:
+
+```tsx
+<form action={createPostAction}>
+  <div className='flex flex-col space-y-4'>
+    <h2 className='text-lg font-semibold'>Create a new Post</h2>
+
+    <Label className='flex flex-col space-y-1.5'>
+      <span>Title</span>
+      <Input name='title' placeholder='Ex. The best Next.js libraries' required />
+    </Label>
+
+    <Label className='flex flex-col space-y-1.5'>
+      <span>Description</span>
+      <Input />
+    </Label>
+
+    <button formAction={createPostAction}>Click</button>
+  </div>
+</form>
+```
+
+### Calling it imperatively as a function
+
+Finally, we can call a server action imperatively as a function using `startTransition`:
+
+```tsx
+import { useTransition } from "react";
+
+function ClientComponent({ id }) {
+  let [isPending, startTransition] = useTransition();
+
+  return (
+    <button onClick={() => startTransition(() => createPostAction(id))}>
+      Save
+    </button>
+  );
+}
+```
+
+## Send CSRF token with server actions
+
+Remember: Makerkit protects by default every POST request with a CSRF token. This is a security measure to prevent CSRF attacks.
+
+It's your job to send this along when you call a server action.

@@ -1,0 +1,43 @@
+---
+title: "Onboarding Flow"
+label: Onboarding Flow
+position: 7
+description: "Learn how to onboard your users to your app using the Onboarding Flow."
+---
+
+After sign-up, users are redirected to the onboarding flow.
+
+Here, you can ask users questions, configure their accounts or simply show them around.
+
+By default, Makerkit adds one single step, where it asks users to **create an organization**.
+
+<Image src="/assets/images/posts/onboarding-flow-tutorial.webp" width="2940" height="1972" />
+
+Of course, you can extend it and add as many steps as you wish. I would recommend replacing the image on the right-hand side with a screenshot of your application, a video, or something that can help users understand what they are signing up for.
+
+### What happens when the user submits the form?
+
+After the user submits the form, the API will:
+
+1. create the user Firestore record at `/users`
+2. create the organization Firestore record at `/organizations` and assign the user as its owner
+
+I encourage you to visit the [Firestore Emulator UI](http://localhost:4000/firestore/) and see the data created.
+
+### What is an "Organization"?
+
+Organizations are groups of users.
+
+You can call them projects, teams, classrooms, or whatever feels suitable for your domain. But, generally speaking, organizations are the backbone of the data model because it's where we store most of the data shared among users.
+
+Users can:
+
+1. create new Organizations
+2. be invited to other Organizations
+3. switch between organizations using a dropdown
+
+### Can I remove this step?
+
+No, **but you can skip it** by automatically submitting the form.
+
+Yes, you can follow this guide for [removing the onboarding flow and organizations](/recipes/removing-organizations).

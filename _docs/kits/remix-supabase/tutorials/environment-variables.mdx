@@ -1,0 +1,57 @@
+---
+title: "Environment Variables"
+label: Environment Variables
+position: 5
+description: "Learn how to use environment variables in your Remix project."
+---
+
+The starter project comes with two different environment variables files:
+1. **.env**: the main environment file
+2. **.env.test**: this environment file is loaded when running the Cypress
+E2E tests. You would rarely need to use this.
+
+NB: the `.env` file is never committed to the repository. This is because it
+contains sensitive information, such as API keys. Instead, we use a `.env.
+template` file to show what the `.env` file should look like.
+
+The environment variables for the Remix Supabase kit look like the below:
+
+```bash
+DEFAULT_LOCALE=en
+SITE_URL=http://localhost:3000
+
+# set the below to "production" in your production environment
+ENVIRONMENT=development
+
+# SUPABASE
+SUPABASE_URL=http://localhost:54321
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# STRIPE
+STRIPE_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+
+# EMAIL
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+<Alert>
+  <Alert.Heading>
+    Define your environment variables in your hosting provider
+  </Alert.Heading>
+
+  Remix does not use .env files for bundling your app in production. Therefore, you will need to define your environment
+  variables in your hosting provider (such as Vercel).
+</Alert>
+
+### Define your environment variables in your hosting provider
+
+**NB**: Remix will not bundle environment variables when building your app, but only during development mode. This needs to be repeated, as it is often confused with how Next.js works.
+
+Instead, you will need to define them in your hosting provider (such as your Vercel project settings).

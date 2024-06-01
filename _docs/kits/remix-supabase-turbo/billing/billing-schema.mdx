@@ -1,0 +1,406 @@
+---
+label: "Billing Schema"
+title: "Writing the billing schema in the Remix Supabase Kit"
+position: 1
+description: "Learn how to configure the plans in your Makerkit application"
+---
+
+The billing schema replicates your billing provider's schema, so that:
+
+1. we can display the data in the UI (pricing table, billing section, etc.)
+2. create the correct checkout session
+3. make some features work correctly - such as per-seat billing
+
+The billing schema is common to all billing providers. Some billing providers have some differences in what you can or cannot do. In these cases, the schema will try to validate and enforce the rules - but it's up to you to make sure the data is correct.
+
+The schema is based on three main entities:
+
+1. **Products**: The main product you are selling (e.g., "Pro Plan", "Starter Plan", etc.)
+2. **Plans**: The pricing plan for the product (e.g., "Monthly", "Yearly", etc.)
+3. **Line Items**: The line items for the plan (e.g., "flat subscription", "metered usage", "per seat", etc.)
+
+#### Setting the Billing Provider
+
+The billing provider is already set as `process.env.VITE_BILLING_PROVIDER` and defaults to `stripe`.
+
+For clarity - this is set in the `apps/web/config/billing.config.ts` file:
+
+```tsx
+export default createBillingSchema({
+  // also update config.billing_provider in the DB to match the selected
+  provider,
+  // products configuration
+  products: []
+});
+```
+
+We will now add the products to the configuration.
+
+#### Products
+
+Products are the main product you are selling. They are defined by the following fields:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+
+1. **id**: The unique identifier for the product. **This is chosen by you, it doesn't need to be the same one as the one in the provider**.
+2. **name**: The name of the product
+3. **description**: The description of the product
+4. **currency**: The currency of the product
+5. **badge**: A badge to display on the product (e.g., "Value", "Popular", etc.)
+
+The majority of these fields are going to populate the pricing table in the UI.
+
+#### Plans
+
+Plans are the pricing plans for the product. They are defined by the following fields:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Starter Monthly',
+          id: 'starter-monthly',
+          trialDays: 7,
+          paymentType: 'recurring',
+          interval: 'month',
+          lineItems: [],
+        }
+      ],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+- **name**: The name of the plan
+- **id**: The unique identifier for the plan. **This is chosen by you, it doesn't need to be the same one as the one in the provider**.
+- **trialDays**: The number of days for the trial period
+- **paymentType**: The payment type (e.g., `recurring`, `one-time`)
+- **interval**: The interval of the payment (e.g., `month`, `year`)
+- **lineItems**: The line items for the plan
+
+Now, we will be looking at the line items. The line items are the items that make up the plan, and can be of different types:
+1. **Flat Subscription**: A flat subscription (e.g., $10/month) - specified as `flat`
+2. **Metered Billing**: Metered billing (e.g., $0.10 per 1,000 requests) - specified as `metered`
+3. **Per-Seat Billing**: Per-seat billing (e.g., $10 per seat) - specified as `per-seat`
+
+You can add one or more line items to the plan when using Stripe. When using Lemon Squeezy, you can only add one line item - but you can decorate it with the necessary metadata to achieve a similar result.
+
+#### Flat Subscriptions
+
+Flat subscriptions are defined by the following fields:
+
+```tsx
+
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Starter Monthly',
+          id: 'starter-monthly',
+          trialDays: 7,
+          paymentType: 'recurring',
+          interval: 'month',
+          lineItems: [
+            {
+              id: 'price_1NNwYHI1i3VnbZTqI2UzaHIe',
+              name: 'Addon 2',
+              cost: 9.99,
+              type: 'flat',
+            },
+          ],
+        }
+      ],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
+- **name**: The name of the line item
+- **cost**: The cost of the line item
+- **type**: The type of the line item (e.g., `flat`, `metered`, `per-seat`). In this case, it's `flat`.
+
+The cost is set for UI purposes. **The billing provider will handle the actual billing** - therefore, **please make sure the cost is correctly set in the billing provider**.
+
+#### Metered Billing
+
+Metered billing is defined by the following fields:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Starter Monthly',
+          id: 'starter-monthly',
+          trialDays: 7,
+          paymentType: 'recurring',
+          interval: 'month',
+          lineItems: [
+            {
+              id: 'price_1NNwYHI1i3VnbZTqI2UzaHIe',
+              name: 'Addon 2',
+              cost: 0,
+              type: 'metered',
+              unit: 'GBs',
+              tiers: [
+                {
+                    upTo: 10,
+                    cost: 0.1,
+                },
+                {
+                    upTo: 100,
+                    cost: 0.05,
+                },
+                {
+                    upTo: 'unlimited',
+                    cost: 0.01,
+                }
+              ]
+            },
+          ],
+        }
+      ],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
+- **name**: The name of the line item
+- **cost**: The cost of the line item. This can be set to `0` as the cost is calculated based on the tiers.
+- **type**: The type of the line item (e.g., `flat`, `metered`, `per-seat`). In this case, it's `metered`.
+- **unit**: The unit of the line item (e.g., `GBs`, `requests`, etc.). You can use a translation key here.
+- **tiers**: The tiers of the line item. Each tier is defined by the following fields:
+- **upTo**: The upper limit of the tier. If the usage is below this limit, the cost is calculated based on this tier.
+- **cost**: The cost of the tier. This is the cost per unit.
+
+The tiers data is used exclusively for UI purposes. **The billing provider will handle the actual billing** - therefore, **please make sure the tiers are correctly set in the billing provider**.
+
+#### Per-Seat Billing
+
+Per-seat billing is defined by the following fields:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Starter Monthly',
+          id: 'starter-monthly',
+          trialDays: 7,
+          paymentType: 'recurring',
+          interval: 'month',
+          lineItems: [
+            {
+              id: 'price_1NNwYHI1i3VnbZTqI2UzaHIe',
+              name: 'Addon 2',
+              cost: 0,
+              type: 'per_seat',
+              tiers: [
+                {
+                    upTo: 3,
+                    cost: 0,
+                },
+                {
+                    upTo: 5,
+                    cost: 7.99,
+                },
+                {
+                    upTo: 'unlimited',
+                    cost: 5.99,
+                }
+              ]
+            },
+          ],
+        }
+      ],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
+- **name**: The name of the line item
+- **cost**: The cost of the line item. This can be set to `0` as the cost is calculated based on the tiers.
+- **type**: The type of the line item (e.g., `flat`, `metered`, `per-seat`). In this case, it's `per-seat`.
+- **tiers**: The tiers of the line item. Each tier is defined by the following fields:
+- **upTo**: The upper limit of the tier. If the usage is below this limit, the cost is calculated based on this tier.
+- **cost**: The cost of the tier. This is the cost per unit.
+
+If you set the first tier to `0`, it basically means that the first `n` seats are free. This is a common practice in per-seat billing.
+
+Please remember that the cost is set for UI purposes. **The billing provider will handle the actual billing** - therefore, **please make sure the cost is correctly set in the billing provider**.
+
+#### One-Off Payments
+
+One-off payments are defined by the following fields:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Starter Monthly',
+          id: 'starter-monthly',
+          paymentType: 'one-time',
+          lineItems: [
+            {
+              id: 'price_1NNwYHI1i3VnbZTqI2UzaHIe',
+              name: 'Addon 2',
+              cost: 9.99,
+              type: 'flat',
+            },
+          ],
+        }
+      ],
+    }
+  ]
+});
+```
+
+Let's break down the fields:
+- **name**: The name of the plan
+- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
+- **paymentType**: The payment type (e.g., `recurring`, `one-time`). In this case, it's `one-time`.
+- **lineItems**: The line items for the plan
+- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
+- **name**: The name of the line item
+- **cost**: The cost of the line item
+- **type**: The type of the line item (e.g., `flat`). It can only be `flat` for one-off payments.
+
+### Adding more Products, Plans, and Line Items
+
+Simply add more products, plans, and line items to the arrays. The UI **should** be able to handle it in most traditional cases. If you have a more complex billing schema, you may need to adjust the UI accordingly.
+
+## Custom Plans
+
+Sometimes - you want to display a plan in the pricing table - but not actually have it in the billing provider. This is common for custom plans, free plans that don't require the billing provider subscription, or plans that are not yet available.
+
+To do so, let's add the `custom` flag to the plan:
+
+```tsx
+{
+  name: 'Enterprise Monthly',
+  id: 'enterprise-monthly',
+  paymentType: 'recurring',
+  label: 'common:contactUs',
+  href: '/contact',
+  custom: true,
+  interval: 'month',
+  lineItems: [],
+}
+```
+
+Here's the full example:
+
+```tsx
+export default createBillingSchema({
+  provider,
+  products: [
+    {
+      id: 'starter',
+      name: 'Starter',
+      description: 'The perfect plan to get started',
+      currency: 'USD',
+      badge: `Value`,
+      plans: [
+        {
+          name: 'Enterprise',
+          id: 'enterprise',
+          paymentType: 'recurring',
+          label: 'common:contactUs',
+          href: '/contact',
+          custom: true,
+          interval: 'month',
+          lineItems: [],
+        }
+      ],
+    }
+  ]
+});
+```
+
+As you can see, the plan is now a custom plan. The UI will display the plan in the pricing table, but it won't be available for purchase.
+
+We do this by adding the following fields:
+
+- **custom**: A flag to indicate that the plan is custom. This will prevent the plan from being available for purchase.
+- **label**: The translation key for the label. This is used to display the label in the pricing table.
+- **href**: The link to the page where the user can contact you. This is used in the pricing table.
+- **lineItems**: The line items for the plan. This is empty as there are no line items for the plan. It must be an empty array.
+
+### Custom Button Label
+You can also provide a custom button label for the plan. This is done by adding the `buttonLabel` field:
+
+```tsx
+{
+  name: 'Enterprise',
+  id: 'enterprise',
+  paymentType: 'recurring',
+  label: 'common:contactUs',
+  href: '/contact',
+  custom: true,
+  interval: 'month',
+  lineItems: [],
+  buttonLabel: 'common:contactUs',
+}
+```
+
+As usual, strings can either be a translation key or a string. If it's a translation key, it will be translated using the `i18n` library.

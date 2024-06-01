@@ -1,0 +1,205 @@
+---
+title: "Reading a Document"
+label: "Reading a Document"
+position: 0
+description: "Learn how to read a document from Firebase using both the Web SDK and the Admin SDK in your Next.js Firebase application"
+---
+
+There is an important distinction to be made when using the Firebase SDK. Indeed, the SDK can be used in two different ways:
+
+1. **Client SDK** - On the client, with minimal permissions (using the Firebase Security Rules), that allows clients to read and write data directly to the database only if they have the right permissions.
+2. **Admin SDK** - On the server, with full permissions, that allows the server to read and write data directly to the database without any restriction.
+
+Depending on the use case, you will need to use one or the other.
+
+## Reading a Document with the Client SDK
+
+The client SDK uses Reactfire to make it easier to fetch data directly from React components using React Hooks.
+
+### Reading a Document with "useFirestoreDocData"
+
+To read a single document, we can use the React Hook `useFirestoreDocData` from Reactfire. This hook takes a `DocumentReference` as a parameter and returns the data of the document as well as the status of the request.
+
+In the example below, we fetch the data of a user document from the Firestore database. We can do so because we have the right permissions to read this document and the User ID is available in the React Context.
+
+```tsx
+import { doc, DocumentReference } from 'firebase/firestore';
+import { useFirestore, useFirestoreDocData } from 'reactfire';
+import { UserData } from '~/core/session/types/user-data';
+import { useUserId } from '~/core/hooks/use-user-id';
+import { USERS_COLLECTION } from '~/lib/firestore-collections';
+
+function useFetchUser() {
+  const firestore = useFirestore();
+  const userId = useUserId() as string;
+
+  const ref = doc(
+    firestore,
+    USERS_COLLECTION,
+    userId
+  ) as DocumentReference<UserData>;
+
+  return useFirestoreDocData(ref, { idField: 'id' });
+}
+
+export default useFetchUser;
+```
+
+### Breaking Down the Code
+
+Let's break down the code above to understand what is happening.
+
+#### 1. Importing the Reactfire Hooks
+
+First, we import the Reactfire Hooks that we need to fetch the data from the Firestore database.
+
+```tsx
+import { doc, DocumentReference } from 'firebase/firestore';
+import { useFirestore, useFirestoreDocData } from 'reactfire';
+```
+
+#### 2. Importing the User ID
+
+We also import the User ID from the React Context. This is the ID of the user that is currently logged in.
+
+```tsx
+import { useUserId } from '~/core/hooks/use-user-id';
+```
+
+#### 3. Creating a Document Reference
+
+We create a `DocumentReference` to the user document in the Firestore database. We use the `useFirestore` hook to get access to the Firestore instance.
+
+```tsx
+const firestore = useFirestore();
+const userId = useUserId() as string;
+
+const ref = doc(
+  firestore,
+  USERS_COLLECTION,
+  userId
+) as DocumentReference<UserData>;
+```
+
+The `USERS_COLLECTION` is a constant that contains the name of the collection in the Firestore database where the user documents are stored.
+
+This would be `users` in Makerkit.
+
+#### 4. Fetching the Data
+
+Finally, we use the `useFirestoreDocData` hook to fetch the data of the user document. We pass the `DocumentReference` as a parameter and we specify the name of the field that contains the ID of the document.
+
+```tsx
+return useFirestoreDocData(ref, { idField: 'id' });
+```
+
+### Reading a Document with "useFirestore"
+
+Let's now see how we can read a document using the `useFirestore` hook from Reactfire from within a React component.
+
+The `useFirestoreDocData` hook will return three values:
+- `data` - The data of the document.
+- `status` - The status of the request
+
+We can use these values to display the data of the document in the React component in a reactive way.
+
+```tsx
+function UserComponent() {
+  const { data, status } = useFetchUser();
+
+  if (status === 'loading') {
+    return <p>Loading...</p>;
+  }
+
+  if (status === 'error') {
+    return <p>Error: {error.message}</p>;
+  }
+
+  return (
+    <div>
+      <p>{data.name}</p>
+    </div>
+  );
+}
+```
+
+## Reading a document using the Firebase Admin SDK
+
+While the API is similar, the Admin SDK is used in a different way. Indeed, the Admin SDK is used on the server, not on the client. This means that we can't use Reactfire to fetch data from the Firestore database.
+
+The Admin SDK is used only in two cases:
+1. When using an API Route
+2. When using `getServerSideProps`
+
+**Remember: The Admin SDK is not used in React components**. Similarly, the Web SDK is not used in API Routes or `getServerSideProps`.
+
+### Reading the user from an API Route
+
+Let's see how we can read a user document from an API Route.
+
+Assuming we have a query parameter `userId` in the API Route, we can use the following code to read the user document from the Firestore database.
+
+```ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { withAdmin as withFirebaseAdmin } from '~/core/middleware/with-admin';
+import getRestFirestore from '~/core/firebase/admin/get-rest-firestore';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  await withFirebaseAdmin();
+
+  const { userId } = req.query;
+  const firestore = getRestFirestore();
+  const usersCollection = firestore.collection('users');
+  const user = await usersCollection.doc(userId).get();
+
+  res.status(200).json(user);
+}
+```
+
+Let's break down the code above to understand what is happening.
+
+#### 1. Importing the Firebase Admin SDK
+
+First, we import the Firebase Admin SDK.
+
+```ts
+import { withAdmin as withFirebaseAdmin } from '~/core/middleware/with-admin';
+import getRestFirestore from '~/core/firebase/admin/get-rest-firestore';
+```
+
+The function `getRestFirestore` returns a Firebase Admin Firestore instance that uses `REST` instead of `gRPC`, because it's much faster in a serverless environment.
+
+#### 2. Using the Firebase Admin SDK
+
+We then use the Firebase Admin SDK to read the user document from the Firestore database.
+
+```ts
+await withFirebaseAdmin();
+
+const { userId } = req.query;
+
+const firestore = getRestFirestore();
+const usersCollection = firestore.collection('users');
+const user = await usersCollection.doc(userId).get();
+```
+
+We use the `withFirebaseAdmin` middleware to initialize the Firebase Admin SDK. This middleware must be called before using the Firebase Admin SDK.
+
+We then use the `getRestFirestore` function to get a Firestore instance that uses `REST` instead of `gRPC`.
+
+Finally, we use the Firestore instance to read the user document from the Firestore database.
+
+#### 3. Returning the Data
+
+Finally, we return the data of the user document as JSON.
+
+```ts
+res.status(200).json(user);
+```
+
+---
+
+To learn more about the above, check out both the Firebase and Reactfire respective documentations.

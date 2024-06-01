@@ -1,0 +1,57 @@
+---
+label: "Migrations"
+position: 1
+title: "How to create new migrations and update the database schema in your Remix Supabase application"
+description: "Learn how to create new migrations and update the database schema in your Remix Supabase application"
+---
+
+Creating a schema for your data is one of the primary tasks when building a new application. In this guide, we'll walk through how to create new migrations and update the database schema in your Remix Supabase application.
+
+## A quick word on migrations
+
+Supabase's hosted Studio is pretty great - but I don't think it should be used to perform schema changes. Instead, I recommend using your local Supabase Studio to make the changes and then generate the migration file. Then, you can push the migration to the remote Supabase instance.
+
+At this point, you have two options:
+
+1. create a migration with `pnpm --filter web supabase migration new <name>` and update the code manually
+2. or, use the local Supabase Studio to make the changes and then run `pnpm --filter web supabase db diff -f <name>` which will generate the migration file for you. DOUBLY CHECK THE FILE!
+
+Once you've tested it all and are happy with your local changes, push the migration to the remote Supabase instance with `pnpm --filter web supabase db push`.
+
+Doing the opposite is also okay - but:
+
+1. You're making changes against the production database - which is risky
+2. You're not testing the changes locally - which is risky
+3. You need to pull the changes from the remote Supabase instance to your local instance so they are in sync
+
+## Creating a Migration
+
+The first step towards building your app schema is to create a new migration.
+
+To do so, run the command:
+
+```
+pnpm --filter web supabase migration new <name>
+```
+
+The migration will be generated at `apps/web/supabase/migrations`.
+
+Once added some SQL commands, you need to reset the schema for it to take effect:
+
+```
+pnpm run supabase:web:reset
+```
+
+The schema is now populated! Yay!
+
+### Generating Supabase types
+
+Now that your schema is populated, you need to generate the types so that your Supabase client can work correctly.
+
+Please run the following command:
+
+```
+pnpm run supabase:web:typegen
+```
+
+Your Supabase client will now correctly infer the types with your schema changes.

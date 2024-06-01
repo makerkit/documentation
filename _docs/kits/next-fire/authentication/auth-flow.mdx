@@ -1,0 +1,50 @@
+---
+title: Firebase and Next.js authentication flow
+label: Auth Flow
+position: 2
+description: 'Learn how MakerKit handles the authentication flow with Firebase Auth and Next.js'
+---
+
+If you use SSR, the flow is slightly different from what you may be
+used.
+
+Typically, Firebase allows signing users in on the client-side. If you use SSR,
+we need a way to authenticate the user on the server-side.
+
+To do so, we use Firebase Auth's session cookies: we create the cookie when
+the user signs in and then destroy it when the user signs out.
+
+### Step 1: User signs in using the client SDK
+
+The user can sign in (or up) using the Firebase Auth client SDK from the client side.
+
+### Step 2: Creating a Session Cookie using an API endpoint
+
+After being authenticated (signing in or up), the application requests to create and store a session cookie using an API endpoint.
+
+The cookie is stored as an HTTP-only cookie and will be sent to the server,
+so we can authenticate users right when we render the page.
+
+When needed, we can perform the necessary redirects and security checks server-side.
+
+### Step 3: User gets redirected to Application Home Page
+
+The application renders a session-aware page if you have opted to use SSR on every page. Otherwise, the Firebase SDK should reflect the current session once the page has been rendered.
+
+When the user is redirected to a protected page, the user's session authentication state is checked in the `getServerSideProps` function.
+
+### Step 4: User signs out
+
+The client SDK starts a sign-out request when the user decides to sign out.
+
+When Firestore Auth destroys the current user session, the event is intercepted by a listener and then calls the API endpoint to destroy the session cookie.
+
+Here is an illustration of the flows:
+
+<Image src="/assets/images/docs/auth-flow.png" width="2344" height="1166" />
+
+## Keeping the client and server sessions in sync
+
+Because the Firebase Session cookies expire after 14 days, we need to keep the client SDK session in sync when the session cookie expires. 
+
+To do so, when the user signs in, we also store a cookie with the expiration date. When the client SDK detects that the server-side session cookie expired, the user gets automatically signed out.

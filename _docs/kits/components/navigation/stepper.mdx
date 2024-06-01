@@ -1,0 +1,49 @@
+---
+title: "Stepper"
+label: "Stepper"
+description: "The Stepper component is used to display a progress bar with a set of steps. It is used to indicate the current position in a process."
+position: 3
+---
+
+## Basic Usage - Default
+
+The basic usage of the Stepper component is to display a progress bar with a set of steps. It is used to indicate the current position in a process. By default, we display the `default` style.
+
+```tsx
+<Stepper 
+  steps={['Details', 'Organization', "Complete"]} 
+  currentStep={0} 
+/> 
+```
+
+<DemoContainer>
+  <div className="max-w-md w-full">
+    <Stepper steps={['Details', 'Organization', "Complete"]} currentStep={0} />
+  </div>
+</DemoContainer>
+
+### Numbers variant
+
+The `numbers` variant displays the step number instead of the default dot.
+
+```tsx
+<Stepper 
+  steps={['Details', 'Organization', "Complete"]} 
+  currentStep={0} 
+  variant="numbers"
+/>
+```
+
+<DemoContainer>
+  <div className="max-w-md w-full">
+    <Stepper steps={['Details', 'Organization', "Complete"]} currentStep={0} variant="numbers" />
+  </div>
+</DemoContainer>
+
+### Props
+
+The following props may be passed to configure the Stepper component.
+
+1. `steps` - An array of strings that represent the steps in the stepper. You can also pass translation keys to localize the stepper, such as `common.step1`.
+2. `currentStep` - The current step in the stepper. This is a zero-based index.
+3. `variant` - The variant of the stepper. The default is `default`. The other option is `numbers`.

@@ -1,0 +1,24 @@
+---
+title: Requiring Email verification
+label: Requiring Email verification
+position: 6
+description: 'Learn how to enforce email verification for your users with Firebase.'
+---
+
+By default, Firebase does not enforce email verification. This means that users can sign up with an email address and password, and then immediately start using your app. However, you may want to require that users verify their email address before they can use your app.
+
+To do so, Makerkit can check that the user has verified their email address before allowing them to use your app from the server side. How? When loading the server side session, we check that the user's property `emailVerified` is `true`. If not, the user is redirected to the sign in page, and signed out.
+
+By default, **this feature is disabled**. To enable it, you need to set the environment variable `NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION` to `true`.
+
+## Enabling requiring email verification
+
+Simply set the following environment variable to `true`:
+
+```bash
+NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION=true
+```
+
+That's pretty much it!
+
+NB: invited users are not required to verify their email address, since they are already verified by having received the invitation by email.

@@ -1,0 +1,77 @@
+---
+title: Searching Posts and Documentation with Minisearch
+label: Search Functionality
+position: 3
+description: 'Learn how Makerkit makes it easy to add a simple search engine
+for your blog posts and documentation'
+---
+
+Makerkit's blog and documentation pages come with built-in search
+functionality that does not reply on complex and expensive cloud services
+such as Algolia and ElasticSearch.
+
+Instead, we used [Minisearch](https://lucaong.github.io/minisearch/), a lightweight Javascript Search
+Engine.
+
+<Alert type="info">
+  This feature has temporarily been deprecated
+</Alert>
+
+### How does Minisearch work?
+
+Instead of indexing our posts at runtime, we index all our
+documentation and blog articles at build time, right after the Next.js
+application has finished building.
+
+Minisearch creates a simple index file in the `public` folder. The API loads
+the index and responds to the user's query.
+
+By default, we index two directories: `_docs` and `_posts`. Of course, it's
+easy to extend this to other folders if you create more types of content.
+
+Below you can find our indexer script that takes care of indexing
+recursively our `.mdx` files in the folders provided:
+
+```tsx title="search-indexer.ts"
+const FIELDS = ['content', 'path', 'tag', 'title', 'collection', 'slug'];
+
+export async function searchIndexer() {
+  const miniSearch = new MiniSearch({
+    fields: FIELDS,
+    storeFields: FIELDS,
+  });
+
+  const engine = new SearchEngine(miniSearch);
+
+  await engine.indexDirectory(`_posts`, (doc) => {
+    return { ...doc, tag: `blog` };
+  });
+
+  await engine.indexDirectory(`_docs`, (doc) => {
+    return { ...doc, tag: `docs` };
+  });
+
+  await engine.export();
+
+  process.exit();
+}
+```
+
+Assuming you have another folder named `_guides`, you could add:
+
+```tsx title="search-indexer.ts"
+await engine.indexDirectory(`guides`, (doc) => {
+  return { ...doc, tag: `guide` };
+});
+```
+
+<Video src={"/assets/images/docs/search.mp4"} />
+
+### Does it scale?
+
+It's important to keep the index not larger
+than few MBs, otherwise it will exceed the maximum memory available to the
+API function.
+
+That could be more or less a few hundreds pieces of content (eg. articles),
+so you may have some room before having to migrate.

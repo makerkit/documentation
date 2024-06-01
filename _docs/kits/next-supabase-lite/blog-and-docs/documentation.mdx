@@ -1,0 +1,88 @@
+---
+title: Add a Documentation website to your Next.js Supabase application
+label: Documentation
+position: 2
+description: 'Learn how to add documentation pages in your Next.js Supabase application'
+---
+
+The Next.js Supabase Starter Kit comes with a documentation generator that you can use to create a documentation website for your SaaS application.
+
+<Image src="/assets/images/posts/docs-index.webp" alt="Documentation Index Page" width="2796" height="1668" />
+
+The documentation (like the blog) is built using the amazing [Contentlayer](https://contentlayer.dev). Take a look at the documentation if you're planning on extending the functionality of the documentation.
+
+### Content Folder
+
+Every kit now has a `content` folder, which contains the Markdown files for the documentation. The `content` folder is organized into sections, which are then rendered as pages on the documentation site.
+
+Sections can be nested, so you can have a section with sub-sections. The sub-sections are then rendered as sub-pages.
+
+### Initial Section page
+
+Every section page can have an `index.mdx` file, which is the initial page for the section. This is useful if you want to have a landing page for the section, which then links to the sub-sections.
+
+<Image src="/assets/images/posts/docs-section-page.webp" alt="Documentation Section Page" width="2818" height="1800" />
+
+### Ordering
+
+To organize the order of the sections, you shall prefix the folder name with a number, such as `01-getting-started`. The sections are then sorted alphabetically, so you can use numbers to control the order.
+
+<Image src="/assets/images/posts/docs-ordering.webp" alt="Documentation Ordering" width="754" height="674" />
+
+For example, the `content` folder for the Next.js Supabase kit looks like this:
+
+```bash
+- content
+  - docs
+    - 01-getting-started
+      - index.mdx
+      - 01-installation.mdx
+      - 02-configuration.mdx
+        - 01-supabase.mdx
+        - 02-firebase.mdx
+      - 03-authentication.mdx
+      - 04-database.mdx
+      - 05-storage.mdx
+      - 06-usage.mdx
+      - 07-deployment.mdx
+        - 01-vercel.mdx
+        - 02-netlify.mdx
+      - 08-questions.mdx
+    - 02-faq
+      - index.mdx
+      - 01-what-is-supabase.mdx
+```
+
+As you can see, we can use nested folders to organize the content. The `01-getting-started` folder is the first section, and it has an `index.mdx` file, which is the initial page for the section. The `02-configuration` folder is the second section, and it has a sub-section `01-supabase` and `02-firebase`.
+
+### Frontmatter
+
+Every Markdown file can have a frontmatter, which is a YAML block at the top of the file. The frontmatter is used to define the title of the page, and the description of the page.
+
+For example, the `index.mdx` file for the `01-getting-started` section looks like this:
+
+```mdx
+---
+title: "Getting Started with the Makerkit SaaS Starter Kits"
+label: "Getting Started"
+description: "Learn how to get started with the Makerkit SaaS Starter Kits"
+---
+```
+
+The `title` is the title of the page, which is used for the `title` tag in the HTML code. The `label` is the label of the page, which is used in the sidebar navigation (where it's likely you will want a less SEO-focused label). The `description` is the description of the page, which is used in the meta tags.
+
+### Content
+
+The content of the Markdown file is written in Markdown, and is rendered as HTML. You can use Markdown to write the content of the page.
+
+Just like the blog post, you can use the following components to render the content:
+
+- `Image`: Add an image to your blog post (a wrapper around the `next/image` component)
+- `Video`: Add a video to your blog post. This is lazy-loaded and includes a loading spinner while the video is loading
+- `Alert`: Add an alert to your blog post
+- `LazyRender`: Lazy-load a React component within your blog post
+- `TweetEmbed`: Embed a tweet within your blog post
+
+### Navigation
+
+The navigation for the documentation is automatically generated based on the folder structure of the `content` folder. Furthermore, page links appear at the bottom of the page, so you can easily navigate to the previous or

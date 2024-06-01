@@ -1,0 +1,28 @@
+---
+title: "Client Only - Display content only on the client in JSX"
+label: "Client Only"
+position: 2
+description: "The ClientOnly component allows to display content only on the client in JSX."
+---
+
+The `ClientOnly` component allows to render content only on the client/browser. This is useful when you want to render content that is not supported by the server (e.g. `window` or `document`).
+
+```tsx
+import { ClientOnly } from '~/core/ui/If';
+
+<ClientOnly>
+  <div>Only rendered on the client</div>
+</ClientOnly>
+```
+
+An alternative to this component can be using the `dynamic` function from `next/dynamic`:
+
+```tsx
+import dynamic from 'next/dynamic';
+
+const DynamicComponent = dynamic(() => import('./DynamicComponent'), {
+  ssr: false,
+});
+```
+
+If you're using Next.js, consider using the `dynamic` function instead of `ClientOnly`.

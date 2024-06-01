@@ -1,0 +1,177 @@
+---
+title: "Project Configuration"
+label: Project Configuration
+position: 4
+description: "Learn how to set up up your project's configuration"
+---
+
+Makerkit can be configured from a single place: the `src/configuration.ts` object. This file exports a constant we use throughout the project to read our application's settings.
+
+<Alert type='info'>
+  <Alert.Heading>
+    Use this file to configure your project
+  </Alert.Heading>
+
+  We recommend adding additional configuration to this file rather than reading it directly from the environment variables. For example, assuming you rename one of your environment variables, you will only need to update it in one place. Additionally, it helps maintain your codebase more explicit and understandable.
+</Alert>
+
+We retrieve some of this file's configuration using **environment
+variables**: these help us swap and tweak our settings based on which environment we're using.
+
+Here is what the configuration file looks like:
+
+```tsx title="src/configuration.ts"
+import getEnv from '~/core/get-env';
+import type { Provider } from '@supabase/gotrue-js/src/lib/types';
+
+const env = getEnv() ?? {};
+const production = env.NODE_ENV === 'production';
+
+enum Themes {
+  Light = 'light',
+  Dark = 'dark',
+}
+
+const configuration = {
+  site: {
+    name: 'Awesomely - Your SaaS Title',
+    description: 'Your SaaS Description',
+    themeColor: '#ffffff',
+    themeColorDark: '#0a0a0a',
+    siteUrl: env.SITE_URL,
+    siteName: 'Awesomely',
+    twitterHandle: '',
+    githubHandle: '',
+    language: 'en',
+    convertKitFormId: '',
+    locale: env.DEFAULT_LOCALE,
+  },
+  auth: {
+    // ensure this is the same as your Supabase project
+    requireEmailConfirmation: true,
+    // NB: Enable the providers below in the Supabase Console
+    // in your production project
+    providers: {
+      emailPassword: true,
+      phoneNumber: false,
+      emailLink: false,
+      oAuth: ['google'] as Provider[],
+    },
+  },
+  production,
+  environment: env.ENVIRONMENT,
+  features: {
+    enableThemeSwitcher: true,
+  },
+  theme: Themes.Dark,
+  paths: {
+    signIn: '/auth/sign-in',
+    signUp: '/auth/sign-up',
+    signInMfa: '/auth/verify',
+    signInFromLink: '/auth/link',
+    callback: '/auth/callback',
+    onboarding: `/onboarding`,
+    appHome: '/dashboard',
+    settings: {
+      profile: '/settings/profile',
+      authentication: '/settings/profile/authentication',
+      email: '/settings/profile/email',
+      password: '/settings/profile/password',
+    },
+    api: {
+      checkout: `/resources/stripe/checkout`,
+      billingPortal: `/resources/stripe/portal`,
+      organizations: {
+        create: `/resources/organizations/create`,
+        transferOwnership: `/resources/organizations/transfer-ownership`,
+        members: `/resources/organizations/members`,
+      },
+    },
+  },
+  email: {
+    host: 'smtp.ethereal.email',
+    port: 587,
+    user: 'gracie.hand58@ethereal.email',
+    password: '5hr3DDGGc2bTbu7tJR',
+    senderAddress: 'MakerKit Team <info@makerkit.dev>',
+  },
+  sentry: {
+    dsn: env.SENTRY_DSN,
+  },
+  stripe: {
+    products: [
+      {
+        name: 'Basic',
+        description: 'Description of your Basic plan',
+        badge: `Up to 20 users`,
+        features: [
+          'Basic Reporting',
+          'Up to 20 users',
+          '1GB for each user',
+          'Chat Support',
+        ],
+        plans: [
+          {
+            name: 'Monthly',
+            price: '$9',
+            stripePriceId: '<price_id>',
+          },
+          {
+            name: 'Yearly',
+            price: '$90',
+            stripePriceId: '<price_id>',
+          },
+        ],
+      },
+      {
+        name: 'Pro',
+        badge: `Most Popular`,
+        recommended: true,
+        description: 'Description of your Pro plan',
+        features: [
+          'Advanced Reporting',
+          'Up to 50 users',
+          '5GB for each user',
+          'Chat and Phone Support',
+        ],
+        plans: [
+          {
+            name: 'Monthly',
+            price: '$29',
+            stripePriceId: '<price_id>',
+          },
+          {
+            name: 'Yearly',
+            price: '$200',
+            stripePriceId: '<price_id>',
+          },
+        ],
+      },
+      {
+        name: 'Premium',
+        description: 'Description of your Premium plan',
+        badge: ``,
+        features: [
+          'Advanced Reporting',
+          'Unlimited users',
+          '50GB for each user',
+          'Account Manager',
+        ],
+        plans: [
+          {
+            name: '',
+            price: 'Contact us',
+            stripePriceId: '',
+            label: `Contact us`,
+            href: `/contact`,
+          },
+        ],
+      },
+    ],
+  },
+};
+
+export default configuration;
+```
+
+Feel free to extend this configuration to your needs. For example, you could new properties to the `site` object to store your social media handles, or add new properties to the `paths` object to store the paths to your pages.

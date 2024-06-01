@@ -1,0 +1,239 @@
+---
+title: Set up Stripe Payments for Next.js and Supabase SaaS applications
+label: Stripe Configuration
+position: 0
+description: 'Learn how to configure Stripe with your MakerKit application'
+---
+
+MakerKit offers support for subscriptions and payments using [Stripe](https://stripe.com).
+
+To get started with [Stripe Checkout](https://stripe.com/docs/payments/checkout), you will need to create an account using the [Stripe website](https://stripe.com).
+
+If you want, you can get your business details sorted right away. If you
+want to continue with the set-up, you can skip it for now and get back to it later.
+
+## Configuration
+
+Visit the [Stripe Checkout Tutorial](https://stripe.com/docs/checkout/quickstart?client=next) where we can copy the
+configuration for our development environment.
+
+If you click on the file `.env` of the code editor on the right-hand side,
+you will be able to see the variables needed:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+Copy these values to your local `.env` file.
+
+<Alert type="warn">
+  Make sure to keep your <code>.env</code> file private. It should not be committed to your repository. These environment variables should be added using your hosting provider's dashboard.
+</Alert>
+
+## Creating your SaaS plans in Stripe
+
+Stripe allows us to create our plans using the UI in the Stripe Dashboard.
+
+To get started, let's add a couple of testing plans that you can use while
+developing your application.
+
+Visit [the Stripe Dashboard](https://dashboard.stripe.com/test/products/prod_KpXDAnvbPkXkgp) and add a new product (for example, a one-time purchase or a SaaS subscription).
+
+You can add multiple "prices": for example, if you're defining a
+subscription, you could use two plans, "Basic" and "Pro".
+
+## Creating a Webhook endpoint
+
+Stripe allows us to create a webhook endpoint to receive events. To tell Stripe
+where to send the events, we need to create a webhook endpoint that points to our application.
+
+After creating a Stripe endpoint, we need to add the "Signing Secret" key in Stripe to the production environment variables. To do so, use the environment variables editor in your hosting provider's dashboard.
+
+<Image src='/assets/images/docs/stripe-webhook-config.webp' width="1670" height="368" />
+
+### Webhook API Endpoint
+
+The API endpoint needs to point to your application's Stripe webhook: the path is `/api/stripe/webhook`. For example, if your application is hosted at `https://myapp.com`, the webhook endpoint would be `https://myapp.com/api/stripe/webhook`.
+
+### Events
+
+The events you want to receive from Stripe are:
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+
+If you have any other events you want to receive, you need to add them here.
+
+### Signing Secret
+
+The signing secret is the value of the `STRIPE_WEBHOOK_SECRET` environment variable. 
+
+<Alert type='warn'>
+  If you do not follow these steps, you will not be able to receive events from Stripe. This will prevent you from being able to update the subscription status of your users. Please make sure to follow these steps.
+</Alert>
+
+Before you continue... **please make sure to follow these steps**:
+
+1. Create a webhook endpoint in Stripe
+2. Make sure to add the **events** you want to receive from Stripe
+3. Copy the **signing secret** to your production environment variables as `STRIPE_WEBHOOK_SECRET`
+4. Redeploy your application to apply the changes
+
+### Pricing Table Configuration
+
+Below is the default Pricing Table configuration of the kits. The `PricingTable` component will automatically generate the pricing table based on the Stripe plans you have created and added to the configuration (see below).
+
+We have 3 products (Basic, Pro and Premium), each with 2 plans (monthly, yearly). By default, the Pro plan is set as the recommended plan.
+
+Of course, the below is simply an example. You will need to customize this according to your application's plans.
+
+```tsx
+stripe: {
+  embedded: true,
+  displayMode: StripeCheckoutDisplayMode.Popup,
+  products: [
+    {
+      name: 'Basic',
+      description: 'Description of your Basic plan',
+      badge: `Up to 20 users`,
+      features: [
+        'Basic Reporting',
+        'Up to 20 users',
+        '1GB for each user',
+        'Chat Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$9',
+          stripePriceId: 'price_1LfXGaI1i3VnbZTq7l3VgZNa',
+          trialPeriodDays: 7,
+        },
+        {
+          name: 'Yearly',
+          price: '$90',
+          stripePriceId: 'basic-plan-yr',
+          trialPeriodDays: 7,
+        },
+      ],
+    },
+    {
+      name: 'Pro',
+      badge: `Most Popular`,
+      recommended: true,
+      description: 'Description of your Pro plan',
+      features: [
+        'Advanced Reporting',
+        'Up to 50 users',
+        '5GB for each user',
+        'Chat and Phone Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$29',
+          stripePriceId: 'pro-plan-mth',
+          trialPeriodDays: 7,
+        },
+        {
+          name: 'Yearly',
+          price: '$200',
+          stripePriceId: 'pro-plan-yr',
+          trialPeriodDays: 7,
+        },
+      ],
+    },
+    {
+      name: 'Premium',
+      description: 'Description of your Premium plan',
+      badge: ``,
+      features: [
+        'Advanced Reporting',
+        'Unlimited users',
+        '50GB for each user',
+        'Account Manager',
+      ],
+      plans: [
+        {
+          name: '',
+          price: 'Contact us',
+          stripePriceId: '',
+          trialPeriodDays: 7,
+          label: `Contact us`,
+          href: `/contact`,
+        },
+      ],
+    },
+  ],
+}
+```
+
+<Alert type="warn">
+  The properties "stripePriceId" are placeholders. You will need to replace them with the IDs of your plans.
+</Alert>
+
+### Embedded Display Mode
+
+You can choose between two layouts for displaying the embedded checkout:
+
+1. **Popup [default]** - the default layout. The checkout will be displayed as a popup.
+2. **Overlay** - the checkout will be displayed as a full page overlay.
+
+### Hosted Stripe Checkout
+
+If you prefer to redirect users to Stripe Checkout, you can set `stripe.embedded` to `false`. This is the default configuration in versions before 0.14.0 as embedded checkouts were not available (released in October 2023).
+
+### Additional Configuration
+
+You can also configure the following properties on each `product`:
+
+- `recommended` - set to `true` if you want to highlight a plan as recommended
+- `badge` - set to a string if you want to display a badge next to the plan name
+
+You can also configure the following properties on each `plan`:
+
+- `price` - any string that you want to display as the price (e.g. `$9.99` or `Free`)
+- `label` - set to a custom string if you want to display a button label
+- `href` - set to a custom URL if you want to link to a custom page (for example, a contact page)
+- `trialPeriodDays` - set to the number of days you want to offer a free trial for
+
+### Install The Stripe CLI
+
+The Stripe CLI is required to help us test our integration.
+Please [follow this guide to install the CLI on your system](https://stripe.com/docs/stripe-cli).
+
+The default recommendation is to use Docker, which Makerkit uses by default.
+
+### Connect CLI with your account
+
+To connect the Stripe CLI with your account, run the following command:
+
+```
+npm run stripe:listen
+```
+
+This command requires Docker, but you can alternatively install Stripe on your OS and change the command to use `stripe` directly.
+
+The CLI should prompt you to connect your account. If you signed in already, visit the link and follow the instructions.
+
+If you followed the instructions, get back to the terminal, and then copy
+the webhook secret to your `STRIPE_WEBHOOK_SECRET` environment variables in the
+`.env` file.
+
+Restart the next.js server to apply the changes.
+
+## Billing Portal
+
+MakerKit uses the [Stripe Billing Portal](https://dashboard.stripe.com/test/settings/billing/portal) to let your users manage their invoices and subscriptions.
+
+The portal becomes accessible once the organization subscribes to a plan, which creates a `customerId` property, making it possible for the organization to access the portal.
+
+### Enabling the Billing Portal in test mode
+
+Please visit the [Stripe Billing Page](https://dashboard.stripe.com/test/settings/billing/portal) to enable the Billing Portal.
+
+Choose the settings that best apply to your product and save your changes.
+
+The only required fields to get started are `Terms of Service` and
+`Privacy` URLs. You can add any URL at this stage. **However, remember to update these pages when you go live**.
+
+For a technical deep-dive, we recommend reading our blog post where we [build the integration between Stripe and Next.js from scratch](/blog/tutorials/guide-nextjs-stripe). Because the result of the blog post is a simplified version of the Makerkit's implementation, it can be beneficial for understanding its code.

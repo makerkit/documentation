@@ -1,0 +1,187 @@
+---
+title: "Calling API Routes from the client-side using SWE"
+label: "Calling API Routes from the client"
+position: 1
+description: "Learn how to use SWR to call your API route handlers from React components"
+---
+
+Makerkit includes the library SWR, a data-fetching React utility written by Vercel, the creators of Next.js.
+
+This library is useful for making asynchronous requests from your React components. For example:
+
+1. When interacting with the Supabase Client (DB, Storage, Auth, etc.)
+2. When making requests to API Routes
+
+Why is it useful? SWR makes it simpler to fetch and mutate data, caching and revalidating. Let's see how we can use it to make requests to our endpoints.
+
+### Should I use SWR or Server Actions?
+
+No exact answer - but here is what I do:
+
+1. For pure mutations, I prefer Server Actions.
+2. For pulling data from the server-side as a result of user interactions, I use SWR.
+
+Ultimately, you should use what you feel more comfortable with as both approaches are valid.
+
+## Using SWR for fetching data from an API Route Handler
+
+Let's assume we have a very simple API Route at `/api/data`:
+
+```tsx title="app/api/data/route.ts"
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    hello: "world"
+  });
+}
+```
+
+As you may know, we can call the endpoint `/api/data` using a GET request and will receive the JSON response `{ "hello": "world" }`.
+
+Now, we want to call this from our Next.js application using SWR, and use it within a React component.
+
+We proceed building a React Hook with SWR which is able to fetch the data from our endpoint `/api/data`:
+
+```tsx
+import useSWR from 'swr';
+
+export function useFetchData() {
+  const key = '/api/data';
+
+  return useSWR<{ hello: string }>([key], async () => {
+    return fetch(key).then(res => res.json());
+  });
+}
+```
+
+Now, we can call this endpoint from any React component:
+
+```tsx
+function MyComponent() {
+  const { data, isLoading, error } = useFetchData();
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error...</p>;
+  }
+
+  return <div>{data.hello}</div>
+}
+```
+
+## Mutating data with SWR
+
+When it comes to mutating data, we can use the `swr/mutation` utility, designed to make mutations simple.
+
+As you may know, mutations will likely use the method `POST`, `PUT`, `PATCH`, or `DELETE`. In these cases, the middleware in the kit will require us to send a CSRF token for security reasons.
+
+As such, we provide a handy wrapper around `fetch`.
+
+Let's write a very simple API Route that makes a mutation: we add a new record in the `tasks` table, and return the ID back to the client.
+
+```tsx
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(
+  req: NextRequest
+) {
+  const client = getSupabaseRouteHandlerClient();
+  const session = await requireSession(client);
+  const task = req.json();
+
+  const { data } = await client.from('tasks').insert({
+    name: task.name,
+    done: false,
+    user_id: session.user.id,
+  })
+  .select('id')
+  .single();
+
+  return NextResponse.json({ id: data.id });
+}
+```
+
+Now, let's write a React Hook that calls this endpoint using SWR.
+
+```tsx
+import useMutation from 'swr/mutation';
+import useApiRequest from '~/core/hooks/use-api';
+
+interface Task {
+  name: string;
+}
+
+function useInsertTask() {
+  const fetcher = useApiRequest();
+  const path = '/api/task';
+
+  return useMutation(
+    path, async (_, data: { arg: Task }) => {
+      return fetcher({
+        path,
+        body: data.arg,
+        method: 'POST'
+      });
+    }
+  );
+}
+```
+
+What does `useApiRequest` do? This hook automatically inserts the CSRF token in our fetch requests, so that you don't have to.
+
+If you prefer not using it, you can manually add the CSRF token instead:
+
+```tsx
+import useMutation from 'swr/mutation';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+interface Task {
+  name: string;
+}
+
+function useInsertTask() {
+  const csrfToken = useCsrfToken();
+  const path = '/api/task';
+
+  return useMutation(
+    path, async (_, data: { arg: Task }) => {
+      return fetch(path, {
+        body: JSON.stringify(data.arg),
+        method: 'POST',
+        headers: {
+          'x-csrf-token': csrfToken
+        }
+      });
+    }
+  );
+}
+```
+
+We can now call the mutation from a React component:
+
+```tsx
+function TaskForm() {
+  const insertTaskMutation = useInsertTask();
+
+  const onSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
+    const name = new FormData(event.currentTarget).get('name') ?? 'No Name';
+    const task = { name };
+
+    return insertTaskMutation.trigger(task);
+  };
+
+  return (
+    <form onSubmit={onSubmit}>
+      <input type={'name'} required />
+
+      <button disabled={insertTaskMutation.isLoading}>
+        Submit
+      </button>
+    </form>
+  );
+}
+```

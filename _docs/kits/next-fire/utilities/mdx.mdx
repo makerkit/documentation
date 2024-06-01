@@ -1,0 +1,86 @@
+---
+title: Compile MDX Documents with Makerkit
+label: MDX
+position: 0
+description: Compile MDX Documents with Makerkit
+---
+
+MDX is one of the most common Markdown flavours for React-based websites. It
+allows us to include our own components into our documents and take out
+blog's interactivity to the next level.
+
+The Makerkit starter uses MDX for writing documents in the blog and in the
+documentation; it may be likely that you would want to add your own document
+types and use MDX for other purposes; for example, you could replace some of
+your HTML with MDX documents if you felt like for making it easier to change
+by non-technical teammates.
+
+In this section, we will explain how to compile MDX content with the
+Makerkit's utilities.
+
+## 1) Compiling MDX to JS
+
+The first step is to compile MDX to Javascript.
+
+To do so, compile your MDX files with the following utility:
+
+```tsx
+import { compileMdx } from '~/core/generic';
+
+// MDX string
+const content = '';
+
+// JS representation of your MDX content
+const compiled = compileMdx(content);
+```
+
+## 2) Pass the compiled MDX file into the MDXRenderer component
+
+Finally, we import the `MDXRenderer` component that takes the string
+compiled with the `compileMDX` utility and renders it as `HTML`.
+
+```tsx
+import MDXRenderer from '~/components/blog/MDXRenderer';
+
+function ArticleBody(props: React.PropsWithChildren<{ content: string }>) {
+  return (
+    <div>
+      <MDXRenderer code={content} />;
+    </div>
+  );
+}
+```
+
+Under the hood, the component `MDXRenderer` will inject a couple of
+custom components we use in the documents: these can be viewed and
+edited at `~/components/blog/MDXComponents`.
+
+## Custom MDX Components
+
+### NextImage
+
+The `NextImage` component replaces the default `img` HTML tag and adds the
+awesome capabilities of the default `Image` component baked in Next.js.
+
+You have 2 ways to use this:
+1. Simply use an image tag as you would normally
+2. Use `NextImage` as a component, which is better if you have to pass
+custom attributes such as `width` and `height`
+
+## ExternalLink
+
+All links are automatically patched with the following attributes:
+`target="_blank"` and `rel="noopener noreferrer"` for security and UX reasons.
+
+## Video
+
+To embed videos in your blog and docs, simply use the `Video` component:
+
+```tsx
+<Video src={"/path/to/video.mp4"} />
+```
+
+### Other UI Components
+
+Additionally, we also imported some components from `~/core/ui` by default
+that you can use in any MDX document.

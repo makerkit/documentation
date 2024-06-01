@@ -1,0 +1,143 @@
+---
+label: 'Credits Based Billing'
+title: 'How to configure per seat billing in Makerkit'
+position: 7
+description: 'Learn how to configure credit based usage in your Next.js Supabase application'
+---
+
+Credit-based billing is a billing model where you charge your users based on the number of credits they consume. This model is useful when you want to charge your users based on the number of actions they perform in your application.
+
+As you may know, this is extremely popular for AI SaaS products, where users may have a limited amount of tokens (or credits) to perform actions - such as requesting data from an LLM.
+
+Makerkit doesn't have a built-in credit-based billing system, but you can easily implement it using the existing billing system.
+
+To do so, we can introduce two new tables to our database: `plans` and `credits`. The `plans` table will store the pricing information for each plan, and the `credits` table will store the credits consumed by each user.
+
+Here's how you can set it up:
+
+### Step 1: Create the `plans` table
+
+First we need to create a `plans` table to store the pricing information for each plan.
+
+```sql
+create table public.plans (
+  id serial primary key,
+  name text not null,
+  variant_id text not null
+);
+
+alter table public.plans enable row level security;
+
+-- allow authenticated users to read plans
+create policy read_plans
+  on public.plans
+  for select
+  to authenticated
+  using (true);
+```
+
+We've created a `plans` table with two columns: `name` and `variant_id`. The `name` column stores the name of the plan, and the `variant_id` column stores the ID of the plan variant.
+
+We also enabled row-level security on the `plans` table and created a policy that allows authenticated users to read the plans.
+
+### Step 2: Create the `credits` table
+
+Next, we need to create a `credits` table to store the credits consumed by each user.
+
+```sql
+create table public.credits (
+  account_id uuid not null references public.accounts(id),
+  tokens integer not null
+);
+
+alter table public.credits enable row level security;
+
+-- allow authenticated users to read their credits
+create policy read_credits
+  on public.credits
+  for select
+  to authenticated
+  using (
+    account_id = (select auth.uid())
+  );
+```
+
+In the above SQL, we create two tables: `plans` and `credits`. The `plans` table stores the pricing information for each plan, and the `credits` table stores the credits consumed by each user.
+
+We also enabled row-level security on the `credits` table and created a policy that allows authenticated users to read their credits.
+
+### Step 3: Functions to manage credits
+
+Next, we need to create functions to manage the credits. We'll call these functions `has_credits` and `consume_credits`.
+
+```sql
+create or replace function public.has_credits(account_id uuid, tokens integer)
+  returns boolean
+  set search_path = ''
+  as $$
+  begin
+    return (select tokens >= tokens from public.credits where account_id = account_id);
+  end;
+  $$ language plpgsql;
+
+grant execute on function public.has_credits to authenticated, service_role;
+```
+
+The `has_credits` function checks if the user has enough credits to perform an action. It takes the `account_id` and the number of tokens required as arguments and returns `true` if the user has enough credits, `false` otherwise.
+
+```sql
+create or replace function public.consume_credits(account_id uuid, tokens integer)
+  returns void
+  set search_path = ''
+  as $$
+  begin
+    update public.credits set tokens = tokens - tokens where account_id = account_id;
+  end;
+  $$ language plpgsql;
+
+grant execute on function public.has_credits to service_role;
+```
+
+You can now use these functions in your RLS policies, or in your application code to manage credits.
+
+NB: we only allow authenticated users to read their credits. To update the credits, we use the service role key, since we lock down the `credits` table to only allow authenticated users to read their credits.
+
+### Step 4: Using credits in your application
+
+Now that you have set up the `plans` and `credits` tables, you can use them in your application to manage credits.
+
+For example, when a user performs an action that consumes credits, you can call the `consume_credits` function to deduct the credits from the user's account. You can use the Supabase client to call the function from your application code.
+
+NB: the `callOpenAIApi` is a placeholder for your API call to OpenAI. You should replace it with your actual API call.
+
+NB: we assume this is in a route handler, so we use the `getSupabaseRouteHandlerClient` client. If you're in a server action, you should use the `getSupabaseServerActionClient` client. [Learn more about the Supabase clients here](supabase-clients).
+
+```tsx
+export function async consumeApi(accountId: string) {
+  // Call the OpenAI API to get the usage
+  const { usage, data } = await callOpenAIApi();
+
+  const client = getSupabaseRouteHandlerClient({
+    admin: true,
+  });
+
+  await client.rpc('consume_credits', {
+    account_id: accountId,
+    tokens: usage,
+  });
+
+  return data;
+}
+```
+
+You can also use the function `has_credits` as part of your RLS policy to restrict access to certain resources based on the user's credits.
+
+```sql
+create policy tasks_write_policy
+  on public.tasks
+  for select
+  using (
+    (select auth.uid()) === account_id and
+    public.has_credits((select auth.uid()), 1)
+  );
+```

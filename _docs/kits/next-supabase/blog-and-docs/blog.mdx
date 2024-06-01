@@ -1,0 +1,46 @@
+---
+title: Add Blog posts to your Next.js Supabase application
+label: Blog
+position: 1
+description: 'Learn how to add blog posts in your MakerKit Next.js Supabase application'
+---
+
+We can add your website's blog posts within the `src/content/posts` folder.
+
+## Add a new blog post
+
+To add a new blog post, create a new markdown file within the `src/content/posts` folder. The file name should be the slug of the blog post. For example, if you want to create a blog post with the slug `hello-world`, create a file called `hello-world.mdx`.
+
+For example, the following file is a blog post with the slug `lorem-ipsum`:
+
+```mdx
+---
+title: Lorem Ipsum
+date: 2023-09-23
+live: true
+description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+image: "/assets/images/posts/lorem-ipsum.webp"
+---
+```
+
+## Blog post metadata
+
+Each blog post should have the following metadata:
+
+- `title`: The title of the blog post
+- `date`: The date of the blog post
+- `live`: Whether the blog post should be visible on the website
+- `description`: The description of the blog post
+- `image`: The image of the blog post
+
+## Blog post content
+
+The content of the blog post should be written in markdown. You can use the [MDX](https://mdxjs.com/) syntax to add React components within the markdown content.
+
+Additionally, we included multiple components that you can use to add content to your blog post:
+
+- `Image`: Add an image to your blog post (a wrapper around the `next/image` component)
+- `Video`: Add a video to your blog post. This is lazy-loaded and includes a loading spinner while the video is loading
+- `Alert`: Add an alert to your blog post
+- `LazyRender`: Lazy-load a React component within your blog post
+- `TweetEmbed`: Embed a tweet within your blog post

@@ -1,0 +1,30 @@
+---
+title: "Adjust the codebase style according to your preferences"
+label: Code Style
+position: 2
+canonical: '/docs/next-supabase/code-style'
+---
+
+The Makerkit's boilerplate codebase is formatted with *Prettier*. You can configure it as you wish by updating the file Prettier configuration in the `package.json` file:
+
+The default settings look like the below:
+
+```json
+{
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "arrowParens": "always",
+  "parser": "typescript",
+  "printWidth": 80,
+  "singleQuote": true
+}
+```
+
+For example, to remove semicolons, update the `semi` and set it to `false`.
+
+After adjusting the Prettier configuration, you can reformat the whole project by running the following command:
+
+```
+npm run format
+```

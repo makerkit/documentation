@@ -1,0 +1,77 @@
+---
+title: "Dialog Component - Display content in a layer above the rest of the page"
+label: "Dialog"
+description: "The Dialog component is used to display content in a layer above the rest of the page. It is used to display content that requires user interaction, interruption of the current process, or a simple modal window."
+position: 4
+---
+
+The `Dialog` component is used to display content in a layer above the rest of the page. This component is built on top of the [Radix UI](https://radix-ui.com) library and styled using [Tailwind CSS](https://tailwindcss.com).
+
+This component comes from the [Shadcn UI Library](https://ui.shadcn.com) - with minimal changes to the original component. I recommended to check out the original documentation for more information.
+
+## Usage
+
+Use the `Dialog` component to display content that requires user interaction, interruption of the current process, or a simple modal window.
+
+```tsx
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '~/core/ui/Dialog';
+import { Button } from '~/core/ui/Button';
+
+function Example() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant={'outline'}>Open Dialog</Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogTitle>
+          Deleting Item
+        </DialogTitle>
+
+        <div className='flex flex-col space-y-4'>
+          <p>
+            You are about to delete this item. This action cannot be undone.
+          </p>
+
+          <p>Are you sure you want to continue?</p>
+
+          <div className='flex justify-end'>
+            <Button variant='destructive'>
+              Yup, I'm sure
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+<DemoContainer>
+  <Dialog.Dialog>
+    <Dialog.DialogTrigger asChild>
+      <Button variant={'outline'}>Open Dialog</Button>
+    </Dialog.DialogTrigger>
+
+    <Dialog.DialogContent>
+      <Dialog.DialogTitle>
+        Deleting Item
+      </Dialog.DialogTitle>
+
+      <div className='flex flex-col space-y-4'>
+        <p>
+          You are about to delete this item. This action cannot be undone.
+        </p>
+
+        <p>Are you sure you want to continue?</p>
+
+        <div className='flex justify-end'>
+          <Button variant='destructive'>
+            Yup, I'm sure
+          </Button>
+        </div>
+      </div>
+    </Dialog.DialogContent>
+  </Dialog.Dialog>
+</DemoContainer>

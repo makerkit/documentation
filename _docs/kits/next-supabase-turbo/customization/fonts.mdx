@@ -1,0 +1,64 @@
+---
+label: "Updating Fonts"
+title: "Update the default fonts of your SaaS"
+position: 3
+description: "Learn how to update the fonts of your Makerkit application"
+---
+
+By default, Makerkit uses two fonts:
+
+1. `font-sans`: using Apple's default font on Apple devices, or `Inter` on others
+2. `font-heading`: uses `Urbanist` from Google Fonts
+
+The fonts are defined at `apps/web/lib/fonts.ts`:
+
+```tsx
+import { Urbanist as HeadingFont, Inter as SansFont } from 'next/font/google';
+
+/**
+ * @sans
+ * @description Define here the sans font.
+ * By default, it uses the Inter font from Google Fonts.
+ */
+const sans = SansFont({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  fallback: ['system-ui', 'Helvetica Neue', 'Helvetica', 'Arial'],
+  preload: true,
+  weight: ['300', '400', '500', '600', '700'],
+});
+
+/**
+ * @heading
+ * @description Define here the heading font.
+ * By default, it uses the Urbanist font from Google Fonts.
+ */
+const heading = HeadingFont({
+  subsets: ['latin'],
+  variable: '--font-heading',
+  fallback: ['system-ui', 'Helvetica Neue', 'Helvetica', 'Arial'],
+  preload: true,
+  weight: ['500', '700'],
+});
+
+// we export these fonts into the root layout
+export { sans, heading };
+```
+
+To display a different font, please replace the imports from `next/font/google` if the font is there.
+
+## Removing Apple's system as default font on Apple Devices
+
+To set another font instead of Apple's system font, update the Tailwind configuration.
+
+Open `tooling/tailwind/index.ts` and replace the line:
+
+```
+sans: ['-apple-system', 'var(--font-sans)', ...fontFamily.sans],
+```
+
+to
+
+```
+sans: ['var(--font-sans)', ...fontFamily.sans],
+```

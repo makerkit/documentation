@@ -1,0 +1,62 @@
+---
+title: "Select Fields"
+label: "Select"
+description: "Select fields are used to create a drop-down list of options for the user to choose from."
+position: 3
+---
+
+The `Select` field is used to create a drop-down list of options for the user to choose from. This component is built on top of the [Radix UI](https://radix-ui.com) library and styled using [Tailwind CSS](https://tailwindcss.com).
+
+This component comes from the [Shadcn UI Library](https://ui.shadcn.com) - with minimal changes to the original component. I recommended to check out the original documentation for more information.
+
+```tsx
+import { 
+  Select, 
+  SelectTrigger, 
+  SelectValue,
+  SelectContent,
+  SelectLabel,
+  SelectGroup,
+  SelectItem
+} from '~/core/ui/Select';
+
+<Select>
+  <SelectTrigger>
+    <SelectValue placeholder={'Pick a fruit...'} />
+  </SelectTrigger>
+
+  <SelectContent>
+    <SelectGroup>
+      <SelectLabel>Fruits</SelectLabel>
+
+      <SelectItem value={'Apple'}>Apple</SelectItem>
+      <SelectItem value={'Banana'}>Banana</SelectItem>
+      <SelectItem value={'Peach'}>Peach</SelectItem>
+    </SelectGroup>
+  </SelectContent>
+</Select>
+```
+
+<DemoContainer>
+  <div className='w-full max-w-xs'>
+    <Select.Select>
+      <Select.SelectTrigger>
+        <Select.SelectValue placeholder={'Pick a fruit...'} />
+      </Select.SelectTrigger>
+
+      <Select.SelectContent>
+        <Select.SelectGroup>
+          <Select.SelectLabel>Fruits</Select.SelectLabel>
+
+          <Select.SelectItem value={'Apple'}>Apple</Select.SelectItem>
+          <Select.SelectItem value={'Banana'}>Banana</Select.SelectItem>
+          <Select.SelectItem value={'Peach'}>Peach</Select.SelectItem>
+        </Select.SelectGroup>
+      </Select.SelectContent>
+    </Select.Select>
+  </div>
+</DemoContainer>
+
+### API
+
+The complete API documentation for the `Select` component is available [on the Shadcn UI documentation](https://ui.shadcn.com/docs/components/select).

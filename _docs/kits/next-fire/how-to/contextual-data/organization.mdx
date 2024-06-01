@@ -1,0 +1,55 @@
+---
+title: "Fetching the selected Organization"
+label:  "Fetching the selected Organization"
+position: 1
+description: "Learn how to fetch the selected organization from the backend and frontend."
+---
+
+There are several ways to fetch the current selected organization, depending on the use-case.
+
+## Fetching the selected Organization from the backend
+
+You will use this function fairly often for fetching the current organization from the backend.
+
+```tsx
+import { NextApiRequest,NextApiResponse } from "next";
+import { getCurrentOrganization } from '~/lib/server/organizations/get-current-organization';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const user = req.firebaseUser;
+  const organization = await getCurrentOrganization(user.uid);
+  // ...
+}
+
+export default withPipe(withAuthedUser, handler);
+```
+
+## Fetching the selected Organization from the frontend
+
+The `withAppProps` middleware used in the gated app pages makes sure that the current organization is passed from the backend to the frontend.
+
+### Getting the Organization with "useCurrentOrganization"
+
+To retrieve the signed in user from the frontend, you can use the `useUserSession` hook:
+
+```tsx
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const organization = useCurrentOrganization();
+```
+
+This is a React hook and can only be used inside a React component.
+
+### Getting if the Organization subscription status is set to "active" on the frontend
+
+You can use the `useIsSubscriptionActive` hook to get the subscription status of the current organization. You may want to use this function to gate access to certain parts of the app.
+
+```tsx
+const isActive = useIsSubscriptionActive();
+```
+
+This is a React hook and can only be used inside a React component.
+
+

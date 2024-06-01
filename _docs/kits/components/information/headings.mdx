@@ -1,0 +1,30 @@
+---
+title: "Heading Component"
+label: "Heading"
+description: "Heading component for titles and subtitles."
+position: 6
+---
+
+Use the `Heading` component to display titles and subtitles.
+
+```tsx
+import { Heading } from '~/core/ui/Heading';
+
+<Heading type={1}>Heading 1</Heading>
+<Heading type={2}>Heading 2</Heading>
+<Heading type={3}>Heading 3</Heading>
+<Heading type={4}>Heading 4</Heading>
+<Heading type={5}>Heading 5</Heading>
+<Heading type={6}>Heading 6</Heading>
+```
+
+<DemoContainer>
+  <div className={'flex flex-col space-y-2'}>
+    <Heading type={1}>Heading 1</Heading>
+    <Heading type={2}>Heading 2</Heading>
+    <Heading type={3}>Heading 3</Heading>
+    <Heading type={4}>Heading 4</Heading>
+    <Heading type={5}>Heading 5</Heading>
+    <Heading type={6}>Heading 6</Heading>
+  </div>
+</DemoContainer>

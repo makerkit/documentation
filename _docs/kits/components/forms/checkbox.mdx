@@ -1,0 +1,43 @@
+---
+title: "Checkbox Component"
+label: "Checkbox"
+description: "The Checkbox component is a simple wrapper around the HTML input[checkbox] element."
+position: 8
+---
+
+Use the `Checkbox` component to render a checkbox input:
+
+```tsx
+import { Checkbox } from '~/core/ui/Checkbox';
+import { Label } from '~/core/ui/Label';
+
+<div className="flex flex-col space-y-4">
+  <Label className='flex space-x-2 items-center'>
+    <Checkbox />
+
+    Remember Me
+  </Label>
+
+  <Label className='flex space-x-2 items-center'>
+    <Checkbox />
+
+    I accept the terms and conditions
+  </Label>
+</div>
+```
+
+<DemoContainer>
+  <div className="flex flex-col space-y-2">
+    <Label className='flex space-x-2 items-center'>
+      <Checkbox />
+
+      Remember Me
+    </Label>
+
+    <Label className='flex space-x-2 items-center'>
+      <Checkbox />
+
+      I accept the terms and conditions
+    </Label>
+  </div>
+</DemoContainer>

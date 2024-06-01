@@ -1,0 +1,53 @@
+---
+title: "Environment Variables"
+label: Environment Variables
+position: 5
+description: "Learn how to use environment variables in your Next.js project."
+---
+
+The starter project comes with three different environment variables files:
+
+1. **.env**: this is a shared environment file. Here, you can add variables shared across all the environments.
+2. **.env.development**: the configuration file loaded when running the `dev` command: by default, we add the Firebase Emulators settings to this file.
+ - Use this file for your **development configuration**.
+3. **.env.production**: the configuration file loaded when running the `build` command locally or deployed to Vercel.
+ - Use this file for your **actual project's configuration** (without private keys!).
+4. **.env.test**: this environment file is loaded when running the Cypress E2E tests. You would rarely need to use this.
+
+Additionally, you can add another environment file named `.env.local`: this file is never added to Git and can be used to store the secrets you need during development.
+
+<Alert type='warn'>
+  <span className='block'>
+    Never ever add secrets to your `.env` files. It's not safe, and you risk leaking confidential data.
+  </span>
+
+  <span>
+    Instead, add your secrets using your Vercel Console, or use the `.env.local` file during development.
+  </span>
+</Alert>
+
+## Adding Environment Variables
+
+The production environment variables template looks like the below:
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_APPCHECK_KEY=
+NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION=false
+
+SERVICE_ACCOUNT_CLIENT_EMAIL=
+GCLOUD_PROJECT=
+
+## SECRET KEYS ARE BEST ADDED TO YOUR CI
+SERVICE_ACCOUNT_PRIVATE_KEY=
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+```

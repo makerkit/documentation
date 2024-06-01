@@ -1,0 +1,21 @@
+---
+title: withAuthProps
+label: withAuthProps
+position: 7
+description: 'The "withAuthProps" is a function that is used to populate the props of the auth pages. It is used in the "getServerSideProps" function of the pages you want to gate.'
+---
+
+The `withAuthProps` function is used to populate the props of the authentication pages. You may never need to use it unless you introduce new authentication pages.
+
+This function is used in the `getServerSideProps` function of the authentication pages.
+
+```tsx
+import { withAuthProps } from "~/lib/props/with-auth-props";
+import { GetServerSidePropsContext } from "next";
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  return await withAuthProps(ctx);
+}
+```
+
+This function ensures **authenticated users won't be able to access the authentication pages**.

@@ -1,0 +1,28 @@
+---
+title: useCurrentOrganization
+label: useCurrentOrganization
+position: 1
+description: 'The "useCurrentOrganization" custom hook allows you to get the current organization from the context of the current user.'
+---
+
+This hook will allow you to get the current user organization.
+
+The data for the current user organization is fetched server-side using the getServerSideProps function, which is executed on the server before the page is rendered. This ensures that the organization data is available to the client-side code as soon as the page loads.
+
+Once the data is fetched, it's injected into the React component tree using the Context API. The `useCurrentOrganization` hook uses this context to retrieve the current user organization and return it to your code.
+
+For example, let's see how we can use this hook to get the current user organization name:
+
+```ts
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+export function useCurrentOrganizationName() {
+  const organization = useCurrentOrganization();
+
+  return organization?.name;
+}
+```
+
+In the example provided, the `useCurrentOrganization` hook is used to retrieve the organization object, which contains various properties including the name of the organization. The `useCurrentOrganizationName` function then extracts the name property from the organization object and returns it.
+
+Finally, it's worth noting that there are many other hooks available in the `~/lib/organizations/hooks` folder that allow you to retrieve other data related to the current user organization, such as the organization ID or the list of users belonging to the organization. These hooks can be used in a similar way to the `useCurrentOrganization` hook, by importing them and using them in your code.

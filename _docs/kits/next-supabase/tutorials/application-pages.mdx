@@ -1,0 +1,149 @@
+---
+title: "Application Pages"
+label: "Application Pages"
+position: 13
+description: "Learn how to create and manage application pages in your Makerkit app"
+---
+
+Now that we have some components to display, we need to add them to the
+actual Next.js pages.
+
+If you have not created the files in the `Routing` section above, it's time to do it.
+
+#### Using the components AppHeader and AppContainer
+
+These components are used to wrap the content of the pages.
+
+They are responsible for displaying the header and the container of the page.
+
+```tsx
+import { Squares2X2Icon } from '@heroicons/react/24/outline';
+
+import Trans from '~/core/ui/Trans';
+import AppHeader from '~/app/dashboard/[organization]/components/AppHeader';
+import AppContainer from '~/app/dashboard/[organization]/components/AppContainer';
+
+function DashboardPage() {
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <Squares2X2Icon className="w-6" />
+
+          <span>
+            <Trans i18nKey={'common:dashboardTabLabel'} />
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+        Your content goes here
+      </AppContainer>
+    </>
+  );
+}
+```
+
+## Guarding Application Pages for Authenticated Users
+
+One of the ways we can use to protect application pages, we can use the `requireSession` function. This function also verifies that the user is authenticated using MFA.
+
+```tsx
+import { redirect } from "next/navigation";
+
+async function MyPage() {
+  const session = await requireSession();
+
+  if (!session) {
+    redirect('/');
+  }
+}
+```
+
+If you don't want to redirect users away, you can simply display an error message instead.
+
+```tsx
+import { redirect } from "next/navigation";
+
+async function MyPage() {
+  const session = await requireSession();
+
+  if (!session) {
+    return <div>You are not authenticated</div>;
+  }
+
+  return <div>Your content goes here</div>;
+}
+```
+
+## Using Dynamic Parameters
+
+Every page and layout can access dynamic parameters from the URL.
+
+For example, if you have a page with the following URL:
+
+```
+https://myapp.com/dashboard/[organization]/[project]
+```
+
+You can access the `organization` and `project` parameters from the page.
+
+```tsx
+interface PageData {
+  params: {
+    organization: string;
+    project: string;
+  }
+}
+
+function Page(data: PageData) {
+  // data.params.organization
+}
+```
+
+## Using Search Parameters
+
+Similarly to dynamic parameters, you can also access search parameters from the URL.
+
+For example, if you have a page with the following URL:
+
+```
+https://myapp.com/dashboard/[organization]/[project]?page=1&limit=10
+```
+
+You can access the `page` and `limit` parameters from the page.
+
+```tsx
+interface PageData {
+  params: {
+    organization: string;
+    project: string;
+  }
+
+  searchParams: {
+    page: string;
+    limit: string;
+  }
+}
+
+function Page(data: PageData) {
+  // data.searchParams.page
+}
+```
+
+## Internationalization
+
+To enable i18n for a layout or a route, simply wrap them using the `withI18n` HOC.
+
+This component makes sure that the i18n is initialized before the page is rendered.
+
+```tsx
+import { withI18n } from '~/i18n/with-i18n';
+
+
+function TaskPage() {
+  // ...
+}
+
+export default withI18n(TaskPage);
+```

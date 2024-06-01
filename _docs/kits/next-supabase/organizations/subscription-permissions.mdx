@@ -1,0 +1,162 @@
+---
+title: Subscription Permissions
+label: Subscription Permissions
+position: 3
+description: "Learn how to gate access to certain features or pagess based
+on the organization's subscription"
+---
+
+Makerkit provides some utilities to retrieve the current organization's
+subscription: you can use these utilities to allow or gate access to
+specific features, pages, or to perform certain actions.
+
+1. On the client side, we can use the hook `useIsSubscriptionActive`
+2. On the server-side, we can use the functions
+`getOrganizationSubscriptionActive` and `getOrganizationSubscription`
+
+## Client Side Gating
+
+Let's assume we want to allow only users who belong to paying organizations to
+perform a certain action:
+
+```tsx title="src/lib/organizations/permissions.ts"
+function isAdmin(
+  role: MembershipRole
+) {
+  return role === MembershipRole.Admin;
+}
+```
+
+Now, combine this function with other conditions:
+
+```tsx title="src/lib/organizations/permissions.ts"
+export function useCreateNewThing(
+  userRole: MembershipRole,
+) {
+  const isPayingUser = useIsSubscriptionActive();
+
+  return isPayingUser && isAdmin(userRole);
+}
+```
+
+As you may know, I recommend adding all the permissions logic to the file
+`permissions.ts` (or similar files), and never inline it: this makes it easy to
+store logic in one single place rather than scattered across the
+application. 
+
+Inlining logic in our code will make it hard to track logic
+down and debugging it.
+
+Once defined out logic functions in `permissions.ts`, we can then use these
+in our components to hide the sections that users do
+not have access to:
+
+```tsx
+function Feature() {
+  const userRole = useCurrentUserRole();
+  const canCreateThing = useCreateNewThing(userRole);
+
+  if (!canCreateThing) {
+    return <div>Sorry, you do not have access to this feature. Subscribe?</div>
+  }
+
+  return <FeatureContainer />;
+}
+```
+
+NB: You should also tighten up the security on the server-side using RLS to prevent users from accessing data they should not have access to.
+
+## Server Side Gating
+
+When gating access on the server side, we can use two utilities that allow
+us to get the organization's subscription by its ID.
+
+### Gating access to certain pages using Server Components
+
+For example, let's assume we want to gate access to a page if the
+`organization` is not on a paid plan: we can prevent the page from rendering by adding some logic to the Server Component rendering the page.
+
+```tsx
+import { use } from "react";
+import { redirect } from "next/navigation";
+import { Stripe } from "stripe";
+import loadAppData from '~/lib/server/loaders/load-app-data';
+
+interface Params {
+  params: {
+    organization: string;
+  }
+}
+
+function GatedPage({ params }: Params) {
+  const canAccessPage = use(canUserAccessPage(params.organization));
+
+  if (!canAccessPage) {
+    redirect('/dashboard?error=forbidden-subscription');
+  }
+
+  // ...
+}
+
+async function canUserAccessPage(
+  organizationUid: string
+) {
+  const data = await loadAppData(organizationUid);
+  const subscription = data.organization.subscription?.data;
+
+  return subscription && isSubscriptionActive(subscription.status);
+}
+
+function isSubscriptionActive(status: Stripe.Subscription.Status) {
+  return ['active', 'trialing'].includes(status);
+}
+
+export default GatedPage;
+```
+
+If you want to go more granular, you can also check the subscription's price ID to match a specific plan for example.
+
+Of course, if you reuse the logic above very often, you can also extract it to a function and reuse it across your Server Components:
+
+```tsx
+import { redirect } from "next/navigation";
+
+async function canUserAccessProFeature(
+  organizationUid: string
+) {
+  const data = await loadAppData(organizationUid);
+  const subscription = data.organization.subscription?.data;
+
+  return subscription && isSubscriptionActive(subscription.status);
+}
+
+function isSubscriptionActive(status: Stripe.Subscription.Status) {
+  return ['active', 'trialing'].includes(status);
+}
+
+export async function withSubscriptionGuard(organizationUid: string) {
+  const canAccessPage = await canUserAccessProFeature(organizationUid);
+
+  if (!canAccessPage) {
+    redirect('/dashboard?error=forbidden-subscription');
+  }
+}
+```
+
+And reuse it in your Server Components:
+
+```tsx
+interface Params {
+  params: {
+    organization: string;
+  }
+}
+
+async function GatedPage({ params }: Params) {
+  await withSubscriptionGuard(params.organization);
+
+  // ...
+}
+
+export default GatedPage;
+```

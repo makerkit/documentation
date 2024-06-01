@@ -1,0 +1,71 @@
+---
+title: "Setting the Supabase Auth Email Templates in Production"
+label: "Authentication Emails"
+description: "Configure the Supabase authentication URLs and emails in the Remix Supabase Starter Kit."
+position: 4
+---
+
+It is very much recommended to update the auth emails using the [following documentation](https://supabase.com/docs/guides/auth/server-side/email-based-auth-with-pkce-flow-for-ssr#update-email-templates-with-url-for-api-endpoint).
+
+The kit already implements the `confirm` route, but you need to update the emails in your Supabase settings to use the correct URL.
+
+Failure to do so will result in hiccups in the authentication flow when users click on an email and get redirected to a different browser than the one they used to sign up due to how the PKCE flow works.
+
+Please set the following email templates - **or at least, use the same URLs** - but customize the email templates to your liking:
+
+### Confirmation Email
+
+```html
+<h2>Confirm your signup</h2>
+
+<p>Follow this link to confirm your user:</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&callback={{ .RedirectTo }}"
+    >Confirm your email</a
+  >
+</p>
+```
+
+### Invite User
+
+```html
+<h2>You have been invited</h2>
+
+<p>
+  You have been invited to create a user on {{ .SiteURL }}. Follow this link to accept the invite:
+</p>
+
+<p>
+  <a
+    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&callback={{ .RedirectTo }}"
+    >Accept the invite</a
+  >
+</p>
+```
+
+### Magic Link
+
+```html
+<h2>Magic Link</h2>
+
+<p>Follow this link to login:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&callback={{ .RedirectTo }}">Log In</a></p>
+```
+
+### Change Email Address
+
+```html
+<h2>Confirm Change of Email</h2>
+
+<p>Follow this link to confirm the update of your email from {{ .Email }} to {{ .NewEmail }}:</p>
+<p><a href="{{ .ConfirmationURL }}">Change Email</a></p>
+```
+
+### Reset Password
+
+```html
+<h2>Reset Password</h2>
+
+<p>Follow this link to reset the password for your user:</p>
+<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
+```

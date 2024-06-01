@@ -1,0 +1,155 @@
+---
+title: Tailwind CSS
+label: Tailwind CSS
+position: 0
+description: 'Learn how to customize Tailwind CSS in your Makerkit project.'
+---
+
+All the Makerkit kits use Tailwind CSS for styling. Tailwind is a utility-first CSS framework that allows you to build custom designs without leaving your HTML. It's a great choice for Makerkit because it allows you to customize the look and feel of your project without having to write any CSS.
+
+The Tailwind CSS configuration file is located at `tailwind.config.js` in the root of your project.
+
+By default, it looks like this:
+
+```js title="tailwind.config.js"
+const colors = require('tailwindcss/colors');
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./app/**/*.{ts,tsx,jsx,js}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        serif: ['serif'],
+        heading: ['system-ui', 'Helvetica Neue', 'Helvetica', 'Arial'],
+        sans: [
+          'system-ui',
+          'BlinkMacSystemFont',
+          'Inter',
+          'Segoe UI',
+          'Roboto',
+          'Ubuntu',
+        ],
+        monospace: [`SF Mono`, `ui-monospace`, `Monaco`, 'Monospace'],
+      },
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        dark: {
+          ...colors.slate,
+          DEFAULT: colors.slate[950],
+          foreground: colors.slate[100],
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          ...colors.violet,
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: 0 },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};
+```
+
+The Tailwind configuration gets extended with two additional colors:
+`primary` and `dark`.
+
+1. `primary` is the main color of your project. It's used for buttons, links, and other interactive elements. It's also used for some backgrounds of the dark mode.
+2. `dark` is the color palette for the dark mode. It's used for the background of the dark mode.
+
+By updating these colors, you can customize the look and feel of your project.
+
+For example:
+1. If you want to change the primary color, you can update the `primary` color in the Tailwind configuration. Try changing it to `blue` and see what happens.
+2. If you want to change the dark mode background color, you can update the `dark` color in the Tailwind configuration. Try changing it to `slate` and see what happens.
+
+Of course - you can also pass your own palette as the `primary` and `dark` colors.
+
+## Usage in practice
+
+Let's say you want to change the primary color of your project to `indigo`. and the dark mode background color to `zinc`.
+
+```js title="tailwind.config.js"
+const colors = require('tailwindcss/colors');
+
+extend: {
+  colors: {
+    dark: {
+      ...colors.zinc,
+      DEFAULT: colors.zinc[950],
+      foreground: colors.zinc[100],
+    },
+    primary: {
+      DEFAULT: 'hsl(var(--primary))',
+      foreground: 'hsl(var(--primary-foreground))',
+      ...colors.indigo,
+    }
+  },
+},
+```
+
+Additionally, please update the CSS variables of your global CSS file `index.css` to match the new colors by updating the `--primary` color to match using the `hsl` value of the `indigo` color.
+
+To have a reference of the Tailwind palette as `hsl` values, you can use [this reference from the ShadcnUI repository](https://github.com/shadcn-ui/ui/issues/669).
+
+When you want to use the primary color in your project, you can use the `primary` color class.
+
+```tsx title="src/components/PrimaryButton.tsx"
+import React from 'react';
+
+export const PrimaryButton = () => {
+  return (
+    <button className="bg-primary text-white dark:bg-primary/10 dark:text-primary px-4 py-2 rounded">
+      Click me
+    </button>
+  );
+};
+```

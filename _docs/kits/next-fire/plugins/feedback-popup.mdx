@@ -1,0 +1,210 @@
+---
+title: "Feedback Popup Plugin for the Next.js Firebase Saas Starter Kit"
+label: "Feedback Popup"
+position: 1
+description: "This plugin adds a feedback popup to your Next.js application. You can import this component anywhere in your application. Also - this plugin provides some admin components to manage and view the feedback submitted by your users."
+---
+
+This plugin adds a feedback popup to your Next.js application. You can
+import this component anywhere in your application.
+
+Also - this plugin provides some admin components to manage and view the
+feedback submitted by your users.
+
+## Using the Plugin
+
+### Installation
+
+To install the plugin, you can use git subtrees from your original repository:
+
+```bash
+git subtree add --prefix plugins/feedback-popup git@github.com:makerkit/next-firebase-saas-kit-plugins.git feedback-popup --squash
+```
+
+After running this command, you will have the plugin in your repository at
+`plugins/feedback-popup`. Once pulled, you can apply any customization you need.
+
+#### Using the CLI
+
+If you're using the CLI, you can run the following command to install the plugin:
+
+```bash
+npx @makerkit/cli@latest plugins install
+```
+
+Follow the instructions to install the plugin.
+
+#### If the installation fails
+
+Some users are not able to install using the GitHub SSH URL. If you're having issues with that:
+1. properly set up SSH access to GitHub with your SSH key
+2. use the HTTPS URL instead of the SSH URL
+
+To use the HTTPS URL, you can run the following command:
+
+```bash
+git subtree add --prefix plugins/feedback-popup https://github.com/makerkit/next-firebase-saas-kit-plugins feedback-popup --squash
+```
+
+#### Add the plugin as a workspace in your package.json
+
+You can do so by adding the following to your `package.json` file:
+
+```json
+{
+  "workspaces": [
+    "plugins/feedback-popup"
+  ]
+}
+```
+
+Add it next to the other workspaces in your `package.json` file.
+
+#### Add the paths alias to the TypeScript configuration
+
+To make sure that the TypeScript compiler can find the plugin, you will need
+to add the following paths alias to your `tsconfig.json` file, in addition
+to the other paths aliases that you may have.
+
+If not yet present, add the following to your `tsconfig.json` file:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "~/plugins/*": [
+        "./plugins/*"
+      ]
+    }
+  }
+}
+```
+
+You only need to add this once, even if you have multiple plugins.
+
+### Update TailwindCSS configuration
+
+To make sure that the plugin's styles are applied, you will need to update
+your TailwindCSS configuration.
+
+Add the plugins path to the `content` array of your `tailwind.config.js` file:
+
+```js
+module.exports = {
+  // ...
+  content: [
+    // ...
+    './plugins/**/*.tsx',
+  ],
+  // ...
+}
+```
+
+This is only needed the first time you install any plugin.
+
+### Installing dependencies
+
+To install the dependencies, you can run the following command:
+
+```bash
+npm i
+```
+
+NPM will install the dependencies in the `plugins/feedback-popup` folder as an
+NPM workspace.
+
+### Importing the Plugin
+
+You can import the `Chatbot` component from the plugin in your `app/layout.tsx`
+file if you want it available on all pages:
+
+```tsx
+import { FeedbackPopupContainer } from '~/plugins/feedback-popup/FeedbackPopup';
+
+export default function Component() {
+  return (
+    <>
+      <FeedbackPopupContainer>
+        <Button variant='outline'>Feedback</Button>
+      </FeedbackPopupContainer>
+    </>
+  );
+}
+```
+
+You can wrap any component with the `FeedbackPopupContainer` component to
+trigger the feedback popup. For example, an icon:
+
+```tsx
+import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import { FeedbackPopupContainer } from '~/plugins/feedback-popup/FeedbackPopup';
+
+export default function Component() {
+  return (
+    <>
+      <FeedbackPopupContainer>
+        <Button size="icon" variant='ghost'>
+          <ChatBubbleLeftIcon className={'h-6'} />
+        </Button>
+      </FeedbackPopupContainer>
+    </>
+  );
+}
+```
+
+Check out this repository's `SiteHeader` component for an example of how it's implemented.
+
+### Adding Admin Routes
+
+We need to import the routes from the plugin to the admin application.
+
+#### Copy the admin routes files
+
+Some of the admin routes are provided by the plugin. Now we have to copy
+them over to our own repository.
+
+1. Locate the file at `src/pages/admin/feedback/index.tsx` and paste
+the same content into your own repository.
+2. Do the same for the file at `src/pages/admin/feedback/[id].tsx`
+
+Finally, add the page to the sidebar by updating the `AdminSidebar` component:
+
+```tsx
+<SidebarItem
+  path={'/admin/feedback'}
+  Icon={() => <ChatBubbleLeftRightIcon className={'h-6'} />}
+>
+  Feedback
+</SidebarItem>
+```
+
+### Copy the API routes
+
+The plugin provides some API routes to manage the feedback. We need to copy
+them over to our own repository.
+
+First, create a route at `src/pages/api/feedback/index.tsx` and paste the
+following content:
+
+```tsx
+import { addFeedbackSubmission } from '~/plugins/feedback-popup/lib/mutations';
+
+export default addFeedbackSubmission;
+```
+
+Then, create a route at `src/pages/api/admin/feedback/[id].ts` and paste the content:
+
+```tsx
+import { deleteFeedbackSubmission } from '~/plugins/feedback-popup/lib/mutations';
+
+export default deleteFeedbackSubmission;
+```
+
+---
+
+That's it! You should now be able to access the admin pages at `/admin/feedback` and `/admin/feedback/[id]`.
+
+### Emulator Limitations
+
+The emulator does not support creating signed URLs for the images. This
+means that we cannot display the uploaded images during development.

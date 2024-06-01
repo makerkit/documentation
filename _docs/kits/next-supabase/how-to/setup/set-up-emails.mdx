@@ -1,0 +1,36 @@
+---
+title: "How to setup emails in your Makerkit SaaS application"
+label: Setting up Emails
+position: 6
+description: "How to setup emails in your Makerkit SaaS application"
+---
+
+Sending emails is a critical part of your SaaS application. Makerkit uses emails to send invites to your users only, but it's likely you'll want to send other emails to your users.
+
+To set up emails in your Makerkit application, you should add the following environment variables to your project, using a secure environment:
+
+```bash
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+Makerkit will use these values to send emails on your behalf using the node library `nodemailer`.
+
+NB: this does not refer to emails sent by Supabase. These have to be setup
+from within the Supabase Dashboard. You can reuse the same SMTP settings.
+
+### Where do I get these values?
+
+These values are normally provided by your service provider.
+
+### Which services are supported?
+
+Any service that supports SMTP should work. We recommend using [Resend](https://resend.com/).
+
+### How do I test emails locally?
+
+Makerkit uses InBucket to allow you testing your emails without using a real
+SMTP service. You can access InBucket at [localhost:54324](http://localhost:54324)

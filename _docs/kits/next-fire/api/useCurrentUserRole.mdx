@@ -1,0 +1,30 @@
+---
+title: useCurrentUserRole
+label: useCurrentUserRole
+position: 2
+description: 'The "useCurrentUserRole" custom hook allows you to get the current user role within the selected organization'
+---
+
+In case you need to access the current user role **within the current organization**, you can use the `useCurrentUserRole` hook.
+
+To use this hook, simply import it from the `~/lib/organizations/hooks/use-current-user-role` module, and then call it from your component.
+
+Here's an example:
+
+```tsx
+import { useCurrentUserRole } from '~/lib/organizations/hooks/use-current-user-role';
+
+function MyComponent() {
+  const role = useCurrentUserRole();
+
+  return (
+    <div>
+      <p>Current user role: {role}</p>
+    </div>
+  );
+}
+```
+
+n this example, the useCurrentUserRole hook is used to retrieve the current user's role within their current organization.
+
+Overall, the `useCurrentUserRole` hook is a convenient and easy-to-use way to retrieve the role of the current user within their current organization in your Next.js app.

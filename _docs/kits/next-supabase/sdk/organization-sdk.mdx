@@ -1,0 +1,122 @@
+---
+title: "Organization SDK - Fetch Organization"
+label: "Organization SDK"
+position: 2
+description: "Learn how to use the Organization SDK to interact with the current user organization"
+---
+
+The Organization SDK allows you to interact with the currently selected Organization. Here we list the methods available in the Organization SDK.
+
+The example below work within a Server Components: by using the required client, you can easily adapt the code examples below to both Server Actions and Route Handlers.
+
+The Organization's SDK is namespaced under `sdk.organization` - so all the methods below are available under `sdk.organization`.
+
+## Fetch the current Organization UID
+
+To fetch the currently selected user's organization UID, use the `getCurrentOrganizationUid` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const organizationUid = await sdk.organization.getCurrentOrganizationUid();
+}
+```
+
+The UID may be `null` - so do make sure to check for that. For example, you may want to redirect the user to the Organizations page if no organization is selected:
+
+```tsx
+import { redirect } from "next/navigation";
+
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const organizationUid = await sdk.organization.getCurrentOrganizationUid();
+
+  if (!organizationUid) {
+    // No organization selected
+    redirect('/organizations')
+  }
+}
+```
+
+## Fetch the current Organization
+
+To fetch the currently selected user's organization, use the `getCurrent` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const organization = await sdk.organization.getCurrent();
+}
+```
+
+The `getCurrent` method returns the interface `GetCurrentOrganizationResponse` which is defined as:
+
+```ts
+interface GetCurrentOrganizationResponse {
+  organization: {
+    id: number;
+    uuid: string;
+    name: string;
+    logoURL?: string | null;
+
+    // your custom fields...
+
+    subscription?: {
+      customerId: string | undefined;
+
+      // your custom fields...
+
+      data: {
+        id: string;
+
+        priceId: string;
+
+        status: Stripe.Subscription.Status;
+        cancelAtPeriodEnd: boolean;
+        currency: string | null;
+
+        interval: string | null;
+        intervalCount: number | null;
+
+        createdAt: string;
+        periodStartsAt: string;
+        periodEndsAt: string;
+        trialStartsAt: string | null;
+        trialEndsAt: string | null;
+
+        // your custom fields ...
+      }
+    }
+  }
+}
+```
+
+<Alert type={'warn'}>
+  <Alert.Heading>
+    This can change if you have a custom Organization model.
+  </Alert.Heading>
+
+  It's very likely that you will be updating the Organization model to include more fields. If that's the case, this
+  method will reflect those changes.
+</Alert>
+
+## Fetch the current Organization's Subscription
+
+The `organization` namespace also includes a `subscription` namespace. This namespace allows you to interact with the current Organization's subscription.
+
+We will show it in the next section.

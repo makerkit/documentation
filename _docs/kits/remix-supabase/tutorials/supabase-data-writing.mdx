@@ -1,0 +1,70 @@
+---
+title: "Supabase: Data Writing"
+label: "Supabase: Data Writing"
+position: 11
+description: "Learn how to write data to the Supabase Database in your React applications."
+---
+
+In the section above, we saw how to fetch data from the Supabase Postgres.
+Now, let's see how to write data to the Supabase database.
+
+#### Creating a Task
+
+First, we want to add a file named `mutations.ts` at `lib/tasks/`. Here, we
+will add all the mutations that we will need to create, update, and delete
+tasks.
+
+```ts
+export function createTask(
+  client: Client,
+  task: Omit<Task, 'id'>
+) {
+  return client.from(TASKS_TABLE).insert({
+    name: task.name,
+    organization_id: task.organizationId,
+    due_date: task.dueDate,
+    description: task.description,
+    done: task.done,
+  });
+}
+```
+
+#### Updating a Task
+
+Now, let's write a hook to update an existing task.
+
+We will write another mutation function to update a task:
+
+```ts title="lib/tasks/mutations.ts"
+export function updateTask(
+  client: Client,
+  task: Partial<Task> & { id: number }
+) {
+  return client
+    .from(TASKS_TABLE)
+    .update({
+      name: task.name,
+      done: task.done,
+    })
+    .match({
+      id: task.id,
+    })
+    .throwOnError();
+}
+```
+
+#### Deleting a Task
+
+We will write another mutation function to delete a task:
+
+```ts title="lib/tasks/mutations.ts"
+export function deleteTask(
+  client: Client,
+  taskId: number
+) {
+  return client.from(TASKS_TABLE).delete().match({
+    id: taskId
+  }).throwOnError();
+}
+```
+

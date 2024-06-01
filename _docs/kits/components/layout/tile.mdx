@@ -1,0 +1,74 @@
+---
+label: "Tile"
+title: "Tile Component"
+position: 2
+description: "Tile component - used to display a tile with an icon and text."
+---
+
+The Tile component is usually used in dashboards to display a tile with an icon and text.
+
+```tsx
+import { Tile } from '~/core/ui/Tile';
+
+<div className={'grid grid-cols-2 gap-4'}>
+  <Tile>
+    <Tile.Heading>MRR</Tile.Heading>
+
+    <Tile.Body>
+      <div className={'flex justify-between space-x-8'}>
+        <Tile.Figure>
+          $13,322
+        </Tile.Figure>
+
+        <Tile.Trend trend={'up'}>+30%</Tile.Trend>
+      </div>
+    </Tile.Body>
+  </Tile>
+
+  <Tile>
+    <Tile.Heading>Support Tickets</Tile.Heading>
+
+    <Tile.Body>
+      <div className={'flex justify-between space-x-8'}>
+        <Tile.Figure>
+          +133
+        </Tile.Figure>
+
+        <Tile.Trend trend={'down'}>+12%</Tile.Trend>
+      </div>
+    </Tile.Body>
+  </Tile>
+</div>
+```
+
+<DemoContainer>
+  <div className={'grid grid-cols-2 gap-4'}>
+    <Tile>
+      <Tile.Heading>MRR</Tile.Heading>
+
+      <Tile.Body>
+        <div className={'flex justify-between space-x-8'}>
+          <Tile.Figure>
+            $13,322
+          </Tile.Figure>
+
+          <Tile.Trend trend={'up'}>+30%</Tile.Trend>
+        </div>
+      </Tile.Body>
+    </Tile>
+
+    <Tile>
+      <Tile.Heading>Support Tickets</Tile.Heading>
+
+      <Tile.Body>
+        <div className={'flex justify-between space-x-8'}>
+          <Tile.Figure>
+            +133
+          </Tile.Figure>
+
+          <Tile.Trend trend={'down'}>+12%</Tile.Trend>
+        </div>
+      </Tile.Body>
+    </Tile>
+  </div>
+</DemoContainer>

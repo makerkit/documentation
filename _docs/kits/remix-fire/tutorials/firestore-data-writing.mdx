@@ -1,0 +1,263 @@
+---
+title: "Firestore: Data Writing"
+label: "Firestore: Data Writing"
+position: 10
+description: "Learn how to write data to Firestore in your React applications."
+---
+
+While `reactfire` does not provide hooks for writing data to Firestore, we can still make our own.
+
+In fact, **I encourage you to make a custom hook for each mutation**.
+
+## Mutations
+
+#### Creating a Task
+
+In the example below, we write a custom hook to add a document to the `tasks` collection:
+
+```tsx title="src/lib/tasks/hooks/use-create-task.ts"
+import { useFirestore } from 'reactfire';
+import { useCallback } from 'react';
+import { addDoc, collection } from 'firebase/firestore';
+import { Task } from '~/lib/tasks/types/task';
+
+function useCreateTask() {
+  const firestore = useFirestore();
+  const tasksCollection = collection(firestore, `/tasks`);
+
+  return useCallback(
+    (task: Task) => {
+      return addDoc(tasksCollection, task);
+    },
+    [tasksCollection]
+  );
+}
+
+export default useCreateTask;
+```
+
+The hook above returns a callback. Let's take a quick look at its usage:
+
+```tsx
+import useCreateTask from '~/lib/tasks/hooks/use-create-task';
+
+function Component() {
+  const createTask = useCreateTask();
+
+  return <Form onCreate={task => createTask(task)} />
+}
+```
+
+#### Updating a Task
+
+Now, let's write a hook to update an existing task.
+
+To update Firestore documents, we will import the function `updateDoc` from Firestore.
+
+```tsx title="src/lib/tasks/hooks/use-update-task.ts"
+import { useCallback } from 'react';
+import { useFirestore } from 'reactfire';
+import { doc, updateDoc } from 'firebase/firestore';
+import { Task } from '~/lib/tasks/types/task';
+
+function useUpdateTask(taskId: string) {
+  const firestore = useFirestore();
+  const tasksCollection = 'tasks';
+
+  const docRef = doc(firestore, tasksCollection, taskId);
+
+  return useCallback(
+    (task: Partial<Task>) => {
+      return updateDoc(docRef, task);
+    },
+    [docRef]
+  );
+}
+
+export default useUpdateTask;
+```
+
+#### Deleting a Task
+
+Finally, we write a mutation to delete a task:
+
+```tsx title="src/lib/tasks/hooks/use-delete-task.ts"
+import { useFirestore } from 'reactfire';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { useCallback } from 'react';
+
+function useDeleteTask(taskId: string) {
+  const firestore = useFirestore();
+  const collection = `tasks`;
+  const task = doc(firestore, collection, taskId);
+
+  return useCallback(() => {
+    return deleteDoc(task);
+  }, [task]);
+}
+
+export default useDeleteTask;
+```
+
+### Using the Modal component for confirming actions
+
+The `Modal` component is excellent for asking for confirmation before performing a destructive action. In our case, we want the users to confirm before deleting a task.
+
+The `ConfirmDeleteTaskModal` is defined below using the core `Modal` component:
+
+```tsx title="src/components/tasks/ConfirmDeleteTaskModal.tsx"
+import Modal from '~/core/ui/Modal';
+import Button from '~/core/ui/Button';
+
+const ConfirmDeleteTaskModal: React.FC<{
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  task: string;
+  onConfirm: () => void;
+}> = ({ isOpen, setIsOpen, onConfirm, task }) => {
+  return (
+    <Modal heading={`Deleting Task`} isOpen={isOpen} setIsOpen={setIsOpen}>
+      <div className={'flex flex-col space-y-4'}>
+        <p>
+          You are about to delete the task <b>{task}</b>
+        </p>
+
+        <p>Do you want to continue?</p>
+
+        <Button block color={'danger'} onClick={onConfirm}>
+          Yep, delete task
+        </Button>
+      </div>
+    </Modal>
+  );
+};
+
+export default ConfirmDeleteTaskModal;
+```
+
+### Wrapping all up: listing each Task Item
+
+Now that we have defined the mutations we can perform on each task item, we can wrap it up.
+
+The component below represents a `task` item and allows users to mark it as `done` or `not done` - or delete them.
+
+```tsx title="src/components/tasks/TasksListItem.tsx"
+import { useCallback, useState } from 'react';
+import Link from 'next/link';
+import { TrashIcon } from '@heroicons/react/24/outline';
+import { toast } from 'sonner';
+import { formatDistance } from 'date-fns';
+
+import { Task } from '~/lib/tasks/types/task';
+import Heading from '~/core/ui/Heading';
+import IconButton from '~/core/ui/IconButton';
+import Tooltip from '~/core/ui/Tooltip';
+import useDeleteTask from '~/lib/tasks/hooks/use-delete-task';
+import ConfirmDeleteTaskModal from '~/components/tasks/ConfirmDeleteTaskModal';
+import useUpdateTask from '~/lib/tasks/hooks/use-update-task';
+
+const TasksListItem: React.FC<{
+  task: WithId<Task>;
+}> = ({ task }) => {
+  const getTimeAgo = useTimeAgo();
+  const deleteTask = useDeleteTask(task.id);
+  const updateTask = useUpdateTask(task.id);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const onDelete = useCallback(() => {
+    const deleteTaskPromise = deleteTask();
+
+    return toast.promise(deleteTaskPromise, {
+      success: `Task deleted!`,
+      loading: `Deleting task...`,
+      error: `Ops, error! We could not delete task`,
+    });
+  }, [deleteTask]);
+
+  const onDoneChange = useCallback(
+    (done: boolean) => {
+      const promise = updateTask({ done });
+
+      return toast.promise(promise, {
+        success: `Task updated!`,
+        loading: `Updating task...`,
+        error: `Ops, error! We could not update task`,
+      });
+    },
+    [updateTask]
+  );
+
+  return (
+    <>
+      <div
+        className={'rounded border p-4 transition-colors dark:border-black-400'}
+      >
+        <div className={'flex items-center space-x-4'}>
+          <div>
+            <Tooltip content={task.done ? `Mark as not done` : `Mark as done`}>
+              <input
+                className={'Toggle cursor-pointer'}
+                type="checkbox"
+                defaultChecked={task.done}
+                onChange={(e) => {
+                  return onDoneChange(e.currentTarget.checked);
+                }}
+              />
+            </Tooltip>
+          </div>
+
+          <div className={'flex flex-1 flex-col space-y-0.5'}>
+            <Heading type={5}>
+              <Link
+                className={'hover:underline'}
+                href={`/tasks/[id]`}
+                as={`/tasks/${task.id}`}
+                passHref
+              >
+                {task.name}
+              </Link>
+            </Heading>
+
+            <div>
+              <p className={'text-xs text-gray-400 dark:text-gray-500'}>
+                Due {getTimeAgo(new Date(task.dueDate))}
+              </p>
+            </div>
+          </div>
+
+          <div className={'flex justify-end'}>
+            <Tooltip content={`Delete Task`}>
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleting(true);
+                }}
+              >
+                <TrashIcon className={'h-5 text-red-500'} />
+              </IconButton>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+
+      <ConfirmDeleteTaskModal
+        isOpen={isDeleting}
+        setIsOpen={setIsDeleting}
+        task={task.name}
+        onConfirm={onDelete}
+      />
+    </>
+  );
+};
+
+export default TasksListItem;
+
+function useTimeAgo() {
+  return useCallback((date: Date) => {
+    return formatDistance(date, new Date(), {
+      addSuffix: true,
+    });
+  }, []);
+}
+```

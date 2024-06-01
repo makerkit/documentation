@@ -1,0 +1,230 @@
+---
+label: "Loading data from the DB"
+position: 4
+title: "Learn how to load data from the Supabase database"
+description: "In this page we learn how to load data from the Supabase database and display it in our Next.js application."
+---
+
+Now that our database supports the data we need, we can start loading it into our application. We will use the `@makerkit/data-loader-supabase-nextjs` package to load data from the Supabase database.
+
+Please check the [documentation](https://github.com/makerkit/makerkit/tree/main/packages/data-loader/supabase/nextjs) for the `@makerkit/data-loader-supabase-nextjs` package to learn more about how to use it.
+
+This nifty package allows us to load data from the Supabase database and display it in our server components with support for pagination.
+
+In the snippet below, we will
+
+1. Load the user's workspace data from the database. This allows us to get the user's account ID without further round-trips because the workspace is loaded by the user layout.
+2. Load the user's tasks from the database.
+3. Display the tasks in a table.
+4. Use a search input to filter the tasks by title.
+
+Let's take a look at the code:
+
+```tsx
+import { use } from 'react';
+
+import { ServerDataLoader } from '@makerkit/data-loader-supabase-nextjs';
+
+import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { Button } from '@kit/ui/button';
+import { Heading } from '@kit/ui/heading';
+import { If } from '@kit/ui/if';
+import { Input } from '@kit/ui/input';
+import { PageBody } from '@kit/ui/page';
+import { Trans } from '@kit/ui/trans';
+
+import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
+import { withI18n } from '~/lib/i18n/with-i18n';
+
+import { TasksTable } from './_components/tasks-table';
+import { UserAccountHeader } from './_components/user-account-header';
+import { loadUserWorkspace } from './_lib/server/load-user-workspace';
+
+interface SearchParams {
+  page?: string;
+  query?: string;
+}
+
+export const generateMetadata = async () => {
+  const i18n = await createI18nServerInstance();
+  const title = i18n.t('account:homePage');
+
+  return {
+    title,
+  };
+};
+
+function UserHomePage(props: { searchParams: SearchParams }) {
+  const client = getSupabaseServerComponentClient();
+  const { user } = use(loadUserWorkspace());
+
+  const page = parseInt(props.searchParams.page ?? '1', 10);
+  const query = props.searchParams.query ?? '';
+
+  return (
+    <>
+      <UserAccountHeader
+        title={<Trans i18nKey={'common:homeTabLabel'} />}
+        description={<Trans i18nKey={'common:homeTabDescription'} />}
+      />
+
+      <PageBody className={'space-y-4'}>
+        <div className={'flex items-center justify-between'}>
+          <div>
+            <Heading level={4}>
+              <Trans i18nKey={'tasks:tasksTabLabel'} defaults={'Tasks'} />
+            </Heading>
+          </div>
+
+          <div className={'flex items-center space-x-2'}>
+            <form className={'w-full'}>
+              <Input
+                name={'query'}
+                defaultValue={query}
+                className={'w-full lg:w-[18rem]'}
+                placeholder={'Search tasks'}
+              />
+            </form>
+          </div>
+        </div>
+
+        <ServerDataLoader
+          client={client}
+          table={'tasks'}
+          page={page}
+          where={{
+            account_id: {
+              eq: user.id,
+            },
+            title: {
+              textSearch: query ? `%${query}%` : undefined,
+            },
+          }}
+        >
+          {(props) => {
+            return (
+              <div className={'flex flex-col space-y-8'}>
+                <If condition={props.count === 0 && query}>
+                  <div className={'flex flex-col space-y-2.5'}>
+                    <p>
+                      <Trans
+                        i18nKey={'tasks:noTasksFound'}
+                        values={{ query }}
+                      />
+                    </p>
+
+                    <form>
+                      <input type="hidden" name={'query'} value={''} />
+
+                      <Button variant={'outline'} size={'sm'}>
+                        <Trans i18nKey={'tasks:clearSearch'} />
+                      </Button>
+                    </form>
+                  </div>
+                </If>
+
+                <TasksTable {...props} />
+              </div>
+            );
+          }}
+        </ServerDataLoader>
+      </PageBody>
+    </>
+  );
+}
+
+export default withI18n(UserHomePage);
+```
+
+Let's break this down a bit, shall we:
+
+1. We import the necessary components and functions.
+2. We define the `SearchParams` interface to type the search parameters.
+3. We define the `generateMetadata` function to generate the page metadata.
+4. We define the `UserHomePage` component that loads the user's workspace and tasks from the database.
+5. We define the `ServerDataLoader` component that loads the tasks from the database.
+6. We render the tasks in a table and provide a search input to filter the tasks by title.
+7. We export the `UserHomePage` component with the `withI18n` HOC. This helps bootstrap the i18n instance for the component.
+
+### Tasks Table
+
+Now, let's show the tasks table component:
+
+```tsx
+'use client';
+
+import Link from 'next/link';
+
+import { ColumnDef } from '@tanstack/react-table';
+import { Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import { Button } from '@kit/ui/button';
+import { DataTable } from '@kit/ui/enhanced-data-table';
+
+import { Database } from '~/lib/database.types';
+
+type Task = Database['public']['Tables']['tasks']['Row'];
+
+export function TasksTable(props: {
+  data: Task[];
+  page: number;
+  pageSize: number;
+  pageCount: number;
+}) {
+  const columns = useGetColumns();
+
+  return (
+    <div>
+      <DataTable {...props} columns={columns} />
+    </div>
+  );
+}
+
+function useGetColumns(): ColumnDef<Task>[] {
+  const { t } = useTranslation('tasks');
+
+  return [
+    {
+      header: t('task'),
+      cell: ({ row }) => (
+        <Link
+          className={'hover:underline'}
+          href={`/home/tasks/${row.original.id}`}
+        >
+          {row.original.title}
+        </Link>
+      ),
+    },
+    {
+      header: t('createdAt'),
+      accessorKey: 'created_at',
+    },
+    {
+      header: t('updatedAt'),
+      accessorKey: 'updated_at',
+    },
+    {
+      header: '',
+      id: 'actions',
+      cell: ({ row }) => {
+        const id = row.original.id;
+
+        return (
+          <div className={'flex justify-end space-x-2'}>
+            <Link href={`/home/tasks/${id}`}>
+              <Button variant={'ghost'} size={'icon'}>
+                <Pencil className={'h-4'} />
+              </Button>
+            </Link>
+          </div>
+        );
+      },
+    },
+  ];
+}
+```
+
+In this snippet, we define the `TasksTable` component that renders the tasks in a table. We use the `DataTable` component from the `@kit/ui/enhanced-data-table` package to render the table.
+
+We also define the `useGetColumns` hook that returns the columns for the table. We use the `useTranslation` hook from the `react-i18next` package to translate the column headers.

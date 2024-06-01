@@ -1,0 +1,36 @@
+---
+title: "Adding a new translation file"
+label: "Adding a new translation file"
+position: 3
+description: "How to add a new translation file to your application."
+---
+
+To add a new translation to your application next to the default ones (common, auth, profile, etc.) you need to:
+
+1. create the new JSON file, for example `tasks.json` in the `public/locales/<lang>` folder
+2. add the new bundle name to the translations list in the `src/i18n.settings.ts` file:
+
+```typescript
+export const defaultI18nNamespaces = [
+  'common',
+  'auth',
+  'organization',
+  'profile',
+  'subscription',
+];
+```
+
+We add the `tasks` bundle name to the `defaultI18nNamespaces`:
+
+```typescript {7}
+export const defaultI18nNamespaces = [
+  'common',
+  'auth',
+  'organization',
+  'profile',
+  'subscription',
+  'tasks'
+];
+```
+
+Now, refresh the dev server and your new bundled will be picked up by the i18n module.

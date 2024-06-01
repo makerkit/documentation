@@ -1,0 +1,136 @@
+---
+title: "Badge Component - Display a small amount of information to the user"
+label: "Badge"
+description: "The Badge component is used to display a small amount of information to the user."
+position: 2
+---
+
+The `Badge` component is used to display a small amount of information to the user. It can be used to display a count of items or a status. The default type is `default` but it can also be `success`, `warning` or `error`.
+
+```tsx
+import { Badge } from '~/core/ui/Badge';
+
+<Badge>
+  User
+</Badge>
+```
+
+<DemoContainer>
+  <Badge>
+    User
+  </Badge>
+</DemoContainer>
+
+You can also set a smaller size by using the `size` prop.
+
+```tsx
+import { Badge } from '~/core/ui/Badge';
+
+<Badge size='sm'>
+  User
+</Badge>
+```
+
+<DemoContainer>
+  <Badge size='small'>
+    User
+  </Badge>
+</DemoContainer>
+
+Alternatively, provide a fully custom `Badge` using the `size`, `color` and `className` props.
+
+```tsx
+import { Badge } from '~/core/ui/Badge';
+
+<Badge 
+  size='custom' 
+  color='custom' 
+  className='py-2 px-4 rounded-sm  border'
+>
+  User
+</Badge>
+```
+
+<DemoContainer>
+  <Badge
+    size='custom'
+    color='custom'
+    className='py-2 px-4 rounded-sm  border'
+  >
+    User
+  </Badge>
+</DemoContainer>
+
+## Success
+
+Create a success badge by using the `color` prop.
+
+```tsx
+import { Badge } from '~/core/ui/Badge';
+
+<Badge color='success'>
+  Success
+</Badge>
+```
+
+<DemoContainer>
+  <Badge color='success'>
+    Success
+  </Badge>
+</DemoContainer>
+
+Use an Icon next to the text:
+
+```tsx
+import { CheckIcon } from '@heroicons/react/24/outline';
+import { Badge } from '~/core/ui/Badge';
+
+<Badge size='small' color='success'>
+  <CheckIcon className='h-3'>
+  Success
+</Badge>
+```
+
+<DemoContainer>
+  <Badge size='small' color='success'>
+    <Icons.CheckIcon className='h-3 mr-0' />
+    Success
+  </Badge>
+</DemoContainer>
+
+## Error
+
+Create an errror badge by using the `color` prop.
+
+```tsx
+import { Badge } from '~/core/ui/Badge';
+
+<Badge color='error'>
+  Error
+</Badge>
+```
+
+<DemoContainer>
+  <Badge color='error'>
+    Error
+  </Badge>
+</DemoContainer>
+
+Use an Icon next to the text:
+
+```tsx
+import { CheckIcon } from '@heroicons/react/24/outline';
+import { Badge } from '~/core/ui/Badge';
+
+<Badge size='small' color='error'>
+  <CheckIcon className='h-3'>
+  Error
+</Badge>
+```
+
+<DemoContainer>
+  <Badge size='small' color='error'>
+    <Icons.XMarkIcon className='h-3 mr-0' />
+    Error
+  </Badge>
+</DemoContainer>

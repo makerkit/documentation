@@ -1,0 +1,93 @@
+---
+title: "Fetching the selected Organization"
+label:  "Fetching the selected Organization"
+position: 1
+description: "Learn how to fetch the selected organization from the backend and frontend."
+---
+
+There are several ways to fetch the current selected organization, depending on the use-case.
+
+## Getting the selected Organization ID
+
+Getting the selected organization ID is done using different ways depending on the context.
+
+1. If you are in a Server Component under the `[organization]` route, the `organizationUid` is passed as a prop to the component. You can match the `organizationUid` with the `uuid` property of the organization.
+2. If you're not, use the cookie utility `parseOrganziationCookie` to get the `organizationUid` from the cookie. This is scoped by user, so you will need to pass the `userId` as well.
+
+### Using "parseOrganizationIdCookie" to get the Organization ID
+
+You can use the `parseOrganizationIdCookie` function in:
+
+- API Routes
+- Server Actions
+- Server Components
+
+```tsx
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+import { parseOrganizationIdCookie } from '~/lib/server/cookies/organization.cookie';
+import requireSession from '~/lib/user/require-session';
+
+async function getOrganizationId() {
+  const client = getSupabaseServerActionClient();
+  const session = await requireSession(client);
+
+  return parseOrganizationIdCookie(session.user.id);
+}
+```
+
+This can be nullish, so remember to check for that.
+
+## Fetching the selected Organization from the backend
+
+To do so, use the function `getCurrentOrganization`, which also takes care of redirecting the user to the login page if they are not signed in, and checking the correct MFA access level if the user opted in.
+
+You can use this function in:
+- API Routes
+- Server Actions
+- Server Components
+
+This function requires the current user ID and the (optionally) organization UID.
+
+1. Get the current user ID from the session: we use the `requireSession` helper to do so.
+2. Get the organization: we use the `getCurrentOrganization` helper to do so using the user ID and the organization UID.
+
+```tsx
+const client = getSupabaseRouteHandlerClient();
+const session = await requireSession(client);
+const userId = session.user.id;
+
+const organizationResponse = await getCurrentOrganization({
+  organizationUid,
+  userId,
+});
+```
+
+## Fetching the selected Organization from the frontend
+
+Within the `[organization]` context, the layout loader passes the current organization is passed from the backend to the frontend using the Context API. Therefore, we can require it using the `useCurrentOrganization` hook.
+
+### Getting the Organization with "useCurrentOrganization"
+
+To retrieve the signed in user from the frontend, you can use the `useUserSession` hook:
+
+```tsx
+import useCurrentOrganization from '~/lib/organizations/hooks/use-current-organization';
+
+const organization = useCurrentOrganization();
+```
+
+This is a React hook and can only be used inside a React component.
+
+### Getting if the Organization subscription status is set to "active" on the frontend
+
+You can use the `useIsSubscriptionActive` hook to get the subscription status of the current organization. You may want to use this function to gate access to certain parts of the app.
+
+```tsx
+import useCurrentOrganization from '~/lib/organizations/hooks/use-is-subscription-active';
+
+const isActive = useIsSubscriptionActive();
+```
+
+This is a React hook and can only be used inside a React component.
+
+

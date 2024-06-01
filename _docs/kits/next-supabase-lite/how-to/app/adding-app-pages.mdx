@@ -1,0 +1,79 @@
+---
+title: "Adding pages to the application of your Makerkit Next.js Supabase project"
+label: Adding Pages
+position: 1
+description: "Learn how to add new pages to the application of your Makerkit Next.js Supabase project."
+---
+
+To add a new page to the application site of your Next.js project, you can create a new page in the `src/app/(app)` directory.
+
+By "application", we mean the private pages of your project behind the authentication wall, such as the dashboard, the settings page, etc.
+
+The vast majority of the "private" pages of your application will be located in the `src/app/(app)` directory.
+This directory contains the pages that are **only accessible to authenticated users**.
+
+### Layout and Sidebar
+
+Pages created within the directory `src/app/(app)` will inherit the layout of the directory and will be displayed together with the Sidebar menu.
+
+### Example - Creating a new page
+
+For example, let's create a `Tasks` application located at `src/app/(app)/tasks`. We will then create a new page at `src/app/(app)/tasks/page.tsx`.
+
+```tsx title="src/app/(app)/tasks/page.tsx"
+import {
+  RectangleStackIcon,
+} from '@heroicons/react/24/outline';
+
+import AppHeader from '~/app/(app)/components/AppHeader';
+import AppContainer from '~/app/(app)/components/AppContainer';
+
+// we will implement this function later
+async function loadTasksData() {
+  // ...
+}
+
+async function TasksPage() {
+  const client = getSupabasServerComponentClient();
+  const session = await requireSession();
+
+  const { tasks } = await loadTasksData({
+    userId: session.user.id,
+  });
+
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <RectangleStackIcon className="w-6" />
+
+          <span>
+            Tasks
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+        {/* ... */}
+      </AppContainer>
+    </>
+  );
+}
+
+export default TasksPage;
+```
+
+Let's break down what we did here:
+
+1. We created a new page at `src/app/(tasks)/page.tsx`. This page will be accessible at `/tasks`.
+2. We created a `loadTasksData` function that will be used to load the data of the page. This is only a mock function for now, we will implement it later.
+3. We created a `TasksPage` component that will be used to render the page. This component is a Next.js Server Page component, so it must be exported as default.
+
+### Layout
+
+Layout-wise, we added the following components:
+
+1. An `AppHeader` component that will be used to render the header of the page.
+2. An `AppContainer` component that will be used to render the content of the page.
+
+You can omit these components if you don't need them.

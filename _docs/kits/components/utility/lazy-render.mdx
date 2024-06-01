@@ -1,0 +1,28 @@
+---
+title: "Lazy Render"
+label: "Lazy Render"
+position: 5
+description: "Lazy render component when it is visible in the viewport."
+---
+
+The `LazyRender` component is used to lazy render a component when it is visible in the viewport. This is useful for rendering components that are not visible on the initial page load, but are visible after scrolling down the page.
+
+This is extremely useful in situations where you want to delay loading a heavy component until it is visible in the viewport. For example, with videos.
+
+## Usage
+
+```tsx
+import { LazyRender } from '~/core/ui/LazyRender';
+
+<LazyRender>
+  <Video />
+</LazyRender>
+```
+
+## Props
+
+The `LazyRender` component accepts the following props:
+
+1. **threshold** - The percentage of the component that must be visible in the viewport before it is rendered. Defaults to `0`.
+2. **rootMargin** - The margin around the viewport that must be visible before the component is rendered. Defaults to `0px`.
+3. **onVisible** - A callback that is called when the component is visible in the viewport.

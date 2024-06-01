@@ -1,0 +1,78 @@
+---
+title: "Navigation Menu"
+label: "Navigation Menu"
+description: "The navigation menu component is used to display a list of links to pages within the site."
+position: 1
+---
+
+The Navigation Menu component is used to display a list of links to pages within the site. This component is used in a variety of places throughout the Kits, including the main navigation menu, the settings menu, etc.
+
+## Usage
+
+Let's explore the different ways the Navigation Menu component can be used.
+
+### Basic Usage
+
+The most basic usage of the Navigation Menu component is to display a list of links to pages within the site. This is the default usage of the component.
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuItem link={{ path: '#', label: 'Home' }} />
+  <NavigationMenuItem link={{ path: '/about', label: 'About' }} />
+  <NavigationMenuItem link={{ path: '/contact', label: 'Contact' }} />
+</NavigationMenu>
+```
+
+<DemoContainer iframeStyle={{ width: '1400px' }} contentStyle={{ 'justifyContent': 'start' }}>
+  <div className={'w-[12rem] flex'}>
+    <NavigationMenu>
+      <NavigationMenuItem link={{ path: '', label: 'Home' }} />
+      <NavigationMenuItem link={{ path: '#/about', label: 'About' }} />
+      <NavigationMenuItem link={{ path: '#/contact', label: 'Contact' }} />
+    </NavigationMenu>
+  </div>
+</DemoContainer>
+
+### Bordered
+
+To display a tabbed-style navigation menu, use the `bordered` prop.
+
+```tsx
+<NavigationMenu bordered>
+  <NavigationMenuItem link={{ path: '/', label: 'Home' }} />
+  <NavigationMenuItem link={{ path: '/about', label: 'About' }} />
+  <NavigationMenuItem link={{ path: '/contact', label: 'Contact' }} />
+</NavigationMenu>
+```
+
+<DemoContainer iframeStyle={{ width: '1400px' }} contentStyle={{ 'justifyContent': 'start' }}>
+  <div className={'w-[12rem] flex'}>
+    <NavigationMenu bordered>
+      <NavigationMenuItem link={{ path: '', label: 'Home' }} />
+      <NavigationMenuItem link={{ path: '#/about', label: 'About' }} />
+      <NavigationMenuItem link={{ path: '#/Contact', label: 'Contact' }} />
+    </NavigationMenu>
+  </div>
+</DemoContainer>
+
+### Pill Vertical
+
+To display secondary navigation menus, the pill vertical style can be ideal. This style is used in the settings menu for the sub-navigation menus.
+
+```tsx
+<NavigationMenu pill vertical>
+  <NavigationMenuItem link={{ path: '/', label: 'Home' }} />
+  <NavigationMenuItem link={{ path: '/about', label: 'About' }} />
+  <NavigationMenuItem link={{ path: '/contact', label: 'Contact' }} />
+</NavigationMenu>
+```
+
+<DemoContainer iframeStyle={{ width: '1400px' }} contentStyle={{ 'justifyContent': 'start' }}>
+  <div className={'w-[12rem] flex'}>
+    <NavigationMenu pill vertical>
+      <NavigationMenuItem link={{ path: '', label: 'Home' }} />
+      <NavigationMenuItem link={{ path: '#/about', label: 'About' }} />
+      <NavigationMenuItem link={{ path: '#/contact', label: 'Contact' }} />
+    </NavigationMenu>
+  </div>
+</DemoContainer>

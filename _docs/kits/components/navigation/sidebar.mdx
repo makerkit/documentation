@@ -1,0 +1,251 @@
+---
+title: "Sidebar"
+label: "Sidebar"
+description: "The Sidebar component is used to create a full-page Sidebar navigation menu."
+position: 2
+---
+
+The Sidebar component is used to create a full-page Sidebar navigation menu. It is used in both the Kits Dashboard and the Admin pages.
+
+## Usage
+
+Let's explore the different ways the Sidebar component can be used.
+
+### Basic Usage
+
+Below is a basic example of how to use the Sidebar component.
+
+```tsx
+import { 
+  Cog8ToothIcon, 
+  CreditCardIcon, 
+  Square3Stack3DIcon, 
+  Squares2X2Icon 
+} from "@heroicons/react/24/outline";
+
+import { Sidebar, SidebarItem, SidebarContent } from "~/core/ui/Sidebar";
+
+function AppSidebar() {
+  return (
+    <Sidebar>
+      <SidebarContent className={'py-4'}>
+        <SidebarItem
+          path={'#dashboard'}
+          Icon={() => <Square3Stack3DIcon className={'w-4'} />}
+        >
+          Dashboard
+        </SidebarItem>
+
+        <SidebarItem
+          path={'#workspace'}
+          Icon={() => <Squares2X2Icon className={'w-4'} />}
+        >
+          Workspace
+        </SidebarItem>
+
+        <SidebarItem
+          path={'#subscription'}
+          Icon={() => <CreditCardIcon className={'w-4'} />}
+        >
+          Subscription
+        </SidebarItem>
+
+        <SidebarItem
+          path={'#settings'}
+          Icon={() => <Cog8ToothIcon className={'w-4'} />}
+        >
+          Settings
+        </SidebarItem>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+```
+
+<DemoContainer iframeStyle={{ width: '1400px' }} contentStyle={{ 'justifyContent': 'start' }}>
+  <Sidebar.Sidebar>
+    <Sidebar.SidebarContent className='py-4'>
+      <Sidebar.SidebarItem
+        path={'/docs/components/sidebar'}
+        Icon={() => <Icons.Square3Stack3DIcon className={'w-4'} />}
+      >
+        Dashboard
+      </Sidebar.SidebarItem>
+
+      <Sidebar.SidebarItem
+        path={'#workspace'}
+        Icon={() => <Icons.Squares2X2Icon className={'w-4'} />}
+      >
+        Workspace
+      </Sidebar.SidebarItem>
+
+      <Sidebar.SidebarItem
+        path={'#subscription'}
+        Icon={() => <Icons.CreditCardIcon className={'w-4'} />}
+      >
+        Subscription
+      </Sidebar.SidebarItem>
+
+      <Sidebar.SidebarItem
+        path={'#settings'}
+        Icon={() => <Icons.Cog8ToothIcon className={'w-4'} />}
+      >
+        Settings
+      </Sidebar.SidebarItem>
+    </Sidebar.SidebarContent>
+  </Sidebar.Sidebar>
+</DemoContainer>
+
+### Sidebar with Groups
+
+You can create groups of Sidebar items by using the `SidebarGroup` component.
+
+```tsx
+import { 
+  Cog8ToothIcon, 
+  CreditCardIcon, 
+  Square3Stack3DIcon, 
+  Squares2X2Icon 
+} from "@heroicons/react/24/outline";
+
+import { Sidebar, SidebarItem, SidebarContent } from "~/core/ui/Sidebar";
+
+function AppSidebar() {
+  return (
+    <Sidebar>
+      <SidebarContent className={'py-4'}>
+        <SidebarGroup label='App' collapsible={false}>
+          <SidebarItem
+            path={'#dashboard'}
+            Icon={() => <Square3Stack3DIcon className={'w-4'} />}
+          >
+            Dashboard
+          </SidebarItem>
+
+          <SidebarItem
+            path={'#workspace'}
+            Icon={() => <Squares2X2Icon className={'w-4'} />}
+          >
+            Workspace
+          </SidebarItem>
+        </SidebarGroup>
+
+        <SidebarGroup label='Settings' collapsible>
+          <SidebarItem
+            path={'#subscription'}
+            Icon={() => <CreditCardIcon className={'w-4'} />}
+          >
+            Subscription
+          </SidebarItem>
+
+          <SidebarItem
+            path={'#profile'}
+            Icon={() => <Cog8ToothIcon className={'w-4'} />}
+          >
+            Profile
+          </SidebarItem>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+```
+
+<DemoContainer iframeStyle={{ width: '1400px' }} contentStyle={{ 'justifyContent': 'start' }}>
+  <Sidebar.Sidebar>
+    <Sidebar.SidebarContent className='py-4'>
+      <Sidebar.SidebarGroup label='App' collapsible={false}>
+        <Sidebar.SidebarItem
+          path={'#dashboard'}
+          Icon={() => <Icons.Square3Stack3DIcon className={'w-4'} />}
+        >
+          Dashboard
+        </Sidebar.SidebarItem>
+
+        <Sidebar.SidebarItem
+          path={'/docs/components/sidebar'}
+          Icon={() => <Icons.Squares2X2Icon className={'w-4'} />}
+        >
+          Workspace
+        </Sidebar.SidebarItem>
+      </Sidebar.SidebarGroup>
+
+      <Sidebar.SidebarGroup label='Settings'>
+        <Sidebar.SidebarItem
+          path={'#subscription'}
+          Icon={() => <Icons.CreditCardIcon className={'w-4'} />}
+        >
+          Subscription
+        </Sidebar.SidebarItem>
+
+        <Sidebar.SidebarItem
+          path={'#settings'}
+          Icon={() => <Icons.Cog8ToothIcon className={'w-4'} />}
+        >
+          Profile
+        </Sidebar.SidebarItem>
+      </Sidebar.SidebarGroup>
+    </Sidebar.SidebarContent>
+  </Sidebar.Sidebar>
+</DemoContainer>
+
+---
+
+### API
+
+The following props are available for the `Sidebar` components.
+
+#### &lt;Sidebar&gt;
+
+The Sidebar component accepts the following props:
+
+1. `collapsed` - Whether the sidebar is initially collapsed or not. Defaults to `false`.
+
+```tsx
+<Sidebar collapsed={false}>
+...
+</Sidebar>
+```
+
+#### &lt;SidebarItem&gt;
+
+The SidebarItem component accepts the following props:
+
+1. `path` - The path to navigate to when the item is clicked.
+2. `Icon` - The icon to display next to the item.
+3. `end` - Whether the item should look as "active" when the path matches the current path. Defaults to `false`. By default, the path will match sub-paths up to 3 levels deep. For example, if the current path is `/dashboard`, then the item will look as "active" if the path is `/dashboard`, `/dashboard/overview`, `/dashboard/overview/1`, etc. If you want to match the path exactly, then set `end` to `true`. In this way, the item will only look as "active" if the path is `/dashboard`.
+
+```tsx
+<SidebarItem
+  path={'/dashboard'}
+  Icon={() => <Square3Stack3DIcon className={'w-4'} />}
+  end={true}
+>...</SidebarItem>
+```
+
+#### &lt;SidebarContent&gt;
+
+The SidebarContent component accepts the following props:
+
+1. `className` - The class name to apply to the content container.
+
+```tsx
+<SidebarContent className={'py-4'}>...<SidebarContent>
+```
+
+#### &lt;SidebarGroup&gt;
+
+The SidebarGroup component accepts the following props:
+
+1. `label` - The label of the group.
+2. `collapsible` - Whether the group is collapsible or not. Defaults to `true`.
+3. `collapsed` - Whether the group is initially collapsed or not. Defaults to `false`.
+
+```tsx
+<SidebarGroup 
+  label='App' 
+  collapsible={true} 
+  collapsed={false}>
+  ...
+</SidebarGroup>
+```

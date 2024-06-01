@@ -1,0 +1,65 @@
+---
+title: "Clone the Next.js Supabase SaaS Kit Turbo Repository"
+label: "Clone the Repository"
+position: 4
+description: "Clone the Next.js Supabase SaaS Kit Turbo repository to your local machine."
+---
+
+## 0. Prerequisites
+
+- Node.js 18.x or later
+- Docker
+- Pnpm
+- Supabase account (optional for local development)
+- Payment Gateway account (Stripe/Lemon Squeezy)
+- Email Service account (optional for local development)
+
+Clone this repository with the command:
+
+```bash
+git clone git@github.com:makerkit/next-supabase-saas-kit-turbo
+```
+
+NB: If your SSH key isn't set - then use the HTTPS.
+
+```bash
+git clone https://github.com/makerkit/next-supabase-saas-kit-turbo
+```
+
+NB: please switch to HTTPS for ALL commands if you are not using SSH, not just the clone command.
+
+Now, remove the original `origin`:
+
+```bash
+git remote rm origin
+```
+
+Add upstream pointing to this repository so you can pull updates
+
+```bash
+git remote add upstream git@github.com:makerkit/next-supabase-saas-kit-turbo
+```
+
+Once you have your own repository, do the same but use `origin` instead of `upstream`
+
+To pull updates (please do this daily with your morning coffee):
+
+```bash
+git pull upstream main
+```
+
+This will keep your repository up to date.
+
+### 0.1. Install Pnpm
+
+```bash
+# Install pnpm
+npm i -g pnpm
+```
+
+## 1. Setup dependencies
+
+```bash
+# Install dependencies
+pnpm i
+```

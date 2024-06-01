@@ -1,0 +1,282 @@
+---
+title: "Supabase: Data Writing"
+label: "Supabase: Data Writing"
+position: 9
+description: "Learn how to write data to the Supabase database in your React applications."
+---
+
+In the section above, we saw how to fetch data from the Supabase Postgres.
+Now, let's see how to write data to the Supabase database.
+
+#### Creating a Task
+
+First, we want to add a file named `mutations.ts` at `lib/tasks/`. Here, we
+will add all the mutations that we will need to create, update, and delete
+tasks.
+
+In our mutations file, we will add all the mutations we want to perform on
+the `tasks` table. In this case, we will add a `createTask` mutation.
+
+```ts
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../database.types';
+import type Task from '~/lib/tasks/types/task';
+import { TASKS_TABLE } from '~/lib/db-tables';
+
+type Client = SupabaseClient<Database>;
+
+export function createTask(
+  client: Client,
+  task: Omit<Task, 'id'>
+) {
+  return client.from(TASKS_TABLE).insert({
+    name: task.name,
+    organization_id: task.organizationId,
+    due_date: task.dueDate,
+    description: task.description,
+    done: task.done,
+  });
+}
+```
+
+You now have 2 alternatives to call the `createTask` mutation:
+
+1. Use a Server Action (recommended)
+2. Use an SWR Mutation
+
+Let's explain the differences between the two:
+
+1. **Server Actions** are functions executed server side - and allow us to revalidate the page after a mutation, so we can see the changes immediately.
+2. **SWR** is a client-side library that allows us to fetch data and mutate it. Since the Supabase Client allows us to perform queries/mutations client-side, we can use it in conjunction with SWR to use it within client-side React components. There are times where you may not need to revalidate the page after a mutation, and in those cases, SWR is also a good option.
+
+Most of the time, you will want to use a Server Action, but we will show both alternatives.
+
+### 1. Using a Server Action
+
+Using server actions is the simplest and most straightforward way to perform mutations in Next.js, which is why I recommend it. With that said, it's worth keeping in mind they're marked as experimental and may change in the future.
+
+#### Creating a Server Action
+
+First, we create a file `actions.ts` from which we can export all our server actions. In this case, we will create a `createTask` server action.
+
+The utility `withSession` is used to ensure the user is authenticated before performing the mutation.
+
+```ts title="lib/tasks/actions.ts"
+'use server';
+
+import { revalidatePath } from 'next/cache';
+
+import { createTask } from '~/lib/tasks/mutations';
+import type Task from '~/lib/tasks/types/task';
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+
+type CreateTaskParams = {
+  task: Omit<Task, 'id'>;
+  csrfToken: string;
+};
+
+export const createTaskAction = withSession(
+  async (params: CreateTaskParams) => {
+    const client = getSupabaseServerActionClient();
+
+    await createTask(client, params.task);
+
+    revalidatePath('/dashboard/[organization]/tasks', 'page');
+  });
+```
+
+#### Using the Server Action
+
+We will show how to use the server action in the `forms` section.
+
+### 2. Using SWR
+
+If you want to use SWR, we can use the `createTask` mutation in our `useCreateTask` hook.
+
+We will be using the `useMutation` hook from `react-query` to create our hook.
+
+```tsx title="lib/tasks/hooks/use-create-task.ts"
+import useSWRMutation from 'swr/mutation';
+import { useRouter } from 'next/navigation';
+
+import useSupabase from '~/core/hooks/use-supabase';
+import { createTask } from '~/lib/tasks/mutations';
+import type Task from '~/lib/tasks/types/task';
+
+function useCreateTaskMutation() {
+  const client = useSupabase();
+  const router = useRouter();
+  const key = 'tasks';
+
+  return useSWRMutation(key, async (_, { arg: task }: { arg: Omit<Task, 'id'> }) => {
+    return createTask(client, task);
+  }, {
+    onSuccess: () => router.refresh()
+  });
+}
+
+export default useCreateTaskMutation;
+```
+
+And now, we could use this hook within a component. Below is a very simple example:
+
+```tsx
+function Component() {
+  const createTaskMutation = useCreateTaskMutation();
+
+  return <MyForm onSubmit={task => createTaskMutation.trigger(task)} />
+}
+```
+
+#### Updating a Task
+
+Now, let's write a hook to update an existing task.
+
+We will write another mutation function to update a task:
+
+```ts title="lib/tasks/mutations.ts"
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../database.types';
+import type Task from '~/lib/tasks/types/task';
+import { TASKS_TABLE } from '~/lib/db-tables';
+
+type Client = SupabaseClient<Database>;
+
+export function updateTask(
+  client: Client,
+  task: Partial<Task> & { id: number }
+) {
+  return client
+    .from(TASKS_TABLE)
+    .update({
+      name: task.name,
+      done: task.done,
+      description: task.description,
+    })
+    .match({
+      id: task.id,
+    })
+    .throwOnError();
+}
+```
+
+### Updating a task using server actions
+
+In addition to what we have written before, add the following code:
+
+```ts title="lib/tasks/actions.ts"
+import { revalidatePath } from 'next/cache';
+import { createTask, updateTask } from '~/lib/tasks/mutations';
+
+type UpdateTaskParams = {
+  task: Partial<Task> & Pick<Task, 'id'>;
+};
+
+export const updateTaskAction = withSession(
+  async (params: UpdateTaskParams) => {
+    const client = getSupabaseServerActionClient();
+
+    await updateTask(client, params.task);
+
+    const path = `/dashboard/[organization]/tasks`;
+
+    // revalidate the tasks page and the task page
+    revalidatePath(path, 'page');
+    revalidatePath(`${path}/[task]`, 'page');
+  },
+);
+```
+
+### Updating a task using SWR
+
+And we can write a hook to use this mutation:
+
+```tsx title="lib/tasks/hooks/use-update-task.ts"
+import useSWRMutation from 'swr/mutation';
+import useSupabase from '~/core/hooks/use-supabase';
+import type Task from '~/lib/tasks/types/task';
+import { updateTask } from '~/lib/tasks/mutations';
+
+type TaskPayload = Partial<Task> & { id: number };
+
+function useUpdateTaskMutation() {
+  const client = useSupabase();
+  const key = ['tasks'];
+
+  return useSWRMutation(key, async (_, { arg: task }: { arg: TaskPayload }) => {
+    return updateTask(client, task);
+  });
+}
+
+export default useUpdateTaskMutation;
+```
+
+#### Deleting a Task
+
+We will write another mutation function to delete a task:
+
+```ts title="lib/tasks/mutations.ts"
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../database.types';
+import { TASKS_TABLE } from '~/lib/db-tables';
+
+type Client = SupabaseClient<Database>;
+
+export function deleteTask(
+  client: Client,
+  taskId: number
+) {
+  return client.from(TASKS_TABLE).delete().match({
+    id: taskId
+  }).throwOnError();
+}
+```
+
+### Deleting a task using server actions
+
+In addition to what we have written before, add the following code:
+
+```ts title="lib/tasks/actions.ts"
+import { createTask, deleteTask, updateTask } from '~/lib/tasks/mutations';
+import revalidatePath from 'next/cache';
+
+type DeleteTaskParams = {
+  taskId: number;
+};
+
+export const deleteTaskAction = withSession(
+  async (params: DeleteTaskParams) => {
+    const client = getSupabaseServerActionClient();
+
+    await deleteTask(client, params.taskId);
+
+    revalidatePath('/dashboard/[organization]/tasks', 'page')
+  });
+```
+
+Finally, we write a mutation to delete a task:
+
+```tsx title="lib/entities/hooks/use-delete-task.ts"
+import useSWRMutation from 'swr/mutation';
+
+import useSupabase from '~/core/hooks/use-supabase';
+import { deleteTask } from '~/lib/tasks/mutations';
+
+function useDeleteTaskMutation() {
+  const client = useSupabase();
+  const taskId = ['tasks'];
+
+  return useSWRMutation(
+    taskId,
+    async (_, { arg: taskId }: { arg: number }) => {
+      return deleteTask(client, taskId);
+  });
+}
+
+export default useDeleteTaskMutation;
+```
+
+---
+
+We're done with the data writing section. In the next section, we will see how to use these functions in our pages and components.

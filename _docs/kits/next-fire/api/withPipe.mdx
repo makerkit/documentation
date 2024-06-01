@@ -1,0 +1,38 @@
+---
+title: withPipe
+label: withPipe
+position: 8
+description: 'The "withPipe" is a utility function that helps you pipe functions when handling API requests.'
+---
+
+API Routes have several utilities that help you build your API endpoints, and save you from writing boilerplate code.
+
+#### 1. `withPipe`: piping functions when handling API requests
+
+The `withPipe` function is used to pipe functions when handling API requests.
+
+```ts {12}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withMethodsGuard(['GET']),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```
+
+This helps you write the utility functions we will see next in a more readable way.

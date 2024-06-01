@@ -1,0 +1,54 @@
+---
+title: "How to fix: Supabase tables not found"
+label: "Tables/Functions not found"
+position: 2
+description: "How to fix the error: Tables/Functions not found when running Supabase locally or remotely."
+---
+
+When you try to start your Makerkit SaaS and try to navigate to your application, you may hit an error that says that the SQL tables or functions were not found.
+
+This can happen for two reasons:
+
+1. You're running Supabase locally and the migrations were not applied correctly.
+2. You're running Supabase remotely and the migrations were not pushed to Supabase.
+3. Something else is wrong with your Supabase instance. In case contact me or the Supabase team.
+
+## This is happening when running Supabase locally
+
+If this is happening when running Supabase locally, it means that the migrations weren't applied correctly. In this case, I recommend restarting Supabase and running the migrations again.
+
+```
+npm run supabase:stop
+npm run supabase:start
+```
+
+### This is happening in the Supabase Cloud Instance
+
+Instead - if this is happening in your remote instance, it means you did not push your migrations to the remote instance. In this case, I recommend pushing your migrations to the remote instance.
+
+To push our database to Supabase, we need to link the Supabase CLI to our project.
+
+You'll need to grab your project's reference ID from the URL: it's the part that comes after `app.supabase.io/` in the URL or the segment that comes before `supabase.co/` in the URL, such as `*******.supabase.co`.
+
+We can do this by running the following command:
+
+```bash
+./node_modules/.bin/supabase link --project-ref **************
+```
+
+When prompted for the database password, enter the password you created when creating your project.
+
+At this point, we can proceed to push our database to Supabase. Run the following command to push our database to Supabase:
+
+```bash
+./node_modules/.bin/supabase db push
+```
+
+The output should look like this:
+
+```bash
+Applying migration 20230705082911_schema.sql...
+Finished supabase db push.
+```
+
+To verify that our database was pushed successfully, navigate to your project's dashboard and verify the tables were created.

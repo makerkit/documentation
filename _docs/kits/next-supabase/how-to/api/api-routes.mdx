@@ -1,0 +1,54 @@
+---
+title: "Adding API Routes in your Next.js application"
+label: "Adding API Routes"
+position: 0
+description: "API Routes allow you to create server endpoints in your Next.js App that you can call from your client or from external sources"
+---
+
+API routes are a way to create a custom API endpoint for your application. You can use API routes to create RESTful endpoints that return JSON data.
+
+Adding an API route to a Makerkit application is no different than any other Next.js (App Router) project. Let's see how.
+
+## Creating an API Route
+
+To create an API route, you can use the file convention `route.ts` within the `app` directory. The file name will be the path name of the API route. For example, if you create a file called `hello/route.ts` inside the `app` directory, it will be accessible at `/hello`.
+
+Here's an example of an API route that returns a JSON response as response to a `GET` request.
+
+```ts title="app/hello/route.ts"
+import { NextResponse } from "next/server";
+
+export function GET() {
+  return NextResponse.json({ text: 'Hello' });
+}
+```
+
+This is kinda simple, right? Let's see how we can use this API route in our application.
+
+### Protecting API Routes
+
+It's very likely that you want to ensure only authenticated users can access your API routes. To do that, you can use the `requireSession` function.
+
+In the example below, we create a `POST` API route that requires the user to be authenticated. If the user is not authenticated, the user will be redirected away. Additionally, the `requireSession` function will also ensure the level access if the user opted in to multi factor authentication.
+
+```ts title="app/hello/route.ts"
+import { NextRequest } from "next/server";
+
+import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
+import requireSession from '~/lib/user/require-session';
+
+export async function POST(req: NextRequest) {
+  const client = getSupabaseRouteHandlerClient();
+  const session = await requireSession(client);
+
+  // user is authenticated, do something here
+}
+```
+
+### CSRF Token
+
+By default, all API routes are protected against CSRF attacks if they use a mutation method. This means that you need to send a CSRF token with every request.
+
+To add a CSRF token to your request, you can use the `useCsrfToken` React hook. This function will return a CSRF token that you can use in your request.
+
+POST requests without a CSRF token will return a `403` error. This can be disabled in the middleware `src/middleware.ts`.

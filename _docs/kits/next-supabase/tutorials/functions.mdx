@@ -1,0 +1,276 @@
+---
+title: "Functions you need to know"
+label: "Functions you need to know"
+position: 15
+description: "Learn the most important functions you need to know to use the Next.js Supabase kit effectively."
+---
+
+This is an extremely important section of the documentation: it will teach you the most important functions you need to know to use the Next.js Supabase kit effectively.
+
+We will cover both client-side and server-side functions.
+
+## Client-Side Functions
+
+### Supabase Hooks
+
+The Next.js Supabase kit uses the client Supabase SDK extensively throughout the kit. You can find the full documentation of the Supabase SDK [here](https://supabase.io/docs/reference/javascript/supabase-client).
+
+To interact with the client-side Supabase SDK, you can use the hook `useSupabase`.
+
+```tsx
+import useSupabase from '~/core/hooks/use-supabase';
+
+function Component() {
+  // This is the Supabase client
+  const supabase = useSupabase();
+}
+```
+
+Using the `useSupabase` hook, you can access the Supabase client anywhere in your application, and it will be initialized with the correct Supabase URL and Supabase key that you have set in your environment variables.
+
+#### Server Side Supabase Clients
+There are other variations for use on the server-side, but of course these are not hooks since you will be using them outside of React components.
+
+We will take a look at server-side Supabase functions in the next sections.
+
+### Makerkit Hooks
+
+#### 1. "useCurrentOrganization": getting the current user organization
+
+This hook will allow you to get the current user organization. It is populated with the data fetched server-side in the `dashboard/[organization]` layout, and is injected using the Context API.
+
+For example, let's see how we can use this hook to get the current user organization name:
+
+```ts
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+export function useCurrentOrganizationName() {
+  const organization = useCurrentOrganization();
+
+  return organization?.name;
+}
+```
+
+There are a variety of other hooks that you can use to get the current user organization data. You can find them in the `~/lib/organizations/hooks` folder.
+
+#### 2. "useCurrentUserRole": getting the current user role within the current organization
+
+In case you need to access the current user role within the current organization, you can use the `useCurrentUserRole` hook.
+
+For example, let's see how we can use this hook to get the current user role within the current organization:
+
+```tsx
+import { useCurrentUserRole } from '~/lib/organizations/hooks/use-current-user-role';
+
+function MyComponent() {
+  const role = useCurrentUserRole();
+
+  return (
+    <div>
+      <p>Current user role: {role}</p>
+    </div>
+  );
+}
+```
+
+#### 3. "useUserSession": getting the current user session information
+
+In case you need to access the current user session data, you can use the `useUserSession` hook.
+
+This hook will return the current user session data, which includes the following information:
+- `auth`: the data that comes from Supabase Auth
+- `data`: the data that comes from the user's Supabase document
+
+```tsx
+export interface UserSession {
+  auth: AuthUser | undefined;
+  data: UserData | undefined;
+}
+```
+
+For example, let's see how we can use this hook to get the current user ID:
+
+```tsx
+import { useUserSession } from '~/core/hooks/use-user-session';
+
+function MyComponent() {
+  const userSession = useUserSession();
+  const userId = userSession?.auth?.uid;
+
+  return (
+    <div>
+      <p>Current user ID: {userId}</p>
+    </div>
+  );
+}
+```
+
+#### 4. "useIsSubscriptionActive": getting the current organization subscription status and checking if it's active
+
+A subscription is considered active if it's either `active` or `trialing`. The `useIsSubscriptionActive` hook will return `true` if the current organization is on any paid subscription, regardless of plan.
+
+This can be useful if you want to display a message to the user if they are on a paid subscription, or if you want to restrict access to certain pages.
+
+You can customize this hook to fit your needs.
+
+```tsx
+import type { Stripe } from 'stripe';
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const ACTIVE_STATUSES: Stripe.Subscription.Status[] = ['active', 'trialing'];
+
+/**
+ * @name useIsSubscriptionActive
+ * @description Returns whether the organization is on any paid
+ * subscription, regardless of plan.
+ */
+function useIsSubscriptionActive() {
+  const organization = useCurrentOrganization();
+  const status = organization?.subscription?.status;
+
+  if (!status) {
+    return false;
+  }
+
+  return ACTIVE_STATUSES.includes(status);
+}
+
+export default useIsSubscriptionActive;
+```
+
+## Server-Side Functions
+
+### 1. Supabase Server clients
+
+Supabase provides different server clients depending on where they are used. This is because the cookie handling is usually different.
+
+1. `getSupabaseServerComponentClient`: getting the server-side Supabase client for use in Server Components
+2. `getSupabaseRouteHandlerClient`: getting the server-side Supabase client for use in API Route Handlers
+3. `getSupabaseServerActionClient`: getting the server-side Supabase client for use in Server Actions
+
+This function will return a server-side Supabase client, which you can use to interact with Supabase server-side.
+
+```ts
+import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
+
+export function  GET() {
+  const supabase = getSupabaseRouteHandlerClient();
+
+  // Do something with the supabase client
+}
+```
+
+if you want to use a Service Role key and use admin permissions, you can pass the `admin` option to the `getSupabaseRouteHandlerClient` function:
+
+```ts
+import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
+
+export function  GET() {
+  const supabase = getSupabaseRouteHandlerClient({
+    admin: true
+  });
+
+  // Do something with the supabase client
+}
+```
+
+If you want to use the client in a Server Component:
+
+```tsx
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+function PageComponent() {
+  const client = getSupabaseServerComponentClient();
+}
+```
+
+If you want to use the Supabase client in a Server Action:
+
+```tsx
+'use server';
+
+import getSupabaseServerActionClient from '~/core/supabase/server-action-client';
+
+export async function serverAction() {
+  const client = getSupabaseServerActionClient();
+}
+```
+
+### 2. "requireSession": Getting (and requiring) the current user session
+
+This function will return the current user session data, and will also require the user to be logged in.
+
+- If the user is not logged in: they will be redirected to the sign-in page.
+- If the user is signed in, but requires MFA: they will be redirected to the MFA verification page.
+
+It returns a Supabase Auth `Session` instance:
+
+```ts
+import getSupabaseRouteHandlerClient from '~/core/supabase/route-handler-client';
+
+export async function GET() {
+  const supabase = getSupabaseRouteHandlerClient();
+  const session = await requireSession(supabase);
+
+  //
+}
+```
+
+Use it across layouts, route handlers, etc. every time you want to validate the user is signed in.
+
+### 3. "getCurrentOrganization": getting the current user organization
+
+This function returns the current user organization. It accepts two optional fields:
+- `userId`: the user ID to get the organization for. If not provided, it will use the current user ID.
+- `organizationId`: the organization ID to get. If not provided, it will use the current organization ID. If neither is found, it will fetch the first organization for the user.
+
+And returns the organization data:
+
+```tsx title="src/lib/organizations/database/queries.ts"
+export type UserOrganizationData = {
+  role: MembershipRole;
+  organization: Organization & {
+    subscription?: {
+      customerId: Maybe<string>;
+      data: OrganizationSubscription;
+    };
+  };
+};
+```
+
+Usage:
+
+```ts
+import getCurrentOrganization from '~/lib/server/organizations/get-current-organization';
+
+export async function GET() {
+  const response = await getCurrentOrganization();
+
+  //
+}
+```
+
+Using a user ID:
+
+```ts
+import getCurrentOrganization from '~/lib/server/organizations/get-current-organization';
+
+export async function GET() {
+  const response = await getCurrentOrganization({
+    userId: '123'
+  });
+}
+```
+
+Using an organization ID:
+
+```ts
+import getCurrentOrganization from '~/lib/server/organizations/get-current-organization';
+
+export async function GET() {
+  const response = await getCurrentOrganization({
+    userId: '123',
+    organizationId: '456'
+  });
+}
+```

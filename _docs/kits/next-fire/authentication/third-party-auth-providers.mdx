@@ -1,0 +1,110 @@
+---
+title: Set up Third party authentication providers with Next.js and Firebase
+label: Third-Party Providers
+position: 3
+description: 'Learn how to setup Third-Paerty providers with Firebase Auth in
+your MakerKit application'
+---
+
+By default, the kit uses Google as the third-party provider to allow users
+to access the application.
+
+With that said, you could decide to add other providers that Firebase provides or even custom ones.
+
+## Customizing the Third Party providers
+
+To add one or multiple oAuth providers, we will need to customize the global
+configuration by adding the Firebase provider to the `oAuth` array.
+
+For example, we could also add Facebook, Twitter, and GitHub:
+
+```tsx title="configuration.ts"
+import { FacebookAuthProvider, TwitterAuthProvider, GitHubAuthProvider } from
+'firebase/auth';
+
+{
+  auth: {
+    providers: {
+      oAuth: [
+        GoogleAuthProvider,
+        FacebookAuthProvider,
+        TwitterAuthProvider,
+        GitHubAuthProvider
+      ],
+    }
+  }
+}
+```
+
+Additionally, we can add custom oAuth providers. First, we define them by
+extending the `OAuthProvider` class:
+
+```tsx
+class MicrosoftAuthProvider extends OAuthProvider {
+  constructor() {
+    super('microsoft.com');
+  }
+}
+
+class AppleAuthProvider extends OAuthProvider {
+  constructor() {
+    super('apple.com');
+  }
+}
+```
+
+And then, we simply add them to the `oAuth` array:
+
+```tsx
+oAuth: [
+  GoogleAuthProvider,
+  MicrosoftAuthProvider,
+  AppleAuthProvider
+],
+```
+
+<Alert type={'warn'}>
+  <p>
+    Remember that you will always need to enable the authentication methods
+    you want to use from the Firebase Console once you deploy your application
+    to production.
+  </p>
+
+  <p>
+    Often, these need an additional configuration you need to
+    enable on the provider's end.
+  </p>
+</Alert>
+
+## Adding Additional Scopes
+
+To add additional scopes to the oAuth provider, we can tweak the
+`OAuthProviders.tsx` component and assign the scopes based on the instance type:
+
+```tsx title="OAuthProviders.tsx"
+import {
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+} from 'firebase/auth';
+
+{OAUTH_PROVIDERS.map((OAuthProviderClass) => {
+  const providerInstance = new OAuthProviderClass();
+  const providerId = providerInstance.providerId;
+
+  if (providerInstance instanceof GoogleAuthProvider) {
+    providerInstance.addScope('scope');
+  }
+
+  if (providerInstance instanceof FacebookAuthProvider) {
+    providerInstance.addScope('scope');
+  }
+
+   return (
+     // render <AuthProviderButton />
+   );
+});
+```
+
+For example, if you are adding the scopes for Facebook Login, [you can check
+out the Firebase documentation](https://firebase.google.com/docs/auth/web/facebook-login). Then, add them to the `addScope` method
+as described above.

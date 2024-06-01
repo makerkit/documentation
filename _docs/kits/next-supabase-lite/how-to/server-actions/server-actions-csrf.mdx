@@ -1,0 +1,99 @@
+---
+title: "Sending CSRF Token to Server Actions"
+label: "Sending CSRF Token to Actions"
+position: 1
+description: "Learn how to send CSRF tokens to server actions in Makerkit."
+---
+
+Makerkit's Middleware ensures that POST requests to your server actions are protected against CSRF attacks. This means that you need to send a CSRF token with every POST request to your server actions. The only instance where you need to manually protect your Actions is when you use forms that send data using `FormData`.
+
+## Getting the CSRF Token
+
+To retrieve the CSRF token to send along with your requests, use the `useCsrfToken` hook. This hook returns the CSRF token as a string.
+
+```tsx
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+// somehwere in your component
+const token = useCsrfToken();
+```
+
+## Sending the CSRF Token
+
+When you call a Server Action, simply add the token as `csrfToken` in the parameters object.
+
+For example, assuming this is our Server Action:
+
+```tsx
+type CreateTaskParams = {
+  task: Omit<Task, 'id'>;
+  csrfToken: string;
+};
+
+export const createTaskAction = withSession(
+  async (params: CreateTaskParams) => {
+    const client = getSupabaseServerActionClient();
+    const path = `/tasks`;
+
+    await createTask(client, params.task);
+
+    // revalidate the tasks page
+    revalidatePath(path, 'page');
+
+    // redirect to the tasks page
+    redirect(path);
+  },
+);
+```
+
+NB: we added `csrfToken` to the `CreateTaskParams` type.
+
+Then, we can call the Server Action like this:
+
+```tsx
+import { useTransition } from "react";
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+function TaskForm() {
+  const csrfToken = useCsrfToken();
+  const [isMutating, startTransition] = useTransition();
+
+  const onSubmit = (task: Task) => {
+    startTransition(async () => {
+      await createTaskAction({ task, csrfToken });
+    });
+  };
+}
+```
+
+As you can see, we're passing an object with two properties: `task` and `csrfToken`. The `csrfToken` property is the one that will be used to send the CSRF token to the server.
+
+## Using "FormData"
+
+When using plain forms, we can pass the CSRF token as an input field.
+
+```tsx
+function TaskForm() {
+  const csrfToken = useCsrfToken();
+
+  return (
+    <form action={createTaskAction}>
+      <input type={'hidden'} name={'csrfToken'} value={csrfToken} />
+    </form>
+  );
+}
+```
+
+In your server action, you will manually need to extract the CSRF token from the request body and verify it using the `verifyCsrfToken` function.
+
+```tsx
+import verifyCsrfToken from '~/core/verify-csrf-token';
+
+export const createTaskAction = async (data: FormData) => {
+  const csrfToken = data.get('csrfToken');
+
+  await verifyCsrfToken(csrfToken);
+
+  // ...
+};
+```

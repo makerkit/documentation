@@ -1,0 +1,36 @@
+---
+title: withAppProps
+label: withAppProps
+position: 5
+description: 'The "withAppProps" is a function that is used to populate the props of the application pages. It is used in the "getServerSideProps" function of the pages you want to gate.'
+---
+
+Props functions are functions that are executed server-side and are used to populate the props of a page. They are executed before the page is rendered, and are used to fetch data that is required for the page to render.
+
+The `withAppProps` function is used to populate the props of the application pages. It is used in the `getServerSideProps` function of the pages you want to gate.
+
+If you take a look at the previous sections, we used this function to protect the `tasks` application so that only authenticated users can access it.
+
+```tsx
+import { withAppProps } from "~/lib/props/with-app-props";
+import { GetServerSidePropsContext } from "next";
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  return await withAppProps(ctx);
+}
+```
+
+### Checks performed by the function
+
+This function will perform the following checks:
+1. Check if the user is authenticated. If not, it will redirect the user to the login page.
+2. Check if the user is onboarded. If not, it will redirect the user to the onboarding page.
+3. (Optionally) Check if the user has the required subscription. If not, it will redirect the user to the home page.
+
+### Props returned to the page components
+
+If successful, it will return the props of the page. If not, it will redirect the user to the appropriate page.
+
+The data returned to the page includes:
+1. the user session (that can be accessed using the hook `useUserSession`)
+2. the organization (that can be accessed using the hook `useCurrentOrganization`)

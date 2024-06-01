@@ -1,0 +1,25 @@
+---
+title: withTranslationProps
+label: withTranslationProps
+position: 6
+description: 'The "withTranslationProps" is a function that is used to populate the props of pages that require translation.'
+---
+
+This function is used to populate the translations of the application. All the other props functions include this by default, so you don't need to use it directly unless it's on a page that does not use any of the other ones.
+
+You will be using this for the majority of your marketing pages.
+
+```tsx
+import { withTranslationProps } from "~/lib/props/with-translation-props";
+import { GetStaticPropsContext } from "next";
+
+export async function getStaticProps(
+  context: GetStaticPropsContext
+) {
+  const { props } = await withTranslationProps(context);
+
+  return {
+    props,
+  };
+}
+```

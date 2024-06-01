@@ -1,0 +1,75 @@
+---
+title: "Adding and updating locales in your Makerkit application"
+label: Translations and Locales
+position: 5
+---
+
+The MakerKit's codebase uses translations using the package `i18next`.
+
+- this package allows you to create multi-language apps effortlessly
+- it also helps easily renaming the Makerkit's entities according to your preferences: for example, renaming "organizations" to another entity such as "team" or "workspace"
+- in a way, it helps write cleaner HTML
+
+To add or update the default strings, you must use the locale files at `public/locales/{lang}.json`. For example, all the locale files for the English language are placed under `public/locales/en`.
+
+<Alert type='warn'>
+  When adding new keys, you'll need to restart the MakerKit server (`npm run dev`) to see the changes. Also, you may need to clear the browser cache since the client is hydrated with the translation files fetched from the JSON files.
+</Alert>
+
+The locales are split by functionality, page, or entity: as your application grows, you may not want to load every JSON file to reduce your bundle size.
+
+For example, the translations for the authentication are placed in `auth.json,` while the ones used across every page are placed under `common.json.`
+
+If you are unsure where to add some translations, simply add them to `common.json`.
+
+<Alert type='info'>
+  To simplify things, the MakerKit's starter uses all the available JSON files, and we recommend doing so until you have too many files.
+</Alert>
+
+### Using Translations in Server Components
+
+To use translations in Server Components, you can use the `withI18n` higher order server component function, which wraps the server component and initializes i18n before rendering the component.
+
+```tsx
+import { withI18n } from '~/i18n/with-i18n';
+
+function DashboardPage() {
+  return (
+    <>
+     Your page...
+    </>
+  );
+}
+
+export default withI18n(DashboardPage);
+```
+
+### Adding new languages
+
+By default, Makerkit uses English for translating the website's text. All the files are stored in the files at `/public/locales/en`.
+
+Adding a new language is very simple:
+1. **Translation Files**: First, we need to create a new folder, such as `/public/locales/es`, and then copy over the files from the English version and start translating files.
+2. **Next.js i18n config**: We need to also add a new language to the i18n configuration at `src/i18n/i18n.settings.ts`. Now add your new language's code to the `languages` array.
+
+The configuration will look like the below:
+
+```js title="src/i18n/i18n.settings.ts"
+const languages: string[] = [fallbackLng, 'es'];
+```
+
+#### Setting the default Locale
+
+To set the default locale, simply update the environment variable `DEFAULT_LOCALE` stored in `.env`.
+
+So, open the `.env` file, and update the variable:
+
+```txt title=".env"
+DEFAULT_LOCALE=de
+```
+
+## Using the Language Switcher
+
+The MakerKit kits come with a language switcher that allows users to switch between the available languages. This is not enabled by default, but you can easily add it anywhere in your application by importing the `LanguageSwitcherDropdown` component from `~/components/LanguageSwitcherDropdown`. 
+
+It does not require any props, and it will automatically detect the available languages and display them in a dropdown.

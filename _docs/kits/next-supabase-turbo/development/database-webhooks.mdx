@@ -1,0 +1,72 @@
+---
+label: "Database Webhooks"
+position: 6
+title: "How to handle custom database webhooks in your Next.js Supabase application"
+description: "Learn how to handle custom database webhooks in your Next.js Supabase application"
+---
+
+Database webhooks allow you to listen to changes in your database and trigger custom logic when a change occurs. This is useful for sending notifications, updating caches, or triggering other services.
+
+Makerkit handles some webhooks by default for functionalities such as deleting a subscription following a user deletion, or sending emails after a user signs up.
+
+You can extend this functionality by adding your own webhook handlers:
+
+```tsx title="apps/web/app/api/db/webhook/route.ts"
+import {
+  getDatabaseWebhookHandlerService,
+} from '@kit/database-webhooks';
+
+/**
+ * @name POST
+ * @description POST handler for the webhook route that handles the webhook event
+ */
+export async function POST(request: Request) {
+  const service = getDatabaseWebhookHandlerService();
+
+  try {
+    // handle the webhook event
+    await service.handleWebhook(request, {
+      handleEvent(change) {
+        if (change.type === 'INSERT' && change.table === 'invitations') {
+          // do something with the invitation
+        }
+      },
+    });
+
+    return new Response(null, { status: 200 });
+  } catch {
+    return new Response(null, { status: 500 });
+  }
+}
+```
+
+As you can see above - the `handleEvent` function is where you can add your custom logic to handle the webhook event. In this example, we check if the event is an `INSERT` event on the `invitations` table and then do something with the invitation.
+
+The `change` object is of type `RecordChange` and contains the following properties:
+
+```tsx
+import { Database } from '@kit/supabase/database';
+
+export type Tables = Database['public']['Tables'];
+
+export type TableChangeType = 'INSERT' | 'UPDATE' | 'DELETE';
+
+export interface RecordChange<
+  Table extends keyof Tables,
+  Row = Tables[Table]['Row'],
+> {
+  type: TableChangeType;
+  table: Table;
+  record: Row;
+  schema: 'public';
+  old_record: null | Row;
+}
+```
+
+You may need to cast the type manually:
+
+```tsx
+type AccountChange = RecordChange<'accounts'>;
+```
+
+Now, the `AccountChange` type can be used to type the `change` object in the `handleEvent` function and is typed to the `accounts` table.

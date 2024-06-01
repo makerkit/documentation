@@ -1,0 +1,146 @@
+---
+title: "Writing data to Firestore"
+label: "Writing data to Firestore"
+position: 0
+description: "Learn how to write, update and delete data using Firestore in
+Makerkit"
+---
+
+Similarly to reading data from Firestore, we may want to create a `custom
+hook`` also when we write, update or delete data.
+
+Assuming we have an entity called `tasks`, and we want to create a hook to
+create a new `Task`, we can do the following.
+
+1. First, we create a new hook at `lib/tasks/hooks/use-create-task.ts`
+2. We add the `tasks` collection name to `lib/firestore-collections`
+3. Wrap the `addDoc` function from Firestore within a `useCallback` hook
+
+```tsx title="lib/tasks/hooks/use-create-task.ts"
+import { TASKS_COLLECTION } from '~/lib/firestore-collections';
+
+function useCreateTask() {
+  const firestore = useFirestore();
+  const tasksCollection = collection(firestore, TASKS_COLLECTION);
+
+  return useCallback(
+    (task: Task) => {
+      return addDoc(tasksCollection, task);
+    },
+    [tasksCollection]
+  );
+}
+```
+
+And now, we could use this hook within a component:
+
+```tsx
+function Component() {
+  const createTask = useCreateTask();
+
+  return <MyForm onSubmit={task => createTask(task)} />
+}
+```
+
+Let's take a look at a complete example of a form that makes a request using
+the hook above:
+
+```tsx title="components/tasks/NewTaskForm.tsx"
+const CreateTaskForm = () => {
+  const createTask = useCreateTask();
+  const { setLoading, state } = useRequestState();
+  const router = useRouter();
+  const organization = useCurrentOrganization();
+  const organizationId = organization?.id as string;
+
+  const onCreateTask: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const target = event.currentTarget;
+      const data = new FormData(target);
+      const name = data.get('name') as string;
+      const dueDate = data.get('dueDate') as string;
+
+      setLoading(true);
+
+      const task = {
+        organizationId,
+        name,
+        dueDate,
+        description: ``,
+        done: false,
+      };
+
+      await toaster.promise(createTask(task), {
+        success: `Task created!`,
+        error: `Ops, error!`,
+        loading: `Creating task...`,
+      });
+
+      await router.push(`/tasks`);
+    },
+    [router, createTask, organizationId, setLoading]
+  );
+
+  return (
+    <div>
+      <form onSubmit={onCreateTask}>
+        <div className={'flex flex-col space-y-3'}>
+          <TextField.Label>
+            Name
+            <TextField.Input
+              required
+              name={'name'}
+              placeholder={'ex. Launch on IndieHackers'}
+            />
+            <TextField.Hint>Hint: whatever you do, ship!</TextField.Hint>
+          </TextField.Label>
+
+          <TextField.Label>
+            Due date
+            <TextField.Input
+              required
+              defaultValue={getDefaultDueDate()}
+              name={'dueDate'}
+              type={'date'}
+            />
+          </TextField.Label>
+
+          <div
+            className={
+              'flex flex-col space-y-2 md:space-y-0 md:space-x-2' +
+              ' md:flex-row'
+            }
+          >
+            <Button loading={state.loading}>
+              <If condition={state.loading} fallback={<>Create Task</>}>
+                Creating Task...
+              </If>
+            </Button>
+
+            <Button color={'transparent'} href={'/tasks'}>
+              Go back
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+function getDefaultDueDate() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate() + 1);
+
+  return `${year}-${month}-${day}`;
+}
+
+function pad(n: number) {
+  return n < 10 ? `0${n}` : n.toString();
+}
+
+export default CreateTaskForm;
+```

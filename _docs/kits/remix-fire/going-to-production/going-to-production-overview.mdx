@@ -1,0 +1,89 @@
+---
+title: Checklist to ship a MakerKit application to Production
+label: Production Checklist
+position: 0
+---
+
+Before going to production, it's essential to follow certain precautions to avoid failures.
+
+## 1) Environment Variables
+
+First, we must safely inject the correct environment variables into their relative environment. MakerKit has predefined templates that allow you to understand where each variable should be added.
+
+Before publishing your SaaS, or if you are making a production release after
+a change and this included an environment variable; ensure your CI provider is
+up to date with the correct variable in the right environments.
+
+Since the `.env` file will not be committed to your repository, you will
+need to add the environment variables beforehand.
+
+## 2) Firebase Security Rules (Firestore and Storage)
+
+Whenever your Security rules need updating, you have to make sure to
+propagate these changes and publish them from your Firebase Console.
+
+## 3) Firestore Indexes
+
+As you may know, the Firestore emulator does not fail when a new index is
+needed, like its production version. This can be dangerous!
+
+If you are setting up Makerkit for the first time, remember to set up the
+an index for querying an invitation without knowing its organization.
+
+### Create Index Exemption by clicking on the link below
+
+You can do so using the following link (replace
+"\[\[YOUR_PROJECT_ID\]\]" with your real project ID):
+
+https://console.firebase.google.com/u/0/project/\[\[YOUR_PROJECT_ID\]\]/firestore/indexes/single-field?create_exemption=ClBwcm9qZWN0cy9zdG9yeWpveS00NmVlMy9kYXRhYmFzZXMvKGRlZ
+mF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvaW52aXRlcy9maWVsZHMvY29kZRACGggKBGNvZGUQAQ
+
+If you have added other complex queries that need a Firestore index
+exemption, **ensure you are testing thoroughly with an actual Firestore database
+to avoid similar issues**.
+
+## 4) Enable Authentication providers
+
+If you have added authentication providers other than Google, make sure you
+have enabled them from the Console and added the needed configuration so
+that they work correctly.
+
+For many of them, you will have to provide an app
+ID or a key, so configure and test them in a production environment.
+
+## 5) Enable your Stripe account Billing Status
+
+Remember to complete your Stripe account's information and enable billing and to not forget it in `Testing Mode`.
+
+Additionally, you will need to add your Stripe API keys to the environment variables to process payments. Ensure you have added the correct keys to the correct environment and that have selected all the required events to your webhook.
+
+Please follow the [Stripe configuration guide](/docs/remix-fire/stripe-configuration) to configure your Stripe account.
+
+## 6) Add your SMPT service credentials
+
+You will need to add your SMTP service credentials to the environment variables to send emails. This is required for sending emails to users when they are invited to an organization.
+
+To set the credentials, use the global configuration file `configuration.ts`.
+
+## 7) Enable Google Analytics (Optional)
+
+Understand how visitors find your website early on.
+
+## 8) Enable Sentry (Optional)
+
+With 4000 events for free per month, we recommend that you use [Sentry.io](https://sentry.io) for
+ensuring you can catch, analyze and fix any runtime errors in your application that your users will encounter.
+
+## 9) Set up a Logging Service (Optional, highly recommended)
+
+We recommend that you use a logging service to log any events that occur in your application. This will allow you to debug any issues that may occur in your application.
+
+While this is optional, we highly recommend that you use a logging service. Logging is how you can debug issues in your application, and it is essential to have a logging service in place.
+
+Some logging services that we recommend are:
+
+- [Baselime](https://baselime.io)
+- [Logflare](https://logflare.app)
+- [Axiom](https://axiom.co)
+
+The above can be installed with a one-click install in the Vercel dashboard (if you are using Vercel).

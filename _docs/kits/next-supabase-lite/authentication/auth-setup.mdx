@@ -1,0 +1,47 @@
+---
+title: Setting up Supabase authentication with MakerKit
+label: Setup
+position: 1
+description: 'Learn how to setup Supabase authentication with MakerKit.'
+---
+
+Supabase needs a few settings to be configured in their Dashboard to work correctly. This guide will walk you through the steps to get your Supabase authentication setup.
+
+<Alert type={'warn'}>
+  Skipping this step will result in your users not being able to login or sign up.
+</Alert>
+
+## Authentication URLs
+
+The first thing you need to do is to set the authentication URLs in the Supabase Dashboard. These URLs are used to redirect users to the correct page after they have logged in or signed up.
+
+1. Go to the [Supabase Dashboard](https://app.supabase.io/).
+2. Click on the project you want to use.
+3. Go to the **Authentication** tab.
+4. Click on **URL Configuration**.
+5. Add your Site URL to the **Site URL** field. This is the URL of your MakerKit site (e.g. `https://my-site.com`).
+6. Add your Redirect URLs to the **Redirect URLs** field. You need to add at least two URLs: This is the URL of your MakerKit site with `/auth/callback` appended to it (e.g. `https://my-site.com/auth/callback`) and another for redirecting users to their password reset page (e.g. `https://my-site.com/settings/profile/password`).
+
+### Troubleshooting
+
+If you are having issues with authentication, ensure that the Site URL and Redirect URLs are correct. If you are using a custom domain, ensure that you are using the correct domain in the Site URL and Redirect URLs.
+
+<Alert type="warn">
+  NB: if your domain includes "www", ensure you include it in the Site URL and Redirect URLs. If your domain does not
+  include "www", ensure you do not include it in the Site URL and Redirect URLs. If these do not match, your users will
+  not be able to login.
+</Alert>
+
+If something is still not working, please open a support ticket with any useful information (such as server logs).
+
+## Custom SMTP (optional, but recommended)
+
+If you want to send emails from your own domain, you can configure your SMTP settings in the Supabase Dashboard.
+
+This is optional, but recommended if you want to send emails from your own domain.
+
+1. Go to the [Supabase Dashboard](https://app.supabase.io/).
+2. Click on the project you want to use.
+3. Go to the **Project Settings** tab.
+4. Click on **Auth**.
+5. Tweak the `SMTP Settings` settings to your liking according to your provider's documentation.

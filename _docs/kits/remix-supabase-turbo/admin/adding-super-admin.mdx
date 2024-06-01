@@ -1,0 +1,18 @@
+---
+label: "Adding a Super Admin"
+title: "Adding a Super Admin to your Remix Supabase application"
+description: "In this post, you will learn how to set up a Super Admin in your Remix Supabase application"
+position: 0
+---
+
+The Super Admin panel allows you to manage users and accounts.
+
+To access the super admin panel at `/admin`, you will need to assign a user as a super admin.
+
+To do so, pick the user ID of the user you want to assign as a super admin and run the following SQL query:
+
+```sql
+UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "super-admin"}' WHERE id='<user_id>';
+```
+
+Please replace `<user_id>` with the user ID you want to assign as a super admin.

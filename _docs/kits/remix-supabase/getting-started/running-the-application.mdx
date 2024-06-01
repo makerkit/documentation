@@ -1,0 +1,144 @@
+---
+title: How to run a Remix and Supabase MakerKit application
+label: Running the application
+position: 3
+description: 'Learn how to run a Remix and Supabase MakerKit application'
+---
+
+After installing the modules, we can finally run the
+application in development mode.
+
+We need to execute two commands (and an optional one for Stripe):
+
+1. **Remix Server**: the first command is for running the Remix server
+2. **Supabase Environment**: the second command is for running the Supabase
+environment with Docker
+3. **Stripe CLI**: finally, the Stripe CLI is needed to dispatch webhooks to
+our local server (optional, only needed when interacting with Stripe)
+
+## About this Documentation
+
+This documentation complements the Supabase one and is not meant to be a replacement. We recommend reading the Supabase documentation to get a better understanding of the Supabase concepts and how to use it.
+
+## Install and Run Docker
+
+Before we can run the Supabase local environment, we need to run Docker, as Supabase uses it for running its local environment.
+
+You can use Docker Desktop, Colima, OrbStack, or any other Docker-compatible solution.
+
+### Adding the environment variables file
+
+The kit comes with a template of what your `.env` file should look like named `.env.template`.
+
+**Before you continue**: rename `.env.template` to `.env`, or copy its contents to `.env`.
+
+**This file won't be committed to git**. When you deploy your production app, ensure you add the environment variables using your CI/Service.
+
+NB: Remix does not use the `.env` file when bundling the application in production mode.
+
+### Running the Supabase Environment
+
+First, let's run the Supabase environment, which will spin up a local
+instance using Docker. We can do this by running the following command:
+
+```bash
+npm run supabase:start
+```
+
+Additionally, it imports the default seed data. We use it this data to
+populate the database with some initial data and execute the E2E tests.
+
+After running the command above, you will be able to access the Supabase
+Studio UI at [http://localhost:54323/](http://localhost:54323/).
+
+### Adding the Supabase Keys to the Environment Variables
+If this is the first time you run this command, we will need to get the
+Supabase keys and add them to our local environment variables configuration
+file `.env`.
+
+```bash
+> supabase start
+
+Applying migration 20221215192558_schema.sql...
+Seeding data supabase/seed.sql...
+Started supabase local development setup.
+
+         API URL: http://localhost:54321
+          DB URL: postgresql://postgres:postgres@localhost:54322/postgres
+      Studio URL: http://localhost:54323
+    Inbucket URL: http://localhost:54324
+      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
+        anon key: ****************************************************
+service_role key: ****************************************************
+```
+
+Now, we need to copy the `anon key` and `service_role key` values and add
+them to the `.env` file:
+
+```
+SUPABASE_ANON_KEY=****************************************************
+SUPABASE_SERVICE_ROLE_KEY=****************************************************
+```
+
+### Building the Contentlayer (Blog and Documentation) documents
+
+The codebase expects the Contentlayer documents to be built before running the Remix server. To do so, run the following command:
+
+```
+npm run contentlayer:build
+```
+
+If you want to build the documents every time you save a file, you can run the following command:
+
+```
+npm run contentlayer:watch
+```
+
+Running the `contentlayer:watch` command is the recommended way to work with the Contentlayer during development.
+
+<Alert type='warn'>
+  You may see an error when running the `contentlayer:build` command. This is a known issue in Node >= 18. You can safely ignore it, as long as the ".contentlayer" directory is created.
+</Alert>
+
+### Running the Remix Server
+
+And now, the Remix server:
+
+```bash
+npm run dev
+```
+
+If everything goes well, your server should be running at
+[http://localhost:3000](http://localhost:3000).
+
+### Running the Stripe CLI
+
+Run the Stripe CLI with the following command:
+
+```bash
+npm run stripe:listen
+```
+
+#### Add the Stripe Webhooks Key to your environment file
+
+If this is the first time you run this command, you will need to copy the Webhooks key printed on the console and add it to your development environment variables file:
+
+```bash title=".env.development"
+STRIPE_WEBHOOKS_SECRET=<PASTE_KEY_HERE>
+```
+
+
+#### Signing In for the first time
+
+You should now be able to sign in. To quickly get started, use the following credentials:
+
+```
+email = test@makerkit.dev
+password = testingpassword
+```
+
+#### Email Confirmations
+
+When signing up, Supabase sends an email confirmation to a testing account. You can access the InBucket testing emails [using the following link](http://localhost:54324/monitor), and can follow the links to complete the sign up process.
+
+

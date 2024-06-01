@@ -1,0 +1,57 @@
+---
+label: "Authentication Configuration"
+title: "Setting your authentication configuration"
+description: "Learn how to setup the authentication configuration of your Next.js Supabase application"
+position: 2
+---
+
+Makerkit supports three different authentication methods:
+
+1. **Password** - the traditional email/password method, set to `true` by default
+2. **Magic Link** - magic link, set to `false` by default
+3. **oAuth** - oAuth providers, by default we set Google Auth
+
+The authentication configuration is set at `apps/web/config/auth.config.ts`.
+
+The recommendation is **to not update this directly** - instead, please define the environment variables below and override the default behavior. The configuration is validated using the Zod schema `AuthConfigSchema`, so if something is off, you'll see the errors.
+
+```tsx
+const authConfig = AuthConfigSchema.parse({
+  // NB: This is a public key, so it's safe to expose.
+  // Copy the value from the Supabase Dashboard.
+  captchaTokenSiteKey: process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY,
+
+  // NB: Enable the providers below in the Supabase Console
+  // in your production project
+  providers: {
+    password: process.env.NEXT_PUBLIC_AUTH_PASSWORD === 'true',
+    magicLink: process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK === 'true',
+    oAuth: ['google'],
+  },
+} satisfies z.infer<typeof AuthConfigSchema>);
+```
+
+For example, if you wanted to switch from password auth to magic link, you'd set the below variables:
+
+```bash
+NEXT_PUBLIC_AUTH_PASSWORD=false
+NEXT_PUBLIC_AUTH_MAGIC_LINK=true
+```
+
+## Third Party Providers
+
+To display third-party providers in the UI, you need to set the `oAuth` array to include the provider you want to display. The default is Google.
+
+```tsx
+providers: {
+  oAuth: ['google'],
+}
+```
+
+**The configuration is done on Supabase's side - not on Makerkit's side**.
+
+Third Party providers need to be configured, managed and enabled fully on the provider's and Supabase's side. Makerkit does not need any configuration (beyond setting the provider to be displayed in the UI).
+
+Please [read Supabase's documentation](https://supabase.com/docs/guides/auth/social-login) on how to set up third-party providers.
+
+For local development, also check out [Supabase's documentation on how to set up OAuth providers locally](https://supabase.com/docs/guides/cli/managing-config).

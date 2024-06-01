@@ -1,0 +1,53 @@
+---
+title: "Adding pages to the application of your Makerkit Next.js Firebase project"
+label: Adding Pages
+position: 1
+description: "Learn how to add new pages to the application of your Makerkit Next.js Firebase project."
+---
+
+To add a new page to the application site of your Next.js project, you can create a new page in the `pages` directory and using the required `getServerSideProps` function.
+
+By "application", we mean the private pages of your project behind the authentication wall, such as the dashboard, the settings page, etc.
+
+As such - we need to make sure to protect these pages from being accessed by unauthorized users. To do so, we can use the `withAppProps` function, which will redirect the user to the login page if they are not authenticated.
+
+### Adding a new page to the app
+
+For example, if you want to add a page at `/tasks`, you can create a new file at `pages/about.tsx` with the following content:
+
+```tsx
+import { GetServerSidePropsContext } from 'next';
+import { withAppProps } from '~/lib/props/with-app-props';
+import RouteShell from '~/components/RouteShell';
+
+const Tasks = () => {
+  return (
+    <RouteShell title={'Tasks'}>
+     Tasks...
+    </RouteShell>
+  );
+};
+
+export default Tasks;
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  return await withAppProps(ctx);
+}
+```
+
+<div>
+  <Alert type={'warn'}>
+    <Alert.Heading>Always use "withAppProps"</Alert.Heading>
+
+    <div>
+      It is important to always use the <code>withAppProps</code> function in your <code>getServerSideProps</code> function, as it will make sure that the user is authenticated before accessing the page.
+    </div>
+  </Alert>
+</div>
+
+---
+
+Let's break down what's happening here:
+
+1. **withAppProps**: This function will retrieve all the required data and send it to the page as props. It will also redirect the user to the login page if they are not authenticated.
+2. **RouteShell**: This component is a wrapper that will add the required layout to the page, including the navigation bar, the sidebar, the footer, etc. It will also initialize Firebase Firestore.

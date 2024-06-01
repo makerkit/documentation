@@ -1,0 +1,35 @@
+---
+title: Themes
+label: Themes
+position: 2
+description: 'Learn how to configure the default theme of your application.'
+---
+
+By default, the Makerkit kits come with a light and a dark theme, and we provide a toggle to let users switch between them.
+
+## Changing the default theme
+
+To change the default theme, you need to update the theme in your `src/configuration.ts` file.
+
+```ts title="src/configuration.ts" {2}
+const configuration = {
+  theme: Themes.Dark,
+  ...
+}
+```
+
+## Disabling the theme toggle
+
+To disable the theme toggle, you need to update the `src/configuration.ts` file.
+
+```tsx title="src/configuration.ts" {3}
+const configuration = {
+  theme: Themes.Dark,
+  features: {
+    enableThemeSwitcher: false,
+  },
+  ...
+}
+```
+
+This will prevent the theme toggle from appearing in the application.

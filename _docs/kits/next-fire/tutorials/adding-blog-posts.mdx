@@ -1,0 +1,87 @@
+---
+title: "Adding Blog Posts"
+label: "Adding Blog Posts"
+position: 17
+description: "Learn how to add blog posts to your site."
+---
+
+We can add your website's blog posts within the `_posts` folder.
+
+#### Collections
+
+Before writing a blog post, we have to define the post's collection. We use `collections` to organize our blog posts by their category.
+
+For example, your blog could have collections such as changelog,
+announcements, tutorials, etc.
+
+MakerKit generates every collection with its page, listing all the articles
+associated with it.
+
+To change a collection page, please change the file `src/pages/blog/[collection].ts`.
+
+##### Adding collections
+
+Let's see how we can define a `collection` in Typescript:
+
+```tsx
+interface Collection {
+  name: string;
+
+  // image
+  logo?: string;
+  emoji?: string;
+}
+````
+
+As you can see, the only required property to create a collection is a name. You can also attach an image or a simple emoji for each `collection`.
+
+A collection can be simply the following file:
+
+```json
+{
+  "name":"Changelog"
+}
+```
+
+#### Writing a Blog Post
+The interface of a blog post is the following:
+
+```tsx
+interface Post {
+  title: string;
+  excerpt: string;
+
+  date: string;
+  live: boolean;
+  tags?: string[];
+
+  coverImage?: string;
+
+  ogImage?: {
+    url: string;
+  };
+
+  author?: {
+    name: string;
+    picture: string;
+    url: string;
+  };
+
+  canonical?: string;
+}
+```
+
+These values can be defined in MDX files using the `frontmatter`, for example:
+
+```yaml
+---
+title: An Awesome Post title
+except: "Write here a short description for your blog post"
+collection: changelog.json
+date: '2022-01-05'
+live: true
+coverImage: '/assets/images/posts/announcement.webp'
+tags:
+  - changelog
+---
+```

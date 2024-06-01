@@ -1,0 +1,41 @@
+---
+label: "Marketing Pages"
+title: "Marketing Pages in the Next.js Supabase Turbo Starter Kit"
+description: "Learn how to create and update marketing pages in the Next.js Supabase Turbo Starter Kit."
+position: 7
+---
+
+Makerkit comes with pre-defined marketing pages to help you get started with your SaaS application. These pages are built with Next.js and Tailwind CSS and are located in the `apps/web/app/(marketing)` directory.
+
+Makerkit comes with the following marketing pages:
+
+- Home Page
+- Contact Form
+- Pricing Page
+- FAQ
+- Contact Page (with a contact form)
+
+## Adding a new marketing page
+
+To add a new marketing page to your Makerkit application, you need to follow these steps.
+
+Create a folder in the `apps/web/app/(marketing)` directory with the path you want to use for the page. For example, to create a new page at `/about`, you would create a folder named `about`. Then, create the page file in the folder. For example, to create an `about` page, you would create an `page.tsx` file in the `about` folder.
+
+```tsx
+// apps/web/app/(marketing)/about/page.tsx
+export default function AboutPage() {
+  return <div></div>
+}
+```
+
+This page inherits the layout at `apps/web/app/(marketing)/layout.tsx`. You can customize the layout by editing this file - but remember that it will affect all marketing pages.
+
+## Contact Form
+
+To make the contact form work, you need to add the following environment variables:
+
+```bash
+CONTACT_EMAIL=
+```
+
+In this variable, you need to set the email address where you want to receive the contact form submissions. The sender will be the same as the one configured in your [mailing configuration](email-configuration).

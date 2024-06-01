@@ -1,0 +1,124 @@
+---
+title: "Forms"
+label: "Forms"
+position: 11
+description: "Learn how to build forms in the Next.js Firebase kit"
+---
+
+Now that we have created a custom hook to write data to Firestore, we need to build a form to create a new `task`.
+
+The example below is straightforward:
+
+1. We have a form with two input fields
+2. When the form is submitted, we read the data using `FormData`
+3. Finally, we add the document using the callback returned by the hook `useCreateTask`
+
+```tsx title="components/tasks/CreateTaskForm.tsx"
+import { useRouter } from 'next/router';
+import { FormEventHandler, useCallback } from 'react';
+import { toast } from 'sonner';
+
+import TextField from '~/core/ui/TextField';
+import Button from '~/core/ui/Button';
+import If from '~/core/ui/If';
+import Heading from '~/core/ui/Heading';
+
+import useCreateTask from '~/lib/tasks/hooks/use-create-task';
+import { useRequestState } from '~/core/hooks/use-request-state';
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const CreateTaskForm = () => {
+  const createTask = useCreateTask();
+  const { setLoading, state } = useRequestState();
+  const router = useRouter();
+  const organization = useCurrentOrganization();
+  const organizationId = organization?.id as string;
+
+  const onCreateTask: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const target = event.currentTarget;
+      const data = new FormData(target);
+      const name = data.get('name') as string;
+
+      const dueDate = (data.get('dueDate') as string) || getDefaultDueDate();
+
+      setLoading(true);
+
+      const task = {
+        organizationId,
+        name,
+        dueDate,
+        description: ``,
+        done: false,
+      };
+
+      const promise = createTask(task).then(() => {
+        return router.push(`/tasks`);
+      });
+
+      await toast.promise(promise, {
+        success: `Task created!`,
+        error: `Ops, error!`,
+        loading: `Creating task...`,
+      });
+    },
+    [router, createTask, organizationId, setLoading]
+  );
+
+  return (
+    <div className={'flex flex-col space-y-4'}>
+      <div>
+        <Heading type={2}>Create a new Task</Heading>
+      </div>
+
+      <form onSubmit={onCreateTask}>
+        <div className={'flex flex-col space-y-3'}>
+          <TextField.Label>
+            Name
+            <TextField.Input
+              required
+              name={'name'}
+              placeholder={'ex. Launch on IndieHackers'}
+            />
+            <TextField.Hint>Hint: whatever you do, ship!</TextField.Hint>
+          </TextField.Label>
+
+          <TextField.Label>
+            Due date
+            <TextField.Input name={'dueDate'} type={'date'} />
+          </TextField.Label>
+
+          <div
+            className={
+              'flex flex-col space-y-2 md:space-y-0 md:space-x-2' +
+              ' md:flex-row'
+            }
+          >
+            <Button loading={state.loading}>
+              <If condition={state.loading} fallback={<>Create Task</>}>
+                Creating Task...
+              </If>
+            </Button>
+
+            <Button color={'transparent'} href={'/tasks'}>
+              Go back
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+function getDefaultDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(23, 59, 59);
+
+  return date.toDateString();
+}
+
+export default CreateTaskForm;
+```

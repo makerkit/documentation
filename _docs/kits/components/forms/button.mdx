@@ -1,0 +1,138 @@
+---
+title: "Button Component"
+label: "Button"
+description: "The Button component is a simple styled wrapper around the native HTML button element."
+position: 5
+---
+
+The Button component is a simple styled wrapper around the native HTML button element.
+
+## Basic Usage
+
+By default - the Button component will render a primary button with a solid background color. This is the same as setting the `variant` prop to `primary`.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button>
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button>
+    Click Me
+  </Button>
+</DemoContainer>
+
+## Button Variants
+
+The Button component has a number of variants that can be used to change the appearance of the button.
+
+### Secondary
+
+Use the `secondary` variant to render a button with a secondary background color.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="secondary">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="secondary">
+    Click Me
+  </Button>
+</DemoContainer>
+
+### Ghost
+
+Use the `ghost` variant to render a button with a transparent background and a border.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="ghost">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="ghost">
+    Click Me
+  </Button>
+</DemoContainer>
+
+### Outline
+
+Use the `outline` variant to render a button with a transparent background and a border.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="outline">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="outline">
+    Click Me
+  </Button>
+</DemoContainer>
+
+### Outline Primary
+
+Use the `outlinePrimary` variant to render a button with a transparent background and a border with the primary color.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="outlinePrimary">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="outlinePrimary">
+    Click Me
+  </Button>
+</DemoContainer>
+
+### Link
+
+Use the `link` variant to render a button that looks like a link.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="link">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="link">
+    Click Me
+  </Button>
+</DemoContainer>
+
+### Destructive
+
+Use the `destructive` variant to render a button with a destructive color.
+
+```tsx
+import { Button } from '~/core/ui/Button';
+
+<Button variant="destructive">
+  Click Me
+</Button>
+```
+
+<DemoContainer>
+  <Button variant="destructive">
+    Click Me
+  </Button>
+</DemoContainer>

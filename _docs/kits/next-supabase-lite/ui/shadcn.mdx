@@ -1,0 +1,72 @@
+---
+title: Shadcn UI
+label: Shadcn UI
+position: 1
+description: 'Learn how to add new components from Shadcn UI to your project.'
+---
+
+ShadCN UI is a template library based on Radix UI and Tailwind CSS. It provides a set of high-quality React components out of the box that are fully accessible, customizable, and themable.
+
+Makerkit was an early adopter of ShadCN UI, and we use it to build our own UI components. With that, we used very different styling conventions early on, which means copy/pasting components from our docs to your project might not work as expected.
+
+ShadCN UI is **configured** in all Makerkit projects as of the latest versions, while versions released before 28 September 2023 will not work seamlessly.
+
+Makerkit only ships the components it uses in the core kit: to use other components, you will need to either use the CLI or import them manually.
+
+## Theming
+
+### Updating the Colors in CSS
+
+To update the theme's colors, please update the `global.css` file in your project and update the CSS variables.
+
+For examples, check out the [ShadCN UI Themes Page](https://ui.shadcn.com/themes).
+
+### Updating the Colors in Tailwind
+
+Additionally, we need to update the Tailwind configuration: since Makerkit uses a color palette based on Tailwind's palette system, we need to update the `tailwind.config.js` file in your project and update the `colors` object.
+
+For example, since the default color for the `primary` color is `violette.500`, we need to update the `colors` object to:
+
+```js
+primary: {
+  DEFAULT: 'hsl(var(--primary))',
+  foreground: 'hsl(var(--primary-foreground))',
+  ...colors.violet,
+}
+```
+
+The code above spreads the `violet` color palette into the `primary` object, which means that the `primary` color will be the `violet.500` color.
+
+The variable `--primary` is the hsl value of the `violet.500` color.
+
+Additionally, we can access other colors of the `primary` palette using `primary-500`, `primary-600`, etc. This helps us to access the color palette in a more semantic way.
+
+### Dark Mode
+
+We need to do the same for the dark mode. Makerkit has historically used the `dark` color palette convention to define the dark mode colors.
+
+By default, Makerkit uses `slate` as the dark mode color palette, so we need to update the `colors` object to:
+
+```js
+dark: {
+  ...colors.slate,
+  DEFAULT: colors.slate[950],
+  foreground: colors.slate[100],
+}
+```
+
+As you can see, we spread the `slate` color palette into the `dark` object, which means that the `dark` color will be the `slate.950` color.
+
+If you were to use another color such as `zinc`, you would need to update the `colors` object to:
+
+```js
+dark: {
+  ...colors.zinc,
+  DEFAULT: colors.zinc[950],
+  foreground: colors.zinc[100],
+}
+```
+
+## Icons
+
+While ShadCN UI uses `lucide` as their icons library, Makerkit has historically used `heroicons`. We have configured ShadCN UI to use `heroicons` instead of `lucide` in all Makerkit projects, but for new components, you will need to use `lucide` instead if you don't want to make changes. As such, please install `lucide` as a dependency in your project.

@@ -1,0 +1,88 @@
+---
+title: "Initial Setup"
+label: Initial Setup
+position: 1
+description: "This section describes how to set up your development environment to use the Next.js Supabase SaaS template, from forking the repository to installing the Node modules"
+---
+
+You have two ways to initialize the project:
+
+1. Forking it from GitHub, or
+2. Cloning it using Git, or
+3. Using the Makerkit CLI (coming soon!)
+
+### 1. Forking the Repository
+
+Fork this repository by clicking on the "Fork" button on the top-right
+corner in GitHub for the repository you want to use. Please be aware that by forking the repository, the Makerkit organization has read-only access to your forked repository.
+
+Once you have forked the repository, clone it locally. Then, set the
+upstream repository to the original repository, so you can pull updates
+when needed:
+
+```
+git remote add upstream git@github.com:makerkit/next-supabase-saas-kit.git
+```
+
+### 2. Cloning the Repository
+
+Alternatively, **assuming you have accepted the invites and have access to the repository**, open your terminal and run this command (replace `tasks-app` with your name of choice):
+
+```
+git clone git@github.com:makerkit/next-supabase-saas-kit.git tasks-app
+```
+
+Once completed, we'll change into the `tasks-app` directory, and then we will install the Node modules:
+
+```
+cd tasks-app
+npm i
+```
+
+### 3. Using the Makerkit CLI (coming soon!)
+
+You can use the Makerkit CLI to create a new project based on this template. The CLI will ask you a few questions, and then it will create a new repository for you, and it will clone it locally.
+
+Run the following command to run the CLI:
+
+```
+npx @makerkit/cli new
+```
+
+The CLI will ask you a few questions, and then it will create a new repository for you, and automatically install the Node modules.
+
+### Reinitialize Git
+
+As the Git repository's remote points to Makerkit's original repository, you can re-initialize (optionally!) the Git repository by running the following commands:
+
+```
+git remote rm origin
+```
+
+Now you have a clean Git repository.
+
+### Setting the Upstream Repository
+
+Then, we set the Makerkit repository as `upstream` - so we can pull updates when needed:
+
+```
+git remote add upstream git@github.com:makerkit/next-supabase-saas-kit.git
+git add .
+git commit -a -m "Initial Commit"
+```
+
+By adding the Makerkit's repository as `upstream` remote, you can fetch updates (after committing your files) by running the following command:
+
+```
+git pull upstream main --allow-unrelated-histories
+```
+
+If you have any conflicts, you can resolve them manually and then commit the changes. If the merge conflicts are too complex, accept your changes and discard the Makerkit's changes - then, you can manually merge the changes by looking at the diff in GitHub.
+
+#### Remember to keep your forked repository up-to-date!
+
+NB: as updates are released almost daily, remember to pull updates often!
+
+---
+
+Perfect! Now you can fire up your IDE and open the `tasks-app` project we just created.

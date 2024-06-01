@@ -1,0 +1,60 @@
+---
+title: "Adding pages to the Marketing Site"
+label: "Adding pages to the Marketing Site"
+position: 15
+description: "Learn how to add pages to the Marketing Site."
+---
+
+To update the site's navigation menu, you can visit the `SiteNavigation.tsx` component and add a new entry to the menu.
+
+By default, you will see the following object `links`:
+
+```tsx title="components/SiteNavigation.tsx"
+const links: Record<string, Link> = {
+  Blog: {
+    label: 'Blog',
+    path: '/blog',
+  },
+  Docs: {
+    label: 'Docs',
+    path: '/docs',
+  },
+  Pricing: {
+    label: 'Pricing',
+    path: '/pricing',
+  },
+  FAQ: {
+    label: 'FAQ',
+    path: '/faq',
+  },
+};
+```
+
+The menu is defined in the render function:
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuItem link={links.Blog} />
+  <NavigationMenuItem link={links.Docs} />
+  <NavigationMenuItem link={links.Pricing} />
+  <NavigationMenuItem link={links.FAQ} />
+</NavigationMenu>
+```
+
+Assuming we want to add a new menu entry, say `About`, we would first add the link object:
+
+```tsx
+About: {
+  label: 'About',
+  path: '/about',
+},
+```
+
+And then we update the menu:
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuItem link={links.About} />
+  ...
+</NavigationMenu>
+```

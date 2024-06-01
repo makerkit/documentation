@@ -1,0 +1,129 @@
+---
+title: "Guarding an API Route"
+label: "Guarding an API Route"
+position: 1
+description: ""
+---
+
+It's very likely that you want to ensure only authenticated users can access your API routes. To do that, you can use the `withAuth` HOC to wrap your API route handler.
+
+```ts title="pages/api/hello.ts"
+import { NextApiRequest, NextApiResponse } from "next";
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+
+function helloWorldHandler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withAuthedUser(
+  helloWorldHandler
+);
+```
+
+When using the `withAuthedUser` HOC, the `req.firebaseUser` object will be available in your API route handler. This object contains the user's information from their Firebase Auth account.
+
+You can use this object to retrieve data from your database, or to perform other actions, based on the user's information.
+
+## Guarding an API Route with a Custom Middleware
+
+If you want to use a custom middleware to guard your API route, you can do so fairly easily by using a function that accepts a handler function and returns a handler function.
+
+### Example: Guarding an API Route based on the User's Role
+
+Let's say we want to create a function that guards an API route based on the user's role. We can do that by creating a function that accepts a role as an argument, and returns a handler function that checks the user's role before executing the handler function.
+
+**Important**: this middleware requires that the `withAuthedUser` middleware is used before it - otherwise, the `req.firebaseUser` object will not be available.
+
+```ts title="core/middleware/with-role.ts"
+import { NextApiRequest,NextApiResponse } from "next";
+import { MembershipRole } from '~/lib/organizations/types/membership-role';
+import { getCurrentOrganization } from '~/lib/server/organizations/get-current-organization';
+
+export function withRole(role: MembershipRole) {
+  return async function(req: NextApiRequest, res: NextApiResponse) {
+    const userId = req.firebaseUser.uid;
+    const currentOrganizationId = req.cookies.organizationId;
+
+    const organization =
+      await getCurrentOrganization(userId, currentOrganizationId);
+
+    const currentUserRole = organization.members[userId].role;
+
+    if (currentUserRole !== role) {
+      return res.status(403).json({
+        error: 'You do not have permission to access this resource.'
+      });
+    }
+  };
+}
+```
+
+Now, we can use this middleware in our API route handler.
+
+```ts title="pages/api/hello.ts"
+import { NextApiRequest, NextApiResponse } from "next";
+import { MembershipRole } from '~/lib/organizations/types/membership-role';
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withRole } from '~/core/middleware/with-role';
+import { withPipe } from '~/core/middleware/with-pipe';
+
+function helloWorldHandler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withRole(MembershipRole.Admin),
+  helloWorldHandler,
+);
+```
+
+### Example: Guarding an API Route based on the Organization's Status
+
+Let's say we want to create a function that guards an API route based on the organization's status.
+
+**Important**: this middleware requires that the `withAuthedUser` middleware is used before it - otherwise, the `req.firebaseUser` object will not be available.
+
+```ts title="core/middleware/with-active-subscription.ts"
+import { NextApiRequest,NextApiResponse } from "next";
+import { getCurrentOrganization } from '~/lib/server/organizations/get-current-organization';
+
+export function withActiveSubscription() {
+  return async function(req: NextApiRequest, res: NextApiResponse) {
+    const userId = req.firebaseUser.uid;
+    const currentOrganizationId = req.cookies.organizationId;
+    const organization =
+      await getCurrentOrganization(userId, currentOrganizationId);
+
+    const status = organization.subscription?.status;
+    const isActive = ['active', 'trialing'].includes(status);
+
+    if (!isActive) {
+      return res.status(403).json({
+        error: 'You do not have permission to access this resource.'
+      });
+    }
+  };
+}
+```
+
+Now, we can use this middleware in our API route handler.
+
+```ts title="pages/api/hello.ts"
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withActiveSubscription } from '~/core/middleware/with-active-subscription';
+import { withPipe } from '~/core/middleware/with-pipe';
+
+function helloWorldHandler(req: NextApiRequest, res: NextApiResponse) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withActiveSubscription,
+  helloWorldHandler,
+);
+```

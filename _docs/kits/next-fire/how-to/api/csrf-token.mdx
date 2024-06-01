@@ -1,0 +1,59 @@
+---
+title: "Checking CSRF Tokens"
+label: "Checking CSRF Tokens"
+position: 3
+description: "How to check CSRF tokens in your Next.js Firebase API routes using the \"withCsrf\" HOC."
+---
+
+You can use the `withCsrf` HOC to ensure only users with a valid CSRF token can access your API routes.
+
+The CSRF token must be sent in the `x-csrf-token` header of the request. If the token is not present, or if it's invalid, the request will be rejected.
+
+```ts title="pages/api/hello.ts" {18}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withPipe } from '~/core/middleware/with-pipe';
+import withCsrf from "./with-csrf";
+
+function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withMethodsGuard(['POST']),
+  withCsrf(),
+  helloWorldHandler,
+);
+```
+
+If you pass the CSRF token in different ways, you can pass a function to the `withCsrf` HOC to retrieve the token from the request.
+
+```tsx title="pages/api/hello.ts" {12}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withPipe } from '~/core/middleware/with-pipe';
+import withCsrf from "./with-csrf";
+
+async function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  await withCsrf(req, () => req.body.csrfToken);
+
+  res.status(200).json({ text: 'Hello' })
+}
+
+export default withPipe(
+  withAuthedUser,
+  withMethodsGuard(['POST']),
+  helloWorldHandler,
+);
+```

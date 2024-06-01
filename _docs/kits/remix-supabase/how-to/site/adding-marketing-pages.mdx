@@ -1,0 +1,37 @@
+---
+title: "Adding pages to the marketing site of your Makerkit Remix Supabase project"
+label: Adding Pages
+position: 3
+description: "Learn how to add new pages to the marketing site of your Makerkit Remix Supabase project."
+---
+
+To add a new page to the marketing site of your Remix project, you can create a new page in the `app/routes/_site` layout.
+
+By "marketing site", we mean the public pages of your project, such as the homepage, the about page, the contact page, etc.
+
+<div>
+  <Alert type={'warn'}>
+    <div>
+      Use the below code only for public pages accessible by everyone, such as the homepage, the about page, the contact
+      page, etc.
+    </div>
+  </Alert>
+</div>
+
+### Adding a new page to the marketing site
+
+For example, if you want to add a page at `/about`, you can create a new file at `app/routes/_site.about._index.tsx` with the following content:
+
+```tsx title="app/_site.about._index.tsx"
+function AboutPage() {
+  return <div>About page</div>;
+}
+
+export default AboutPage;
+```
+
+This page will **automatically inherit the site layout** from `app/routes/_site.tsx` - which means it will already display the header and footer.
+
+#### I don't want to use the same layout though?
+
+If you don't want to use the site layout, create a new group inside `app/routes`, and add your page there. This replaces the `_site` layout with your own layout.

@@ -1,0 +1,54 @@
+---
+title: Add a Documentation website to your Next.js application
+label: Documentation
+position: 2
+description: 'Learn how to add documentation pages in your Next.js application'
+---
+
+We place the documentation pages within the `_docs` folder.
+
+## Topics
+The pages are defined hierarchically so that you can define your
+documentation in the following way:
+
+```
+- _docs
+  - [topic]
+    - [topic.json]
+    - [page].mdx
+```
+
+The documentation you're reading, for example, is defined as follows.
+
+The MakerKit kit has a folder called `_docs`: in this folder, we have a list of
+sub-folders for each topic we are describing.
+
+Each folder has a metadata file named `meta.json`:
+
+```json
+{
+  "title": "Blog and Docs",
+  "position": 2,
+  "description": "Learn how to configure and write your product's Blog and Documentation"
+}
+```
+
+The `position` property defines the order of the topics. In
+the case above, the topic `Blog and Docs` will be the third topic in the list.
+
+## Pages
+
+Within each topic, we define the collection pages defined as MDX files.
+They share the same components as the blog posts' files.
+
+A page is defined as follows:
+
+```yaml
+---
+title: Blog
+position: 1
+---
+```
+
+The `position` property defines the order in which the page is listed within
+the topic.

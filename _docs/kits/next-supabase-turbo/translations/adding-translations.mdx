@@ -1,0 +1,29 @@
+---
+title: "Adding new translations"
+label: "Adding new translations"
+description: "Learn how to add new translations to your Makerkit project."
+position: 1
+---
+
+Translations are stored at application level and can be found at `apps/web/public/locales`. Translations for English (which is the only language provided by default) will be found at `apps/web/public/locales/en`.
+
+If you wish to provide a new language, there are two steps.
+
+### 1. Add the language files
+
+Create a new folder using the correct language code at `apps/web/public/locales/[lng]` where `[lng]` can be any correct language code, such as `de`, `it`, `es`, `ja`, etc.
+
+### 2. Update settings
+
+Add the language to the settings file at `apps/web/lib/i18n/i18n.settings.ts`:
+
+```tsx
+/**
+ * The list of supported languages.
+ * By default,  only the default language is supported.
+ * Add more languages here if needed.
+ */
+export const languages: string[] = [defaultLanguage, 'es'];
+```
+
+In the above, I appended the language `es` to the `languages` array. You can add as many languages as you need.

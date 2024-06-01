@@ -1,0 +1,166 @@
+---
+title: "Routing"
+label: "Routing"
+position: 10
+description: "Learn the basics of routing in the Next.js Supabase SaaS Boilerplate"
+---
+
+Before getting started with building our Tasks Pages, let's take a look at the default page structure of the boilerplate:
+
+```txt
+├── app
+  └── layout.tsx
+
+  └── onboarding
+
+  (site)
+    └── faq
+    └── pricing
+
+  └── auth
+    └── link
+    └── password-reset
+    └── sign-in
+    └── sign-up
+
+  └── invite
+    └── [code]
+      └── page.tsx
+
+  └── dashboard
+    └── [organization]
+      └── page.tsx
+
+      └── settings
+        └── organization
+          └── members
+            └── page.tsx
+            └── invite
+              └── page.tsx
+
+        └── profile
+          └── index
+          └── email
+          └── password
+          └── authentication
+
+        └── subscription
+
+  └── page.tsx
+```
+
+The routes are split in the following way:
+
+1. The website's pages are placed under `(site)`
+2. The auth pages are placed under `auth`
+3. The internal pages (behind auth) that are specific to organizations are placed under `dashboard/[organization]`
+4. Some pages in the "middle" are placed outside `dashboard/[organization]`, such as the invites page and the onboarding flow.
+
+### Setting the application's Home Page
+
+By default, the application's home page is `/dashboard/[organization]`; every time the user logs in, they're redirected to the page `src/app/dashboard/[organization]/page.tsx`.
+
+The path `dashboard` is also defined as `appPrefix` in the configuration file `src/configuration.tsx`: you can update this and rename the folder if you want to change the path.
+
+To update the application's home page, you can update the `configuration.paths.appHome` variable in `src/configuration.tsx`.
+
+### Demo: Tasks Application
+
+Our demo application will be a simple tasks management application. We will be able to create tasks, list them, mark them as completed, and delete them.
+
+Here is a quick demo of what we will build:
+
+<Video src="/assets/images/posts/tasks-demo.mp4" />
+
+### Routing
+
+Ok, so we want to add three pages to our application:
+
+1. **Tasks List**: A page to list all our tasks
+2. **Task Detail**: A page specific to the selected task
+
+To create these two pages, we will create a folder named `tasks` at `src/app/dashboard/[organization]/tasks`.
+
+In the folder `src/app/dashboard/[organization]/tasks` we will create three `Page Components`:
+
+1. The tasks list page at `tasks/page.tsx`
+2. The task's own detail page at `tasks/[task]/page.tsx`.
+
+```
+├── app
+  └── dashboard/[organization]
+    └── tasks
+      └── page.tsx
+
+      └── [task]
+        └── page.tsx
+```
+
+### Adding Functionalities to your application
+
+To add new functionalities to your application (in our case, tasks management), usually, you'd need the following things:
+
+1. **Data Model**: first, we want to define the data model of the feature you want to add
+2. **Supabase Queries/Mutations**: once we're happy with the data model, we can create our Supabase DB queries/mutations
+3. **Build Feature components**: then we can build the components of the feature (forms, lists, etc.)
+4. **Add feature components into the pages**: finally, we add the components to the pages
+
+### Adding page links to the Navigation Menu
+
+#### Updating the Top header Navigation
+
+To update the navigation menu, we need to update the `NAVIGATION_CONFIG` object in `src/navigation-config.tsx`. This object contains the links to the pages that are displayed in the top header menu.
+
+1. The `label` is the text that will be displayed in the menu - it's a translation key that you can find in `locales/[lang]/common.json`
+2. The `path` is the path to the page
+
+```ts
+const NAVIGATION_CONFIG = (organization: string) => ({
+  items: [
+    {
+      label: 'common:dashboardTabLabel',
+      path: getPath(organization, ''),
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+      end: true,
+    },
+    {
+      label: 'common:tasksTabLabel',
+      path: getPath(organization, 'tasks'),
+      Icon: ({ className }: { className: string }) => {
+        return <RectangleStackIcon className={className} />;
+      },
+    },
+    {
+      label: 'common:settingsTabLabel',
+      path: getPath(organization, 'settings'),
+      Icon: ({ className }: { className: string }) => {
+        return <Cog8ToothIcon className={className} />;
+      },
+    },
+  ],
+});
+
+function getPath(organizationId: string, path: string) {
+  const appPrefix = configuration.paths.appPrefix;
+
+  return [appPrefix, organizationId, path].filter(Boolean).join('/');
+}
+```
+
+To add a new link to the header menu, follow the same convention:
+
+1. Add a new item to the `items` array
+2. Add the `label` and `path` properties
+3. Make sure the `label` is a translation key that you can find in `locales/[lang]/common.json`
+4. Add the `Icon` property if you want to display an icon next to the label
+5. Make sure the `path` is correct
+
+The result will be similar to the images below:
+
+<Image src="/assets/images/posts/sidebar-layout-link.webp" width="1280" height="984" />
+
+---
+
+In the next sections we will go into more detail about how to use and configure Application Pages.

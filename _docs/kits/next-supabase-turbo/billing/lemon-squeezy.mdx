@@ -1,0 +1,67 @@
+---
+label: "Lemon Squeezy"
+title: "Configuring Lemon Squeezy Billing"
+position: 3
+description: "Lemon Squeezy is a payment processor that allows you to charge your users for your SaaS product. It is a Merchant of Record, which means they handle all the billing and compliance for you."
+---
+
+For using Lemon Squeezy, we need to first set it as the default billing provider:
+
+```bash
+NEXT_PUBLIC_BILLING_PROVIDER=lemon-squeezy
+```
+
+Also, we need to switch the DB config to use Lemon Squeezy
+
+```sql
+update config set billing_provider = 'lemon-squeezy';
+```
+
+Then, you'll need to set the following environment variables:
+
+```bash
+LEMON_SQUEEZY_SECRET_KEY=
+LEMON_SQUEEZY_SIGNING_SECRET=
+```
+
+I am aware you know this, but never add these variables to the `.env` file. Instead, add them to the environment variables of your CI/CD system.
+
+To test locally, you can add them to the `.env.local` file. This file is not committed to Git, therefore it is safe to store sensitive information in it.
+
+### Schema Definition
+
+Makerkit's billing configuration allows adding multiple line items into a single subscription: for example, you can mix flat fees, metered usage, and per-seat billing.
+
+Lemon Squeezy **does not support multiple line items** like Stripe. The billing schema will fail validation if you do so, and you will need to adjust it.
+
+However, with Lemon Squeezy, you can adjust various fields to fit your needs, albeit with very limited flexibility.
+
+#### Metered Usage
+
+Metered Usage can only be applied to the entire subscription, not to individual line items. For example, if you have a plan that charges $1 per 1000 requests, you can set the `tiers` property to charge $1 per 1000 requests.
+
+However, you cannot have a plan that charges $1 per 1000 requests for one line item and $2 per 1000 requests for another line item. Or using a flat fee for one line item and metered usage for another.
+
+#### Setup Fee + Metered Usage
+
+Lemon Squeezy has support for the property `setupFee`: this property allows you to create a metered usage plan with a setup fee. That is, assuming you have a plan that charges a flat fee of $10 and then $1 per 1000 requests, you can set the `setupFee` to 10 and then set up the `tiers` to charge $1 per 1000 requests.
+
+NB: the setup fee is only charged once, when the subscription is created.
+
+### Testing locally
+
+To receive webhooks from Lemon Squeezy, you need a proxy. You can create one for free with `ngrok` (or others). Once set up, create a webhook in Lemon Squeezy pointing to `{proxy-url}/api/billing/webhook` where `{proxy-url}` is a valid URL pointing to your local machine.
+
+If your proxy is for example `https://myawesomeproxy.com` you will use `https://myawesomeproxy.com/api/billing/webhook` as the endpoint in Lemon Squeezy.
+
+### Production
+
+When going to production, you will set your exact application URL and scratch `{proxy-url}`. Don't forget, please.
+
+Please set the following webhook events in Lemon Squeezy:
+
+1. `order_created`
+2. `subscription_created`
+3. `subscription_updated`
+4. `subscription_expired`
+5. `subscription_payment_success`

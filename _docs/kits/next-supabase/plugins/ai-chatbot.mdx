@@ -1,0 +1,299 @@
+---
+title: "AI Chatbot Plugin for the Next.js Supabase Saas Starter Kit"
+label: "AI Chatbot"
+position: 2
+description: "This plugin adds an AI chatbot to your Next.js Supabase SaaS application."
+---
+
+This plugin adds an AI chatbot trained on your website content to your Next.js
+application built using the OpenAI API. It's a simple component that will be
+displayed on the bottom right of your website.
+
+This documentation is for the Next.js Supabase version. Please make sure you're looking at the right documentation.
+
+## Using the Plugin
+
+### Installation
+
+To install the plugin, you can use git subtrees from your original repository:
+
+```
+git subtree add --prefix plugins/chatbot git@github.com:makerkit/next-supabase-saas-kit-plugins.git chatbot --squash
+```
+
+After running this command, you will have the plugin in your repository at
+`plugins/chatbot`. Once pulled, you can apply any customization you need.
+
+#### Using the CLI
+
+If you're using the CLI, you can run the following command to install the plugin:
+
+```
+npx @makerkit/cli@latest plugins install
+```
+
+Follow the instructions to install the plugin.
+
+#### Add the plugin as a workspace in your package.json
+
+You can do so by adding the following to your `package.json` file:
+
+```json
+{
+  "workspaces": [
+    "plugins/chatbot"
+  ]
+}
+```
+
+Add it next to the other workspaces in your `package.json` file.
+
+#### If the installation fails
+
+Some users are not able to install using the GitHub SSH URL. If you're having issues with that:
+
+1. properly set up SSH access to GitHub with your SSH key
+2. use the HTTPS URL instead of the SSH URL
+
+To use the HTTPS URL, you can run the following command:
+
+```bash
+git subtree add --prefix plugins/chatbot https://github.com/makerkit/next-supabase-saas-kit-plugins chatbot --squash
+```
+
+#### Add the paths alias to the TypeScript configuration
+
+To make sure that the TypeScript compiler can find the plugin, you will need
+to add the following paths alias to your `tsconfig.json` file, in addition
+to the other paths aliases that you may have:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "~/plugins/*": [
+        "./plugins/*"
+      ]
+    }
+  }
+}
+```
+
+### Installing dependencies
+
+To install the dependencies, you can run the following command:
+
+```
+npm i
+```
+
+NPM will install the dependencies in the `plugins/chatbot` folder as an NPM workspace.
+
+### Configuring the database migration
+
+This plugin needs to store the documents that the AI will be trained on as
+vectors in the Supabase database. As such, we need to add a migration to the
+database.
+
+The migration SQL file is available at `plugins/chatbot/migration.sql`. You
+can generate a new mutation using the following command:
+
+```
+supabase migration new chatbot
+```
+
+Make sure you're happy with the default table names before proceeding so
+that they don't conflict with your existing tables.
+
+Now paste the content of the `plugins/chatbot/migration.sql` file into the
+new migration file that was created.
+
+When going to production, you will need to run the migration using the
+Supabase CLI:
+
+```
+supabase db push
+```
+
+### Importing the Plugin
+
+You can import the `Chatbot` component from the plugin in your `app/layout.tsx`
+file if you want it available on all pages:
+
+```tsx
+import dynamic from 'next/dynamic';
+
+const ChatBot = dynamic(() => import('~/plugins/chatbot/components/ChatBot'));
+
+export default function RootLayout() {
+  return (
+    <>
+      <ChatBot />
+      {/* ... */}
+    </>
+  );
+}
+```
+
+Alternatively, you can import the `Chatbot` component in the layout of the page
+where you want it to appear. If you only want it available in the website
+pages, then you will import it in the `app/(site)/layout.tsx` layout.
+
+#### Initial Prompts
+
+You can pass an array of strings to the `defaultPrompts` prop of the
+component:
+
+```tsx
+const DEFAULT_CHAT_PROMPTS = [
+  `Can you tell me more about ${configuration.site.siteName}?`,
+  `What is the price of ${configuration.site.siteName}?`,
+  `How can I contact you?`,
+  `I want to share some feedback`,
+];
+
+// in the component
+
+<Chatbot defaultPrompts={DEFAULT_CHAT_PROMPTS} />
+```
+
+### Configuring the plugin
+
+To configure the plugin, add the following environment variables to your
+`.env.local` files:
+
+```
+OPENAI_API_KEY=
+NEXT_PUBLIC_CHATBOT_FALLBACK_URL=
+```
+
+- `OPENAI_API_KEY` - Your OpenAI API key. You can get one from your OpenAI
+dashboard.
+- `NEXT_PUBLIC_CHATBOT_FALLBACK_URL` - The URL of the fallback chatbot. This
+is the link the chatbot will display if it can't answer the question. You
+can use an email such as `mailto:youremail@yourstartup.com` or a link to
+the customer service page of your website.
+
+When going to production, you will need to add these environment variables
+from your provider dashboard.
+
+### Setting the API Route Handler
+
+#### CSRF exemption
+
+Open the file `src/app/middleware.ts` and add the route `/api/chat` to the
+CSRF exemption list:
+
+```ts
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|locales|assets|api/chat|api/stripe/webhook).*)',
+  ],
+};
+```
+
+#### Next.js Route
+
+Create a route at `app/api/chat/route.ts` with the following content:
+
+```ts
+import handleChatBotRequest from '~/plugins/chatbot/lib/server/route-handler';
+
+export const runtime = 'edge';
+
+export const POST = handleChatBotRequest;
+```
+
+### Indexing the content's embeddings
+
+By default, the AI will be trained on the content of your website available
+within your documentation pages at `/docs`.
+
+In addition, you can provide a list of questions and answers.
+
+To do so, add MDX files at `plugins/chatbot/questions/<filename>.mdx` file
+and add content with the following format:
+
+```mdx
+---
+question: "<question>"
+---
+
+<answer>
+```
+
+For example, you can create a file at
+`plugins/chatbot/questions/refund-policy.mdx`:
+
+```mdx
+---
+question: "What is your refund policy?"
+---
+
+We offer a 30-day money-back guarantee. If you're not happy with our product,
+we will refund you.
+```
+
+To generate the embeddings, you can run the following command:
+
+```
+npx tsx plugins/chatbot/cli.ts generate
+```
+
+Follow the instructions to generate the embeddings.
+
+If you are generating the embeddings for your production environment, you
+will need to provide the Supabase credentials in the `.env.production` file.
+
+### Captcha Protection (optional) (WIP)
+
+To protect your chatbot from bots (ha ha!), you can add a captcha challenge
+using [Cloudflare's Turnstile](https://developers.cloudflare.com/turnstile/)
+service.
+
+To do so, you will need to add the following environment variables to your
+environment files:
+
+```
+NEXT_PUBLIC_CHATBOT_TURNSTILE_SITE_KEY=
+```
+
+[You can get the site key from your Turnstile dashboard](https://developers.
+cloudflare.com/turnstile/get-started/).
+
+On the server side, you will need to add the following environment
+variables: `CHATBOT_TURNSTILE_SECRET_KEY`.
+
+You can also get the secret key from your Turnstile dashboard. Since this is
+a secret key - avoid adding it to your repository. Please use the
+environment variables of your provider to add it to your production environment.
+
+### De-duplicating indexing
+
+To avoid indexing the same content multiple times, the CLI generates a file
+named `plugins/chatbot/indexed-files.json` that contains a list of all the
+pages that have been indexed and the SHA256 hash of their content.
+
+If the content of the file changes, the CLI will re-index the pages.
+
+### Keeping the plugin up to date
+
+To keep the plugin up to date, you can use git subtrees again:
+
+```
+git subtree pull --prefix plugins/chatbot git@github.com:makerkit/next-supabase-saas-kit-plugins.git chatbot --squash
+```
+
+## Best Practices
+
+As you may know - the AI is only as good as the data it's trained on. As
+such, make sure to provide as much content as possible to the AI. I don't
+mean dozens of pages - but hundreds. Seriously, the more content you provide
+- the more useful the AI will be. Without context, hallucinations are bound
+to happen - and you don't want that.
+
+### Provide a fallback email
+
+If the AI can't answer the question, it will display a fallback URL. Make
+sure to provide a fallback URL that will allow your users to contact you in
+case the AI can't answer their question.

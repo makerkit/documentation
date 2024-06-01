@@ -1,0 +1,52 @@
+---
+title: "The Makerkit SDK - an easy API for your Makerkit projects"
+label: The Makerkit SDK
+position: 0
+description: "The Makerkit SDK is a simple API for your Makerkit projects. It allows you to easily interact with the Makerkit core entities"
+---
+
+The Makerkit SDK is a simple API for your Makerkit projects. It allows you to easily interact with the Makerkit core entities, such as: Users, Organizations, Subscriptions and Memberships.
+
+As you build your application, you will need to interact with the core entities. The SDK provides a simple way to do that.
+
+<Alert>
+  <Alert.Heading>This is a Preview</Alert.Heading>
+
+  The Makerkit SDK is still unreleased. It is currently in preview and is subject to change. We are working hard to make
+  it available as soon as possible.
+</Alert>
+
+## Usage
+
+Initializing the SDK is simple. You will need to provide any of the Supabase Server clients - depending on where you are using the SDK (route, server component or server action).
+
+### Loaders/Actions
+
+In the example below, we initialize the SDK in a Server Action
+
+```tsx
+import { ActionFunctionArgs } from '@remix-run/node';
+import getSdk from '~/lib/sdk';
+import getSupabaseServerClient from '~/core/supabase/server-client';
+
+export async function action(args: ActionFunctionArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const sdk = getSdk(client);
+
+  // ...
+}
+```
+
+### Client Side
+
+You may also initialize the SDK on the client side - but **bear in mind some API are not going to work in non-server environments**. This is useful if you need to interact with the core entities on the client side.
+
+```tsx
+import useSupabase from '~/core/supabase/use-supabase';
+
+export function useSdk() {
+  const client = useSupabase();
+
+  return getSdk(client);
+}
+```

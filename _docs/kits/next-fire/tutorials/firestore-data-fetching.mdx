@@ -1,0 +1,185 @@
+---
+title: "Firestore: Data Fetching"
+label: "Firestore: Data Fetching"
+position: 9
+description: "Learn how to fetch data from Firestore in your React applications."
+---
+
+Before writing the Components, we want to tackle the task of fetching data from Firestore.
+
+This involves a couple of steps:
+
+1. We need to define, on paper, what the data model of the Firestore collections looks like
+2. We need to update the Firestore rules so we can read and write data to the collection
+3. We need to write the hooks to fetch data from Firebase Firestore
+
+#### Firestore Data Model
+
+First, let's write the data model. But... what does it mean?
+
+When thinking about the Firestore data model, we need to answer the following questions:
+
+1. Where does the data live?
+2. How is the data structured?
+3. How do we protect the data with security rules?
+
+Ok, let's reply to these questions.
+
+##### Where does the data live?
+
+We can place `tasks` as a Firestore top-level collection. Because tasks belong to an organization, we can ensure that only users of that organization can read and write those tasks by adding a foreign key to each `task` named `organizationId`.
+
+##### How is the data structured?
+
+We can define a `Task` model at `src/lib/tasks/types/task.ts`:
+
+```tsx title="src/lib/tasks/types/task.ts"
+export interface Task {
+  name: string;
+  description: string;
+  organizationId: string;
+  dueDate: string;
+  done: boolean;
+}
+```
+
+##### How do we protect the data with security rules?
+
+To write our Security Rules, we will update the file `firestore.rules`:
+
+```
+match /tasks/{taskId} {
+  allow create: if userIsMemberByOrganizationId(incomingData().organizationId);
+  allow read, update, delete: if userIsMemberByOrganizationId(existingData().organizationId);
+}
+```
+
+The function `userIsMemberByOrganizationId` is pre-defined in the Makerkit's template: basically, it will verify that the current user is a member of the organization with ID `organizationId`.
+
+If you use VSCode, take a look at the extension `toba.vsfire`.
+
+### Data Fetching: React Hooks to read data from Firestore
+
+Now that our security rules are updated, we can write Hooks to read data from Firestore.
+
+I recommend writing your entities' hooks at `src/lib/tasks/hooks`. Let's start with a `React Hook` to fetch all the organization's tasks:
+
+```tsx title="src/lib/tasks/hooks/use-fetch-tasks.ts"
+import { useFirestore, useFirestoreCollectionData } from 'reactfire';
+
+import {
+  collection,
+  CollectionReference,
+  query,
+  where,
+} from 'firebase/firestore';
+
+import { Task } from '~/lib/tasks/types/task';
+
+function useFetchTasks(organizationId: string) {
+  const firestore = useFirestore();
+  const tasksCollection = 'tasks';
+
+  const collectionRef = collection(
+    firestore,
+    tasksCollection
+  ) as CollectionReference<WithId<Task>>;
+
+  const path = `organizationId`;
+  const operator = '==';
+  const constraint = where(path, operator, organizationId);
+  const organizationsQuery = query(collectionRef, constraint);
+
+  return useFirestoreCollectionData(organizationsQuery, {
+    idField: 'id',
+  });
+}
+
+export default useFetchTasks;
+```
+
+Let's take a deep breath and slowly go through the above hook.
+
+1. The hook above uses `useFirestoreCollectionData`, a `React hook` from the library `reactfire` to fetch real-time collection data from Firestore
+2. We build a query that checks that the `organizationId` parameter matches the `organizationId` property of each task
+3. Finally, we add `{ idField: 'id' }`. This special parameter decorates the data with the ID of the document. Thanks to the interface `WithId`, we add an `id` property to the `Task` interface returned from Firestore
+
+### Displaying Firestore data in Components
+
+Now that we can fetch our data using the hook `useFetchTasks,` we can build a component that lists each `Task.`
+
+To do so, let's create a new component named `TasksListContainer`:
+
+```tsx title="components/tasks/TasksContainer.tsx"
+import PageLoadingIndicator from '~/core/ui/PageLoadingIndicator';
+import Alert from '~/core/ui/Alert';
+import Heading from '~/core/ui/Heading';
+import Button from '~/core/ui/Button';
+
+import useFetchTasks from '~/lib/tasks/hooks/use-fetch-tasks';
+import TasksList from '~/components/tasks/TasksList';
+
+const TasksContainer: React.FC<{
+  organizationId: string;
+}> = ({ organizationId }) => {
+  const { status, data: tasks } = useFetchTasks(organizationId);
+
+  if (status === `loading`) {
+    return <PageLoadingIndicator>Loading Tasks...</PageLoadingIndicator>;
+  }
+
+  if (status === `error`) {
+    return (
+      <Alert type={'error'}>
+        Sorry, we encountered an error while fetching your tasks.
+      </Alert>
+    );
+  }
+
+  if (tasks.length === 0) {
+    return <TasksEmptyState />;
+  }
+
+  return (
+    <div className={'flex flex-col space-y-4'}>
+      <div className={'flex justify-end'}>
+        <CreateTaskButton>New Task</CreateTaskButton>
+      </div>
+
+      <TasksList tasks={tasks} />
+    </div>
+  );
+};
+
+function TasksEmptyState() {
+  return (
+    <div
+      className={
+        'flex flex-col items-center justify-center space-y-4' + ' h-full p-24'
+      }
+    >
+      <div>
+        <Heading type={5}>No tasks found</Heading>
+      </div>
+
+      <CreateTaskButton>Create your first Task</CreateTaskButton>
+    </div>
+  );
+}
+
+function CreateTaskButton(props: React.PropsWithChildren) {
+  return <Button href={'/tasks/new'}>{props.children}</Button>;
+}
+
+export default TasksContainer;
+```
+
+The data above will automatically update when the `tasks` collection changes!
+
+<Alert type="warn">
+  <Alert.Heading>
+    Hold on, we're not done yet!
+  </Alert.Heading>
+
+  Since the component "TaskListItem" is pretty complex and requires more files, we will define it separately. You will find it below after we explain the mutation hooks that the component will use.
+</Alert>
