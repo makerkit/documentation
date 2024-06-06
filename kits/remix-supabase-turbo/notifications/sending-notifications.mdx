@@ -23,7 +23,7 @@ async function sendNotificationAfterSignup(
   const client = getSupabaseServerActionClient({ admin: true });
   const api = createNotificationsApi(client);
 
-  await api.sendNotification({
+  await api.createNotification({
     account_id: accountId,
     body: 'You have successfully signed up!',
   });
@@ -52,7 +52,7 @@ async function sendNotificationAfterSignup(
   const client = getSupabaseServerActionClient({ admin: true });
   const api = createNotificationsApi(client);
 
-  await api.sendNotification({
+  await api.createNotification({
     account_id: accountId,
     body: 'You have successfully signed up!',
     channel: 'email',
@@ -84,7 +84,7 @@ async function sendNotificationAfterSignup(
   const client = getSupabaseServerActionClient({ admin: true });
   const api = createNotificationsApi(client);
 
-  await api.sendNotification({
+  await api.createNotification({
     account_id: accountId,
     body: 'You have successfully signed up!',
     type: 'info', // this is the default type, no need to specify it
@@ -97,7 +97,7 @@ async function sendNotificationAfterSignup(
 To send a warning notification, you can use the `warning` type.
 
 ```tsx
-api.sendNotification({
+api.createNotification({
   account_id: accountId,
   body: 'Your credit card is about to expire!',
   type: 'warning',
@@ -109,7 +109,7 @@ api.sendNotification({
 To send an error notification, you can use the `error` type.
 
 ```tsx
-api.sendNotification({
+api.createNotification({
   account_id: accountId,
   body: 'There was an error processing your payment.',
   type: 'error',
@@ -121,7 +121,7 @@ api.sendNotification({
 You can also include a link in the notification using the `link` field. This will create a clickable link in the notification.
 
 ```tsx
-api.sendNotification({
+api.createNotification({
   account_id: accountId,
   body: 'You have created a task!',
   link: '/tasks/123',

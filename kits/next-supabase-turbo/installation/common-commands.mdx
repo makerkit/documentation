@@ -27,6 +27,26 @@ pnpm run dev
 
 This command will start the development server for the web application.
 
+## Running the Supabase CLI commands
+
+Supabase is installed in the `apps/web` folder. To run commands with the Supabase CLI, you can use the command:
+
+```
+pnpm run --filter web supabase <command>
+```
+
+For example, if the documentation in Supabase recommends a command such as:
+
+```
+supabase db link
+```
+
+You will use:
+
+```
+pnpm run --filter web supabase db link
+```
+
 ## Starting Supabase
 
 To start Supabase, run the following command:

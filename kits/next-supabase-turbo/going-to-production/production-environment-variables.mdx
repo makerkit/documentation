@@ -1,0 +1,52 @@
+---
+title: "Generating and validating the environment variables needed for deployment"
+label: "Environment Variables"
+description: "Guide to generate and validate the environment variables needed for deployment"
+position: 1
+---
+
+Makerkit has a lot of environment variables that need to be set for the project to work correctly. The environment variables are validated using Zod, so if you miss any, the project will not build correctly - at least in most cases.
+
+While this can be annoying, you will agree with me that it's better to have a project that doesn't build than a project that doesn't work correctly.
+
+## Before you start
+
+Before you get started, make sure you have the following:
+
+1. A Stripe/Lemon Squeezy account with the API keys and Webhook secret
+2. A Supabase account with the API keys
+3. A Mailer account with the API keys
+
+If you don't have these, you can sign up for them. The project will not work correctly without these (well, you can fake them and deploy anyway, but it won't work correctly).
+
+Why is Makerkit requiring these variables? I just want to deploy the project! Well, Makerkit tries quite hard to validate the project to make sure it works correctly. The environment variables are crucial for the project to work correctly. If you don't have them, the project will not work correctly. If you don't have the required services, maybe it's just not yet time to deploy the project.
+
+## Generating the environment variables
+
+Makerkit provides a script that will guide you through the process of generating the environment variables. To generate the environment variables, run the following command:
+
+```bash
+turbo gen env
+```
+
+This command will guide you through the process of generating the environment variables. It will ask you for the values of the environment variables and generate a `.env.local` at `turbo/generators/templates/env/.env.local`.
+
+This file is to never be committed to the repository. It is a template file that you can use to set the environment variables in your deployment environment.
+
+For example, if you're using Vercel, you can copy/paste the contents of the `.env.local` file into the Vercel environment variables. Depending on your deployment environment, you may need to set the environment variables in a different way - but the `.env.local` file will guide you on what to set.
+
+## Validating the environment variables
+
+After generating the environment variables, you can validate them by running the following command:
+
+```bash
+turbo gen validate-env
+```
+
+By default, this command will validate the environment variables in the `.env.local` file `turbo/generators/templates/env`.
+
+The generator (at this time) validates each single variable, not the schema as a whole. It is assumed the previous step has generated the correct variables and the validation is just to ensure they are set. In the future, I plan on making the validation even smarter.
+
+## Validate, Validate, Validate
+
+The environment variables are crucial for the project to work correctly. If you miss any, the project will not work correctly. So please make sure to validate the environment variables before deploying the project.
