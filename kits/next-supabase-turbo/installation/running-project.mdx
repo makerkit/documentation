@@ -4,55 +4,54 @@ label: "Running the Project"
 position: 4
 description: "Learn how to run the Next.js Supabase Turbo project on your local machine."
 ---
+To run the project, follow these steps to start the development server, Supabase, and Stripe (optional for billing system testing).
 
-To run the project - there are some commands you need to run.
+## 1. Start the Development Server
 
-1. Start the development server (web application)
-2. Start Supabase (ensure Docker is running)
-3. Start Stripe (optional, if you want to test the billing system)
-
-## 1. Start the development server
+To start the web application development server, run:
 
 ```bash
 # Start the development server
 pnpm dev
 ```
 
-This command will run the web application.
+This command launches the web application.
 
-Please refer to `apps/web/README.md` for more information about the web application.
+For more details about the web application, please refer to `apps/web/README.md`.
 
-To get started right away, use the credentials below:
+### Quick Start Credentials
+
+Use the following credentials to get started right away:
 
 - **Email**: `test@makerkit.dev`
 - **Password**: `testingpassword`
 
-To confirm email addresses, please visit [Inbucket](http://localhost:54324/status): Supabase uses Inbucket to capture emails sent during the authentication process.
+To confirm email addresses, visit [Inbucket](http://localhost:54324/status). Supabase uses Inbucket to capture emails sent during the authentication process.
 
 ## 2. Start Supabase
 
-Run the following command to start Supabase (or use your IDE to run the command in the package.json)
+Ensure Docker is running, then start Supabase with:
 
 ```bash
 pnpm run supabase:web:start
 ```
 
-This command will start the Supabase web server.
+This command initiates the Supabase web server.
 
-## 3. Start Stripe
+## 3. Start Stripe (Optional)
 
-If you want to test the billing system, you can start Stripe by running the following command:
+To test the billing system, start Stripe by running:
 
 ```bash
 pnpm run stripe:listen
 ```
 
-This will route webhooks to your local machine.
+This command routes webhooks to your local machine.
 
 You now have the Next.js Supabase Turbo project running on your local machine. 🚀
 
 ## Deploying to Production
 
-When you are ready to deploy the project to production, please follow the [checklist](checklist) to ensure everything is set up correctly.
+When you're ready to deploy the project to production, follow the [checklist](checklist) to ensure everything is set up correctly.
 
-NB: using Supabase's hosted instance is akin to deploying to production - which means that you'd still need to follow the checklist to ensure everything is set up correctly.
+**Note:** Using Supabase's hosted instance is similar to deploying to production. Therefore, you still need to follow the checklist to ensure everything is properly configured.
