@@ -5,21 +5,23 @@ description: "Makerkit uses i18next to translate your project into multiple lang
 position: 0
 ---
 
-Makerkit uses `i18next` for translations, although we abstract if behind the package `@kit/i18n` - so that if we ever need to change the translation library, we can do so without affecting your code.
+Makerkit uses the library `i18next` for translations, but it's abstracted behind the `@kit/i18n` package. This abstraction ensures that any future changes to the translation library won't impact your code.
 
-Makerkit's translations system works everywhere:
+The translation system in Makerkit is versatile and can be used in:
 
-1. Server components
+1. Server components (RSC)
 2. Client components
 3. Server-side rendering
 
-## How to use translations
+## Utilizing Translations in your Next.js Supabase Project
 
-### Bootstrapping i18n in Server Components
+The guide below will show you how to use translations in your Next.js Supabase project in all the scenarios mentioned above.
 
-When you create a new page, make sure to wrap it around the `withI18n` function to bootstrap the translations before rendering the server component.
+### Initializing i18n in Server Components
 
-Because server components are rendered in parallel, there is no telling which one will be rendered first. This is why we need to bootstrap the translations before rendering the server component in each page/layout.
+When creating a new page, ensure to wrap it with the `withI18n` function. This function initializes the translations before rendering the server component.
+
+Given that server components are rendered in parallel, it's uncertain which one will render first. Therefore, it's crucial to initialize the translations before rendering the server component on each page/layout.
 
 ```tsx
 import { withI18n } from '~/lib/i18n/with-i18n';
@@ -31,9 +33,9 @@ const Page = () => {
 export default withI18n(Page);
 ```
 
-### Using translations in Server Components
+### Implementing Translations in Server Components
 
-Once you have bootstrapped the translations, you can use the `Trans` component to translate strings in your server components.
+After initializing the translations, you can use the `Trans` component to translate strings in your server components.
 
 ```tsx
 import { Trans } from '@kit/ui';
@@ -49,18 +51,22 @@ const Page = () => {
 export default withI18n(Page);
 ```
 
-It is very important you load the `Trans` component from `@kit/ui` and not from `react-i18next` directly.
+Ensure to import the `Trans` component from `@kit/ui` and not directly from `react-i18next`.
 
-### Using the useTranslation hook
+### Using the useTranslation Hook
 
-You can also use the `useTranslation` hook to translate strings in components that are not in the render path.
+The `useTranslation` hook is another way to translate strings in components that are not in the render path.
 
 ```tsx
 import { useTranslation } from 'react-i18next';
 
 const MyComponent = () => {
   const { t } = useTranslation();
-
+  
   return <div>{t('auth:signIn')}</div>;
 };
 ```
+
+### Conclusion
+
+By following these steps, you can easily add translations to your Next.js Supabase project. This approach ensures that your application is accessible to a global audience, providing a better user experience for all users.

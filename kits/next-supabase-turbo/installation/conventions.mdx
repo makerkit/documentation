@@ -40,3 +40,4 @@ Files located in `server` folders are intended for server-side code only. They s
 
 - This convention helps clarify where the code is meant to run, which is particularly important in Next.js where the distinction can be blurry.
 - For example, server-related code for a part of the app can be found in the `_lib/server` folder.
+- Include the `server-only` package at the top of the file to ensure it is not accidentally imported in client-side code.

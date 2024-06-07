@@ -5,25 +5,27 @@ position: 9
 description: "Guidelines for migrating from Makerkit v1 to Next.js SaaS Boilerplate."
 ---
 
-This guide will help you migrate from Makerkit v1 to the Next.js SaaS Boilerplate. The Next.js SaaS Boilerplate is a complete rewrite of Makerkit v1, and there are significant changes between the two versions. This guide will help you understand the changes and how to migrate your project to the new v2.
+🚀 Welcome to your journey from Makerkit v1 to the Next.js SaaS Boilerplate! 
 
-Overall, this is what you will need to do:
+This guide is designed to help you understand the changes between the two versions and navigate your project migration to the new v2. Whether you're a seasoned developer or just starting out, we've got you covered!
 
-1. **Bootstrap a new project**: Create a new project using the Next.js SaaS Boilerplate v2
-2. **Update Schema**: Update the Postgres schema foreign key references, and add your existing tables
-3. **Move files from older app**: Move your files to the new app structure
-4. **Update imports to existing files**: Update imports to the new file structure
-5. **Update configuration**: Update the configuration files to match the new schemas
+Here's a roadmap of the steps you'll take:
+
+1. **Bootstrap a new project**: Kickstart a new project using the Next.js SaaS Boilerplate v2 🎉
+2. **Update Schema**: Tweak the Postgres schema foreign key references, and integrate your existing tables 🧩
+3. **Move files from older app**: Transport your files to the new app structure 📦
+4. **Update imports to existing files**: Refresh imports to align with the new file structure 🔄
+5. **Update configuration**: Modify the configuration files to match the new schemas ⚙️
 
 ## 1. Bootstrap a new project
 
-The Next.js SaaS Boilerplate is a complete rewrite of Makerkit v1. You will need to create a new project using the new boilerplate. You can follow the [installation guide](clone-repository) to create a new project.
+The Next.js SaaS Boilerplate is a fresh take on Makerkit v1. You'll need to create a new project using this innovative boilerplate. Follow the [installation guide](clone-repository) to get your new project up and running in no time!
 
 ## 2. Update Schema
 
-The schema in the Next.js SaaS Boilerplate has changed significantly from Makerkit v1. You will need to update your Postgres schema to match the new schema.
+The schema in the Next.js SaaS Boilerplate has evolved significantly from Makerkit v1. You'll need to update your Postgres schema to match the new one.
 
-The main difference is that before, you'd have a foreign key set to the organization ID:
+Previously, you'd have a foreign key set to the organization ID:
 
 ```sql
 organization_id bigint not null references organizations(id) on delete cascade,
@@ -35,22 +37,18 @@ Now, you'll have a foreign key set to the account ID as a UUID:
 account_id uuid not null references public.accounts(id) on delete cascade,
 ```
 
-In fact, an account can be both a user or a organization. While in v1 you referenced the organization ID, in v2 you'll reference the account ID. It's the same if you were using the Lite kit and referencing a user ID: now you'll reference the account ID related to the user ID.
+In v2, an account can be both a user or an organization. So, instead of referencing the organization ID as in v1, you'll now reference the account ID. 
 
 ## 3. Move files from older app
 
-In v2 you can choose to add these files to either the "user scope" (`/home`) or the "account scope" (`/home/[account]`).
-
-If you choose to add the files to the "user scope", you can add them to the `/home` directory. If you choose to add the files to the "account scope", you can add them to the `/home/[account]` directory.
+In v2, you have the flexibility to add these files to either the "user scope" (`/home`) or the "account scope" (`/home/[account]`). Choose the one that best suits your project needs.
 
 ## 4. Update imports to existing files
 
-You will need to update the imports to your existing files to match the new file structure.
-
-This is the case for all the components and utilities that you imported from Makerkit.
-
-For example, if you were importing a button from `~/core/ui/Button`, you will now import this from `@kit/ui/button` - and so on.
+You'll need to update the imports to your existing files to match the new file structure. This applies to all the components and utilities that you imported from Makerkit. For instance, a button previously imported from `~/core/ui/Button`, will now be imported from `@kit/ui/button`.
 
 ## 5. Update configuration
 
-You will need to update the configuration files to match the new schemas. The configuration is now split across various files at `apps/web/config`. Most notably, you will need to update the billing schema, which is now much more versatile (and a bit more complex).
+Lastly, you'll need to update the configuration files to match the new schemas. The configuration is now split across various files at `apps/web/config`. Pay special attention to the billing schema, which is now more versatile (and a bit more complex).
+
+Ready to get started? Let's dive in! 🏊‍♀️
