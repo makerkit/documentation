@@ -10,6 +10,7 @@ To check if users are authed, or to retrieve information about the currently sig
 ```tsx
 import { redirect } from 'next/navigation';
 import { requireUser } from '@kit/supabase/require-user';
+
 import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
 
 async function ServerComponent() {

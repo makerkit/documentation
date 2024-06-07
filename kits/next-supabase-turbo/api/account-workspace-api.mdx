@@ -11,6 +11,8 @@ The data in this layout has most of the information you need around the currentl
 
 To access the data, you can use the `loadTeamWorkspace` loader function. This function is cached per-request, so you can call it multiple times without worrying about performance.
 
+While multiple calls to this function are deduped within a single request, bear in mind that this request will be called when navigating to the page. If you only require a small subset of data, it would be best to make more granular requests.
+
 ```tsx
 import { loadTeamWorkspace } from '~/home/[account]/_lib/server/team-account-workspace.loader';
 

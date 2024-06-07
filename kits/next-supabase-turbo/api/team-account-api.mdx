@@ -9,7 +9,9 @@ You can use the Team Account API for retrieving information about the team accou
 
 ## Usage
 
-To use the Team Account API, you need to import the `createTeamAccountsApi` function from `@kit/team-account/api`. We need to pass a valid `SupabaseClient` to the function - so we can interact with the database from the server.
+To use the Team Account API, you need to import the `createTeamAccountsApi` function from `@kit/team-account/api`.
+
+We need to pass a valid `SupabaseClient` to the function - so we can interact with the database from the server.
 
 ```tsx
 import { createTeamAccountsApi } from '@kit/team-accounts/api';
@@ -34,7 +36,7 @@ import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-clie
 export async function myServerAction() {
   const client = getSupabaseServerActionClient();
   const api = createTeamAccountsApi(client);
-  
+
   // use api
 }
 ```
