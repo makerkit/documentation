@@ -10,7 +10,7 @@ To use [Baselime](https://baselime.io) to capture exceptions and performance met
 
 ```bash
 NEXT_PUBLIC_BASELIME_KEY=your_key
-ENABLE_MONITORING_INSTRUMENTATION=baselime
+NEXT_PUBLIC_MONITORING_PROVIDER=baselime
 ```
 
 You can find your Baselime key in the Baselime dashboard.
@@ -19,4 +19,5 @@ If you also want to enable OpenTelemetry, you can set the following variables:
 
 ```bash
 ENABLE_MONITORING_INSTRUMENTATION=true
+INSTRUMENTATION_SERVICE_NAME=your_service_name
 ```

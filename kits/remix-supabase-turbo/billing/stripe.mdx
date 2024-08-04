@@ -21,15 +21,34 @@ During development, you can place them in `.env.local` as it's not committed to 
 
 ## Stripe CLI
 
-To run the Stripe CLI - which allows you to listen to Stripe events straight to your own localhost - you can use the following command:
+The Stripe CLI which allows you to listen to Stripe events straight to your own localhost. You can install and use the CLI using a variety of methods, but we recommend using Docker - since you already have it installed.
+
+First - login to your Stripe account using the project you want to run:
+
+```bash
+docker run --rm -it --name=stripe -v ~/.config/stripe:/root/.config/stripe stripe/stripe-cli:latest login
+```
+
+Copy the webhook secret displayed in the terminal and set it as the `STRIPE_WEBHOOK_SECRET` environment variable in your `.env.local` file:
+
+```bash
+STRIPE_WEBHOOK_SECRET=*your_webhook_secret*
+```
+
+Now, you can listen to Stripe events running the following command:
 
 ```bash
 pnpm run stripe:listen
 ```
 
-**The first time you set it up, you are required to sign in**. This is a one-time process. Once you sign in, you can use the CLI to listen to Stripe events.
+**If you have not logged in - the first time you set it up, you are required to sign in**. This is a one-time process. Once you sign in, you can use the CLI to listen to Stripe events.
 
 **Please sign in and then re-run the command**. Now, you can listen to Stripe events.
+
+If you're not receiving events, please make sure that:
+
+1. the webhook secret is correct
+2. the account you signed in is the same as the one you're using in your app
 
 ## Configuring the Stripe Customer Portal
 

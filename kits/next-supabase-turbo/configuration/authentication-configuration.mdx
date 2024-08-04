@@ -21,6 +21,10 @@ const authConfig = AuthConfigSchema.parse({
   // Copy the value from the Supabase Dashboard.
   captchaTokenSiteKey: process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY,
 
+  // whether to display the terms checkbox during sign-up
+  displayTermsCheckbox:
+    process.env.NEXT_PUBLIC_DISPLAY_TERMS_AND_CONDITIONS_CHECKBOX === 'true',
+
   // NB: Enable the providers below in the Supabase Console
   // in your production project
   providers: {
@@ -55,3 +59,28 @@ Third Party providers need to be configured, managed and enabled fully on the pr
 Please [read Supabase's documentation](https://supabase.com/docs/guides/auth/social-login) on how to set up third-party providers.
 
 For local development, also check out [Supabase's documentation on how to set up OAuth providers locally](https://supabase.com/docs/guides/cli/managing-config).
+
+## Password Requirements
+
+To set the password requirements, you can set the following environment variables:
+
+```bash
+NEXT_PUBLIC_PASSWORD_REQUIRE_UPPERCASE=true
+NEXT_PUBLIC_PASSWORD_REQUIRE_NUMBERS=true
+NEXT_PUBLIC_PASSWORD_REQUIRE_SPECIAL_CHARS=true
+```
+
+The above will enforce the following rules:
+1. At least one uppercase letter
+2. At least one number
+3. At least one special character
+
+## Displaying Terms and Conditions
+
+To display the terms and conditions checkbox during sign-up, set the following environment variable:
+
+```bash
+NEXT_PUBLIC_DISPLAY_TERMS_AND_CONDITIONS_CHECKBOX=true
+```
+
+This is off by default.

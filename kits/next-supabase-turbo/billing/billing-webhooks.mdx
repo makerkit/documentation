@@ -21,7 +21,6 @@ However, you can extend it using the callbacks provided by the `BillingService`:
 
 ```tsx
 await service.handleWebhookEvent(request, {
-  onInvoicePaid: async (data) => {},
   onPaymentFailed: async (sessionId) => {},
   onPaymentSucceeded: async (sessionId) => {},
   onCheckoutSessionCompleted: async (subscription, customerId) => {},
@@ -36,13 +35,8 @@ If the event is not in one of these methods, you can handle it in the `onEvent` 
 
 ```tsx
 await service.handleWebhookEvent(request, {
-  async onEvent(event: string, data: unknown) {
+  async onEvent(data: unknown) {
     logger.info(
-      {
-        ...ctx,
-        event,
-        data,
-      },
       `Received billing event`,
     );
 
@@ -57,8 +51,8 @@ For example, to handle the `invoice.payment_succeeded` event, you can use the `o
 
 ```tsx
 await service.handleWebhookEvent(request, {
-  async onEvent(event: string, data: unknown) {
-    if (event === 'invoice.payment_succeeded') {
+  async onEvent(data: unknown) {
+    if (data.type === 'invoice.payment_succeeded') {
       const invoice = data as Stripe.Invoice;
       // Your custom code here
     }

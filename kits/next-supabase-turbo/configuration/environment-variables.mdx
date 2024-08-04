@@ -211,3 +211,367 @@ CONTACT_EMAIL=
 ```
 
 This email will receive the submissions from the contact form.
+
+## List of Environment Variables for the Web App
+
+### NEXT_PUBLIC_SITE_URL
+
+The URL of the site. This is used for generating absolute URLs across the site (where needed). When going to production, this should be set to the production URL - including `https` as protocol (e.g., `https://example.com`). The configuration will validate that the URL is valid - so the build will fail if the URL is not valid.
+
+```
+NEXT_PUBLIC_SITE_URL=https://example.com
+```
+
+### NEXT_PUBLIC_PRODUCT_NAME
+
+The name of the product. This is used in various places across the site.
+
+```
+NEXT_PUBLIC_PRODUCT_NAME=Makerkit
+```
+
+### NEXT_PUBLIC_SITE_TITLE
+
+The title of the site. This is used in the `<title>` tag of the site.
+
+```
+NEXT_PUBLIC_SITE_TITLE=Makerkit - The easiest way to start your next project
+```
+
+### NEXT_PUBLIC_SITE_DESCRIPTION
+
+The description of the site. This is used in the `<meta name="description">` tag of the site.
+
+```
+NEXT_PUBLIC_SITE_DESCRIPTION=Makerkit is the easiest way to start your next project. It comes with everything you need to get started.
+```
+
+### NEXT_PUBLIC_DEFAULT_THEME_MODE
+
+The default theme mode of the site. This can be either `light` or `dark` or `system` (to follow the system theme).
+
+```
+NEXT_PUBLIC_DEFAULT_THEME_MODE=light
+```
+
+### NEXT_PUBLIC_DEFAULT_LOCALE
+
+The default locale of the site. This is used for the default language of the site.
+
+```
+NEXT_PUBLIC_DEFAULT_LOCALE=en
+```
+
+### NEXT_PUBLIC_AUTH_PASSWORD
+
+Use this variable to enable or disable password-based authentication. If you set this to `true`, users will be able to sign up and sign in using their email and password. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_AUTH_PASSWORD=true
+```
+
+### NEXT_PUBLIC_AUTH_MAGIC_LINK
+
+Use this variable to enable or disable magic link-based authentication. If you set this to `true`, users will be able to sign up and sign in using a magic link sent to their email. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_AUTH_MAGIC_LINK=true
+```
+
+### CONTACT_EMAIL
+
+The email address where the contact form submissions will be sent.
+
+```
+CONTACT_EMAIL=info@makerkit.dev
+```
+
+### NEXT_PUBLIC_ENABLE_THEME_TOGGLE
+
+Use this variable to enable or disable the theme toggle. If you set this to `true`, the theme toggle will be shown. If you set this to `false`, the theme toggle won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=true
+```
+
+### NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION
+
+Use this variable to enable or disable personal account deletion. If you set this to `true`, users will be able to delete their personal account. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION=true
+```
+
+### NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING
+
+Use this variable to enable or disable billing for personal accounts. If you set this to `true`, users will be able to add their billing information. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNT_DELETION
+
+Use this variable to enable or disable team accounts deletion. If you set this to `true`, users will be able to delete their team account. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNT_DELETION=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING
+
+Use this variable to enable or disable billing for team accounts. If you set this to `true`, users will be able to add their billing information. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS
+
+Use this variable to enable or disable team accounts. If you set this to `true`, users will be able to create team accounts. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING
+
+Use this variable to enable or disable billing for team accounts. If you set this to `true`, users will be able to add their billing information. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION
+
+Use this variable to enable or disable team accounts creation. If you set this to `true`, users will be able to create team accounts. If you set this to `false`, the form won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION=true
+```
+
+### NEXT_PUBLIC_ENABLE_NOTIFICATIONS
+
+Use this variable to enable or disable notifications.
+
+If you set this to `true`, users will be able to see the notifications dropdown. If you set this to `false`, the notifications dropdown won't be shown.
+
+```
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+```
+
+### NEXT_PUBLIC_REALTIME_NOTIFICATIONS
+
+Use this variable to enable or disable real-time notifications.
+
+If you set it to `true` we will use Supabase Realtime to show notifications in real-time. If you set it to `false`, notifications will be fetched lazily.
+
+This is preferable for billing reasons, as real-time notifications can be expensive.
+
+```
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=true
+```
+
+### NEXT_PUBLIC_ENABLE_VERSION_UPDATER
+
+Use this variable to enable or disable the version updater. If enabled, the version updater will check for new versions of the app and prompt the user to update.
+
+NB: if you use Vercel, this is redundant, as Vercel uses Skew Protection to automatically reload the page when a new version is deployed.
+
+```
+NEXT_PUBLIC_ENABLE_VERSION_UPDATER=true
+```
+
+This is disabled by default.
+
+### NEXT_PUBLIC_SUPABASE_URL
+
+The URL of the Supabase project.
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
+```
+
+### NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+The anonymous key of the Supabase project. You find this in your Supabase project settings.
+
+```
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### SUPABASE_SERVICE_ROLE_KEY
+
+The service role key of the Supabase project. You find this in your Supabase project settings.
+
+```
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### NEXT_PUBLIC_BILLING_PROVIDER
+
+The billing provider to use. This can be either `stripe` or `lemon-squeezy`.
+
+```
+NEXT_PUBLIC_BILLING_PROVIDER=stripe
+```
+
+### NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+If you are using Stripe as your billing provider, you need to set this variable to your Stripe publishable key.
+
+```
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-stripe-publishable-key
+```
+
+### STRIPE_SECRET_KEY
+
+If you are using Stripe as your billing provider, you need to set this variable to your Stripe secret key.
+
+```
+STRIPE_SECRET_KEY=your-stripe-secret-key
+```
+
+### STRIPE_WEBHOOK_SECRET
+
+If you are using Stripe as your billing provider, you need to set this variable to your Stripe webhook secret.
+
+```
+STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+```
+
+This variable is the "Signing Secret" from the Stripe webhook settings, after creating a webhook endpoint.
+
+### LEMON_SQUEEZY_SECRET_KEY
+
+If you are using Lemon Squeezy as your billing provider, you need to set this variable to your Lemon Squeezy secret key.
+
+```
+LEMON_SQUEEZY_SECRET_KEY=your-lemon-squeezy-secret-key
+```
+
+### LEMON_SQUEEZY_STORE_ID
+
+If you are using Lemon Squeezy as your billing provider, you need to set this variable to your Lemon Squeezy store ID.
+
+```
+LEMON_SQUEEZY_STORE_ID=your-lemon-squeezy-store-id
+```
+
+### LEMON_SQUEEZY_SIGNING_SECRET
+
+If you are using Lemon Squeezy as your billing provider, you need to set this variable to your Lemon Squeezy signing secret.
+
+```
+LEMON_SQUEEZY_SIGNING_SECRET=your-lemon-squeezy-signing-secret
+```
+
+### SUPABASE_DB_WEBHOOK_SECRET
+
+This is a secret key that you must generate and set in both the the environment variable and in the Supabase webhook headers when ccreating a webhook.
+
+This is used to verify that the webhook is coming from the correct source.
+
+Please use any random string for this. For example, make a strong password using a password manager.
+
+```
+SUPABASE_DB_WEBHOOK_SECRET=********
+```
+
+### CMS_CLIENT
+
+The CMS client to use. This can be either `wordpress` or `keystatic`.
+
+```
+CMS_CLIENT=keystatic
+```
+
+### WORDPRESS_API_URL
+
+If you are using WordPress as your CMS client, you need to set this variable to your WordPress API URL.
+
+```
+WORDPRESS_API_URL=https://your-wordpress-site.com/wp-json
+```
+
+### MAILER_PROVIDER
+
+The mailer provider to use. This can be either `nodemailer` or `resend`.
+
+```
+MAILER_PROVIDER=nodemailer
+```
+
+Resend uses an HTTP API to send emails. Nodemailer uses SMTP. It is mandatory to use Resend when using the edge runtime, since it doesn't support Nodemailer, which requires a Node.js runtime.
+
+### RESEND_API_KEY
+
+If you are using Resend as your mailer provider, you need to set this variable to your Resend API key.
+
+```
+RESEND_API_KEY=your-resend-api-key
+```
+
+### EMAIL_SENDER
+
+The email address to use as the sender of the emails.
+
+```
+EMAIL_SENDER=info@makerkit.dev
+```
+
+### EMAIL_HOST
+
+If you are using Nodemailer as your mailer provider, you need to set this variable to your SMTP host.
+
+```
+EMAIL_HOST=smtp.your-email-provider.com
+```
+
+### EMAIL_PORT
+
+If you are using Nodemailer as your mailer provider, you need to set this variable to your SMTP port.
+
+```
+EMAIL_PORT=587
+```
+
+### EMAIL_USER
+
+If you are using Nodemailer as your mailer provider, you need to set this variable to your SMTP user.
+
+```
+EMAIL_USER=your-email-user
+```
+
+### EMAIL_PASSWORD
+
+If you are using Nodemailer as your mailer provider, you need to set this variable to your SMTP password.
+
+```
+EMAIL_PASSWORD=your-email-password
+```
+
+### EMAIL_TLS
+
+If you are using Nodemailer as your mailer provider, you need to set this variable to your SMTP TLS setting.
+
+```
+EMAIL_TLS=true
+```
+
+### NEXT_PUBLIC_CAPTCHA_SITE_KEY
+
+If you want to protect your endpoints using Cloudflare's Captcha, you need to set this variable to your Captcha site key.
+
+```
+NEXT_PUBLIC_CAPTCHA_SITE_KEY=your-captcha-site-key
+```
+
+### CAPTCHA_SECRET_TOKEN
+
+If you want to protect your endpoints using Cloudflare's Captcha, you need to set this variable to your Captcha secret token.
+
+```
+CAPTCHA_SECRET_TOKEN=your-captcha-secret-token
+```

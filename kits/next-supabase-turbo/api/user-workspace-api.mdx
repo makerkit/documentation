@@ -23,7 +23,7 @@ export default async function SomeUserPage() {
 }
 ```
 
-The data returned from the `loadTeamWorkspace` function is an object with the following properties:
+The data returned from the `loadUserWorkspace` function is an object with the following properties:
 
 - `user`: The user object coming from Supabase Auth
 - `account`: The account object of the user
@@ -61,3 +61,24 @@ The `account` object contains the following properties:
 - `picture_url`: The account picture URL
 - `public_data`: The account public data
 - `subscription_status`: The subscription status of the account. This can be 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused'.
+
+
+## Accessing the User Workspace Data in Client Components
+
+The data fetched from the user workspace API is available in the context. You can access this data using the `useUserWorkspace` hook.
+
+```tsx
+'use client';
+
+import { useUserWorkspace } from '@kit/accounts/hooks/use-user-workspace';
+
+export default function SomeComponent() {
+  const { account, user, accounts } = useUserWorkspace();
+
+  // use account, user, and accounts
+}
+```
+
+The `useUserWorkspace` hook returns the same data structure as the `loadUserWorkspace` function.
+
+NB: the hooks **is not to be used** is Server Components, only in Client Components. Additionally, this is only available in the pages under `/home/(user)` layout.

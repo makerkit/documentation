@@ -41,12 +41,14 @@ const { items, count } = await client.getContentItems({
 ```
 
 The `getContentItems` function takes an object with the following properties:
+
 1. `collection` - The collection to fetch content items from.
 2. `limit` - The number of content items to fetch.
 3. `offset` - The offset to start fetching content items from.
 4. `language` - The language to fetch content items in.
 5. `sortBy` - The field to sort content items by.
 6. `sortDirection` - The direction to sort content items in.
+7. `status` - The status of the content items to fetch. It can be one of `published`, `draft`, `pending` or `review`. By default, only `published` content items are fetched.
 
 ```tsx
 import { createCmsClient } from '@kit/cms';
@@ -91,6 +93,7 @@ The `getContentItemBySlug` function takes an object with the following propertie
 
 1. `slug` - The slug of the content item to fetch.
 2. `collection` - The collection to fetch the content item from.
+3. `status` (optional): The status of the content item to fetch. It can be one of `published`, `draft`, `pending` or `review`. By default, only `published` content items are fetched.
 
 #### Rendering pages using content from your CMS
 

@@ -1,0 +1,88 @@
+---
+title: 'Add an AI Text Editor to the Remix Supabase SaaS Starter kit'
+label: 'Text Editor'
+position: 3
+description: 'Add an AI text editor to your Remix Supabase SaaS Starter kit to provide a rich text editing experience to your users.'
+---
+
+**NB:** this is currently a work in progress and not yet available.
+
+A Text Editor built with Lexical.
+
+### Installation
+
+Pull the plugin from the main repository:
+
+```
+npx @makerkit/cli@latest plugins install text-editor
+```
+
+Now, install the plugin from your main app by adding the following to your `package.json` file:
+
+```json title="apps/web/package.json"
+{
+  "dependencies": {
+    "@kit/text-editor": "workspace:*"
+  }
+}
+```
+
+And then run `pnpm install` to install the plugin.
+
+### AI Routes
+
+Add the following AI Routes to your Next.js API routes:
+
+One route at `apps/web/app/routes/api.editor.edit._index/route.ts`:
+
+```ts
+import { ActionFunctionArgs } from '@remix-run/server-runtime';
+
+import { createAIEditRouteHandler } from '@kit/text-editor/server';
+
+export const action = ({ request }: ActionFunctionArgs) => {
+  return createAIEditRouteHandler(request);
+};
+```
+
+And another route at `apps/web/app/routes/api.editor.autocomplete._index/route.ts`:
+
+```ts
+import { ActionFunctionArgs } from '@remix-run/server-runtime';
+
+import { createAIAutocompleteRouteHandler } from '@kit/text-editor/server';
+
+export const action = ({ request }: ActionFunctionArgs) => {
+  return createAIAutocompleteRouteHandler(request);
+};
+```
+
+### Environment Variables
+
+Make sure to add the variable `OPENAI_API_KEY` to your `.env.local` file to test locally, and make sure it's added to your production environment variables.
+
+### Import the component
+
+Now, you can import the component from the plugin:
+
+```tsx
+import { TextEditor } from '@kit/text-editor';
+import '@kit/text-editor/style';
+```
+
+And use it in your app:
+
+```tsx
+<TextEditor />
+```
+
+You can assign the following props to the `TextEditor` component:
+
+```tsx
+{
+  className?: string;
+  content?: string;
+  placeholder?: () => React.ReactElement;
+  onChange?: (content: string) => void;
+}
+```

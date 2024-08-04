@@ -1,0 +1,125 @@
+---
+title: 'Add a Feedback Widget plugin to your Remix Supabase SaaS Starter kit'
+label: 'Feedback Widget'
+position: 4
+description: 'Add a Feedback Widget plugin to your Remix Supabase SaaS Starter kit'
+---
+
+The feedback plugin allows you to add a feedback widget to your app. Users can provide feedback on your app, and you can view and manage feedback submissions in the admin panel.
+
+### Installation
+
+Pull the plugin from the main repository:
+
+```
+npx @makerkit/cli@latest plugins install feedback
+```
+
+Now, install the plugin from your main app:
+
+```
+pnpm add --filter web @kit/feedback
+```
+
+### Create an API route
+
+Create an API route at `routes/api.feedback._index/route.ts` and call the action:
+
+```tsx
+import { ActionFunctionArgs } from '@remix-run/server-runtime';
+
+import { submitFeedbackAction } from '@kit/feedback/server';
+
+export const action = ({ request }: ActionFunctionArgs) => {
+  if (request.method !== 'POST') {
+    return new Response(null, { status: 405 });
+  }
+
+  return submitFeedbackAction(request);
+};
+```
+
+### Import the component
+
+Now, you can import the component from the plugin:
+
+```tsx
+import {FeedbackPopup} from '@kit/feedback';
+```
+
+And use it in your app:
+
+```tsx
+<FeedbackPopup>
+    <Button>Gimme feedback</Button>
+</FeedbackPopup>
+```
+
+You can also import the form alone - so you can customize its appearance:
+
+```tsx
+import {FeedbackForm} from '@kit/feedback';
+```
+
+And use it in your app:
+
+```tsx
+<FeedbackForm/>
+```
+
+## Adding the Admin Panel pages
+
+Add the following to your `routes/admin.feedback._index/route.ts` file:
+
+```tsx
+import { LoaderFunctionArgs } from '@remix-run/server-runtime';
+
+import { FeedbackSubmissionsPage } from '@kit/feedback/admin';
+import { feedbackSubmissionsLoader } from '@kit/feedback/admin/server';
+import { deleteFeedbackSubmissionAction } from '@kit/feedback/server';
+
+export const loader = ({ request }: LoaderFunctionArgs) => {
+  return feedbackSubmissionsLoader(request);
+};
+
+export default FeedbackSubmissionsPage;
+
+export const action = async ({ request }: LoaderFunctionArgs) => {
+  return deleteFeedbackSubmissionAction(request);
+}
+```
+
+Add the following to your `routes/admin.feedback.$id._index/route.ts` file:
+
+```tsx
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+} from '@remix-run/server-runtime';
+
+import { FeedbackSubmissionPage } from '@kit/feedback/admin';
+import { feedbackSubmissionLoader } from '@kit/feedback/admin/server';
+import { deleteFeedbackSubmissionAction } from '@kit/feedback/server';
+
+export const loader = ({ params, request }: LoaderFunctionArgs) => {
+  return feedbackSubmissionLoader(request, params.id as string);
+};
+
+export default FeedbackSubmissionPage;
+
+export const action = ({ request }: ActionFunctionArgs) => {
+  return deleteFeedbackSubmissionAction(request);
+};
+```
+
+Add the sidebar item to `apps/web/app/routes/admin/_components/admin-sidebar.tsx`:
+
+```tsx
+
+<SidebarItem
+    path={'/admin/feedback'}
+    Icon={<MessageCircle className={'h-4'} />}
+>
+    Feedback
+</SidebarItem>
+```

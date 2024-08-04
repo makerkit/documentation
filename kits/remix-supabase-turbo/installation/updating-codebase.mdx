@@ -27,7 +27,7 @@ Please run `pnpm i` in case there are any changes in the dependencies.
 
 If there are any conflicts during the merge, you will need to resolve them manually. Git will show you the files with conflicts, and you can edit them to resolve the conflicts.
 
-#### Conflicts in the lock file
+#### Conflicts in the lock file "pnpm-lock.yaml"
 
 If you have conflicts in the `pnpm-lock.yaml` file, accept any of the two changes (don't do it manually), then run:
 
@@ -37,7 +37,7 @@ pnpm i
 
 The lock file will now reflect both your changes and the changes from the `upstream` repository.
 
-#### Conflicts in the DB types
+#### Conflicts in the DB types "database.types.ts"
 
 Since your types will differ from the ones in the `upstream` repository, you need to rebuild them.
 

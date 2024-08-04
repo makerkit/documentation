@@ -1,0 +1,124 @@
+---
+title: 'Roadmap Plugin in the Next.js Supabase SaaS Starter kit'
+label: 'Roadmap Plugin'
+position: 2
+description: 'Learn how to install the Roadmap plugin in the Next.js Supabase SaaS Starter kit.'
+---
+
+This plugin allows you to create a roadmap for your project and display it on your website.
+
+Your users can see what features are planned, in progress, and completed and suggest new features or comment on existing ones.
+
+## Functionality
+
+The plugin provides the following functionality:
+
+1. Display the feature requests on the website.
+2. Allow users to suggest new features.
+3. Allow users to comment on existing features.
+4. Display the Feature Requests in the Admin panel.
+5. Allow Admins to manage the Feature Requests, update their status, and delete them.
+6. Allow Admins to manage the comments on the Feature Requests.
+
+## Installation
+
+To install the plugin, run the following command:
+
+```bash
+npx @makerkit/cli plugins install
+```
+
+Since this plugin depends on the Kanban plugin, you need to install both. Please select the `kanban` plugin from the list of available plugins.
+
+Then, please select the `roadmap` plugin from the list of available plugins.
+
+### Migration
+
+Create a new migration file by running the following command:
+
+```bash
+pnpm --filter web supabase migration new roadmap
+```
+
+And place the content you can see at `packages/plugins/roadmap/migrations/migration.sql` into the newly created file.
+
+Then run the migration:
+
+```bash
+pnpm run supabase:web:reset
+```
+
+And update the types:
+
+```bash
+pnpm run supabase:web:typegen
+```
+
+Once the plugin is added to your repository, please install it as a dependency in your application in the package.json file of `apps/web`:
+
+```json
+{
+    "dependencies": {
+      "@kit/roadmap": "workspace:*"
+    }
+}
+```
+
+Now run the following command to install the plugin:
+
+```bash
+pnpm i
+```
+
+## Displaying the Roadmap and Feature Requests
+
+To display the roadmap and feature requests on your website, add the following code to the `apps/web/app/(marketing)/roadmap/page.tsx` file:
+
+```tsx
+import { RoadmapPage } from "@kit/roadmap/server";
+
+export default RoadmapPage;
+```
+
+Let's now add the comments GET route at `apps/web/app/(marketing)/roadmap/comments/route.ts`:
+
+```tsx
+import { createFetchCommentsRouteHandler } from '@kit/roadmap/route-handler';
+
+export const GET = createFetchCommentsRouteHandler;
+```
+
+## Admin Pages
+
+To add the Admin pages from where you can manage the roadmap and feature requests, add the following code to the `apps/web/app/admin/roadmap/page.tsx` file:
+
+```tsx
+import { AdminGuard } from '@kit/admin/components/admin-guard';
+import { AdminIssuesPage } from '@kit/roadmap/admin';
+
+export default AdminGuard(AdminIssuesPage);
+```
+
+And now, we add the feature request's detail page at `apps/web/app/admin/roadmap/[id]/page.tsx`:
+
+```tsx
+import { AdminGuard } from '@kit/admin/components/admin-guard';
+import { AdminIssueDetailPage } from '@kit/roadmap/admin';
+
+export default AdminGuard(AdminIssueDetailPage);
+```
+
+Add the sidebar item as well at `apps/web/app/admin/_components/admin-sidebar.tsx`:
+
+```tsx
+<SidebarItem
+    path={'/admin/roadmap'}
+    Icon={<FolderKanbanIcon className={'h-4'} />}
+>
+    Roadmap
+</SidebarItem>
+```
+
+Import the `FolderKanbanIcon` icon from the existing `lucide-react` package.
+
+You can now run the application and navigate to the Admin panel to manage the roadmap and feature requests.

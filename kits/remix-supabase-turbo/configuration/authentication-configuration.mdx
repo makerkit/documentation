@@ -37,3 +37,18 @@ For example, if you wanted to switch from password auth to magic link, you'd set
 VITE_AUTH_PASSWORD=false
 VITE_AUTH_MAGIC_LINK=true
 ```
+
+## Password Requirements
+
+To set the password requirements, you can set the following environment variables:
+
+```bash
+VITE_PASSWORD_REQUIRE_UPPERCASE=true
+VITE_PASSWORD_REQUIRE_NUMBERS=true
+VITE_PASSWORD_REQUIRE_SPECIAL_CHARS=true
+```
+
+The above will enforce the following rules:
+1. At least one uppercase letter
+2. At least one number
+3. At least one special character

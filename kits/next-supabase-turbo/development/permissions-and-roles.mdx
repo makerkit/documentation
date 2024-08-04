@@ -10,9 +10,9 @@ Makerkit implements granular RBAC for team members. This allows you to define ro
 Makerkit implements two tables for roles and permissions:
 
 - `roles` table: This table stores the roles for each team member.
-- `roles_permissions` table: This table stores the permissions for each role.
+- `role_permissions` table: This table stores the permissions for each role.
 
-The table `roles_permissions` has the following schema:
+The table `role_permissions` has the following schema:
 
 - `id`: The unique identifier for the role permission.
 - `role`: The role for the team member.
@@ -63,11 +63,11 @@ commit;
 
 In the above, we added two new permissions: `tasks.write` and `tasks.delete`.
 
-You can assign these permissions to roles in the `roles_permissions` table for fine-grained access control:
+You can assign these permissions to roles in the `role_permissions` table for fine-grained access control:
 
 ```sql
-insert into public.roles_permissions (role, permission) values ('owner', 'tasks.write');
-insert into public.roles_permissions (role, permission) values ('owner', 'tasks.delete');
+insert into public.role_permissions (role, permission) values ('owner', 'tasks.write');
+insert into public.role_permissions (role, permission) values ('owner', 'tasks.delete');
 ```
 
 Of course - you will need to enforce these permissions in your application code and RLS.

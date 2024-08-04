@@ -69,7 +69,7 @@ The `app` directory is where the routing of the application is defined. Here are
 
 ```
 - app
---- (dashboard)
+--- home
 --- (marketing)
 --- auth
 --- join
@@ -80,7 +80,7 @@ The `app` directory is where the routing of the application is defined. Here are
 
 Let's break down the directories:
 
-1. `(dashboard)` - this is where the internal dashboard of the application lives. This is where you define the routes when the user is logged in. It's a pathless route, so you don't see it in the URL.
+1. `home` - this is where the internal home of the application lives. This is where you define the routes when the user is logged in.
 2. `(marketing)` - this is where the marketing pages of the application live. This is where you define the routes when the user is not logged in. It's a pathless route, so you don't see it in the URL.
 3. `auth` - this is where the authentication pages of the application live. This is where you define the routes for the login, signup, and forgot password pages.
 4. `join` - this is where the join pages of the application live. This route is the route where the user can join a team account following an invitation.
@@ -88,12 +88,11 @@ Let's break down the directories:
 6. `update-password` - this is where the update password pages of the application live. This is the route the user is redirected to after resetting their password.
 7. `server-sitemap.xml` - this is where the sitemap of the application is defined.
 
-### Diving into `(dashboard)`
+### Diving into `home`
 
-The `(dashboard)` directory is where the internal dashboard of the application lives. Here are some of the key files you should be aware of:
+The `home` directory is where the internal dashboard of the application lives. Here are some of the key files you should be aware of:
 
 ```
-- (dashboard)
 --- home
 ------ (user)
 ------ [account]

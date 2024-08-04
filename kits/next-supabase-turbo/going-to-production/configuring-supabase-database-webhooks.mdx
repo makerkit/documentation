@@ -7,19 +7,25 @@ position: 1
 
 Makerkit uses Database Webhooks in response to changes in the database.
 
-This allows the app to intercept events and handle them for various purposes, such as sending emails after an invitation, or canceling a subscription after a user deletes their account. As such, it is mandatory to set up the Database Webhooks in your Supabase instance for the app to work correctly.
+This allows the app to intercept events and handle them for various purposes, such as sending emails after an invitation, or canceling a subscription after a user deletes their account.
 
-First, you need to set a secret `SUPABASE_DB_WEBHOOK_SECRET` that your server and your Supabase instance will share to authenticate the requests.
+As such, it is mandatory to set up the Database Webhooks in your Supabase instance for the app to work correctly.
+
+First, you need to generate a secret and set it using the environment variable `SUPABASE_DB_WEBHOOK_SECRET`.
+
+We use this varable in two places:
+1. In the Supabase webhooks headers, so the server can authenticate the request is coming from Supabase
+2. In the server, so we can authenticate the request is coming from Supabase
+
+Please set the `SUPABASE_DB_WEBHOOK_SECRET` environment variable:
 
 ```bash
 SUPABASE_DB_WEBHOOK_SECRET=**************************************************
 ```
 
-Make it a strong secret key - and make sure to keep it secret!
+**Note**: Make it a strong secret key - and make sure to keep it secret!
 
-Now, you need to deploy the Supabase DB webhooks to your Supabase instance.
-
-Please copy the webhooks (written with Postgres SQL) from apps/web/supabase/seed.sql and make sure to replicate them to the Supabase instance.
+Once you have set the environment variable, you need to deploy the Supabase DB webhooks to your Supabase instance.
 
 Make sure to add the following header `X-Supabase-Event-Signature` with the value of the `SUPABASE_DB_WEBHOOK_SECRET` to the request.
 
@@ -32,6 +38,8 @@ As the endpoint, remember to use the `/api/db/webhook` endpoint. If your APP URL
 The below is only needed when going to production. The local development seed.sql script will add the webhooks for you.
 
 While you can create a migration to add the database webhooks, you can also add them from the Supabase Studio.
+
+Here are the steps to add the webhooks from the Supabase Studio:
 
 1. Go to the Supabase Studio
 2. Go to Database->Webhooks

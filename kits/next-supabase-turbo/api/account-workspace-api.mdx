@@ -9,6 +9,8 @@ When within the layout `/home/[account]` - you have access to data fetched from 
 
 The data in this layout has most of the information you need around the currently selected account and the user.
 
+## Accessing the Team Account Workspace Data in Server Components
+
 To access the data, you can use the `loadTeamWorkspace` loader function. This function is cached per-request, so you can call it multiple times without worrying about performance.
 
 While multiple calls to this function are deduped within a single request, bear in mind that this request will be called when navigating to the page. If you only require a small subset of data, it would be best to make more granular requests.
@@ -69,3 +71,23 @@ The `account` object contains the following properties:
 7. `primary_owner_user_id`: The primary owner user ID
 8. `subscription_status`: The subscription status of the account. This can be 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused'.
 9. `permissions`: An array of permissions the user has in the account
+
+## Accessing the Account Workspace Data in Client Components
+
+The data fetched from the account workspace API is available in the context. You can access this data using the `useAccountWorkspace` hook.
+
+```tsx
+'use client';
+
+import { useTeamAccountWorkspace } from '@kit/team-accounts/hooks/use-team-account-workspace';
+
+export default function SomeComponent() {
+  const { account, user, accounts } = useTeamAccountWorkspace();
+
+  // use account, user, and accounts
+}
+```
+
+The `useTeamAccountWorkspace` hook returns the same data structure as the `loadTeamWorkspace` function.
+
+NB: the hooks **is not to be used** is Server Components, only in Client Components. Additionally, this is only available in the pages under `/home/[account]` layout.

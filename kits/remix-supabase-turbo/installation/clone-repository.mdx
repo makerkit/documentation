@@ -63,3 +63,35 @@ npm i -g pnpm
 # Install dependencies
 pnpm i
 ```
+
+## 2. Post-merge Hooks
+
+It's very useful to run the following command after pulling updates from the upstream repository:
+
+```bash
+pnpm i
+```
+
+This ensures that any new dependencies are installed and the project is up to date. We can run this command automatically after pulling updates by setting up a post-merge hook.
+
+Create a new file named `post-merge` in the `.git/hooks` directory:
+
+```bash
+touch .git/hooks/post-merge
+```
+
+Add the following content to the `post-merge` file:
+
+```bash
+#!/bin/bash
+
+pnpm i
+```
+
+Make the `post-merge` file executable:
+
+```bash
+chmod +x .git/hooks/post-merge
+```
+
+Now, every time you pull updates from the upstream repository, the `pnpm i` command will run automatically to ensure your project is up to date. This ensures you're always working with the latest changes and dependencies and avoid errors that may arise from outdated dependencies.

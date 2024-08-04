@@ -27,3 +27,24 @@ export const languages: string[] = [defaultLanguage, 'es'];
 ```
 
 In the above, I appended the language `es` to the `languages` array. You can add as many languages as you need.
+
+
+## 3. Add new namespaces
+
+If you want to add a new namespace (for example, `chatbots.json`) where you will store translations for chatbots, you can do so by creating a new file in the `apps/web/public/locales/[lng]` directory. For example, `apps/web/public/locales/en/chatbots.json`.
+
+Then, you register the new namespace in the `i18n.settings.ts` file:
+
+```tsx {8} title="apps/web/lib/i18n/i18n.settings.ts"
+export const defaultI18nNamespaces = [
+  'common',
+  'auth',
+  'account',
+  'teams',
+  'billing',
+  'marketing',
+  'chatbots',
+];
+```
+
+In the example above, the `chatbots` namespace is added to the `defaultI18nNamespaces` array. And that's it! You can now start adding translations to your new namespace.

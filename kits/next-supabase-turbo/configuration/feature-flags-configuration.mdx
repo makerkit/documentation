@@ -12,6 +12,7 @@ This configuration is set at application level. The configuration gets propagate
 The recommendation is **to not update this directly** - instead, please define the environment variables below and override the default behavior. The configuration is validated using the Zod schema `FeatureFlagsSchema`, so if something is off, you'll see the errors.
 
 ```tsx
+
 const featuresFlagConfig = FeatureFlagsSchema.parse({
   enableThemeToggle: getBoolean(
     process.env.NEXT_PUBLIC_ENABLE_THEME_TOGGLE,
@@ -41,9 +42,20 @@ const featuresFlagConfig = FeatureFlagsSchema.parse({
     process.env.NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING,
     false,
   ),
-  languagePriority: process.env.NEXT_PUBLIC_LANGUAGE_PRIORITY as
-    | 'user'
-    | 'application',
+  languagePriority: process.env
+    .NEXT_PUBLIC_LANGUAGE_PRIORITY as LanguagePriority,
+  enableNotifications: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_NOTIFICATIONS,
+    true,
+  ),
+  realtimeNotifications: getBoolean(
+    process.env.NEXT_PUBLIC_REALTIME_NOTIFICATIONS,
+    false,
+  ),
+  enableVersionUpdater: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_VERSION_UPDATER,
+    false,
+  ),
 } satisfies z.infer<typeof FeatureFlagsSchema>);
 
 export default featuresFlagConfig;
@@ -60,6 +72,9 @@ NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION=
 NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING=
 NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=
 NEXT_PUBLIC_LANGUAGE_PRIORITY=
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=
+NEXT_PUBLIC_ENABLE_VERSION_UPDATER=
 ```
 
 ### Explanation
@@ -72,6 +87,9 @@ NEXT_PUBLIC_LANGUAGE_PRIORITY=
 6. **NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING**: use this feature to enable or disable the ability of personal accounts to subscribe to a plan.
 7. **NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING**: use this feature to enable or disable the ability of team accounts to subscribe to a plan.
 8. **NEXT_PUBLIC_LANGUAGE_PRIORITY**: use this feature to set the language priority. If set to `user`, the user's preferred language will be used. If set to `application`, the application's default language will be used.
+9. **NEXT_PUBLIC_ENABLE_NOTIFICATIONS**: use this feature to enable or disable notifications in the app.
+10. **NEXT_PUBLIC_REALTIME_NOTIFICATIONS**: use this feature to enable or disable real-time notifications in the app.
+11. **NEXT_PUBLIC_ENABLE_VERSION_UPDATER**: use this feature to enable or disable the version updater in the app.
 
 ### Note
 

@@ -1,0 +1,26 @@
+---
+title: 'Installing Plugins in the Next.js Supabase SaaS Starter kit'
+label: 'Installing Plugins'
+position: 0
+description: 'Learn how to install plugins in the Next.js Supabase SaaS Starter kit.'
+---
+
+Plugins are placed into a separate repository that mirrors the original repository structure. This allows us to build the plugins using the same files and structure as the main repository.0
+
+You may wonder why we don't include the plugins in the main repository. The reason is that plugins are optional and may not be needed by all users. By keeping them separate, we can keep the main repository clean and focused on the core functionality. Instead you can install the plugins you need when you need them.
+
+## Installing Plugins
+
+To install a plugin, you can use the Makerkit CLI:
+
+```bash
+npx @makerkit/cli@latest plugins install
+```
+
+This command will prompt you to select a plugin to install. Once selected, the plugin will be installed in your project.
+
+## How Makerkit installs plugins in your project
+
+Plugins use `git subtree` to pull in the plugin repository into the `plugins` directory of your project. This allows you to keep the plugin up-to-date by pulling in changes from the plugin repository.
+
+If you don't want to use git subtree, you can also manually clone a copy of the plugin repository, and then manually moving the folder from `packages/plugins` into your own repository.

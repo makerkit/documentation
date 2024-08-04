@@ -9,7 +9,7 @@ The application configuration is set at `apps/web/config/app.config.ts`. This co
 
 This configuration is set at application-level. The configuration gets propagated to the packages that the app imports, so you can control the behavior and logic of the package. This also allows you to host multiple apps in the same monorepo, as every application defines its own configuration.
 
-The recomendation is **to not update this directly** - instead, please define the environment variables below and override the default behavior. The configuration is validated using the Zod schema `AppConfigSchema`, so if something is off, you'll see the errors.
+The recommendation is **to not update this directly** - instead, please define the environment variables below and override the default behavior. The configuration is validated using the Zod schema `AppConfigSchema`, so if something is off, you'll see the errors.
 
 ```tsx
 const appConfig = AppConfigSchema.parse({

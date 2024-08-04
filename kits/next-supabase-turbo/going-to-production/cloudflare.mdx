@@ -9,11 +9,10 @@ To deploy the application to Cloudflare, you need to do the following:
 
 1. Opt-in to the Edge runtime
 2. Using the Cloudflare Mailer
-3. Install the Cloudflare CLI
-4. Switching CMS mode
-5. Setting Node.js Compatibility Flags
-6. Environment variables
-7. Workarounds
+3. Switching CMS
+4. Setting Node.js Compatibility Flags
+5. Environment variables
+6. Workarounds
 
 NB: deploying to Cloudflare requires a subscription to the Cloudflare Workers paid service due to the size limitations of the free tier. It starts at $5.
 
@@ -41,13 +40,7 @@ This will enable the Edge runtime for your application.
 
 ### 2. Using the Cloudflare Mailer or Resend Mailer
 
-Since the default library `nodemailer` relies on Node.js, we cannot use it in the Edge runtime. Instead, we will use the Cloudflare Mailer or the Resend Mailer.
-
-To use the Cloudflare Mailer, you need to do the following. Set the `MAILER_PROVIDER` environment variable to `cloudflare` in the `apps/web/.env` file:
-
-```bash
-MAILER_PROVIDER=cloudflare
-```
+Since the default library `nodemailer` relies on Node.js, we cannot use it in the Edge runtime. Instead, we will Resend Mailer.
 
 Set up SPF and DKIM records in your DNS settings.
 
@@ -65,32 +58,9 @@ And provide the Resend API key:
 RESEND_API_KEY=your-api-key
 ```
 
-### 3. Installing the Cloudflare CLI (optional!)
+Alternatively, implement your own mailer using the abstract class we provide in the `packages/mailers` package.
 
-Please follow the instructions on the [Cloudflare documentation](https://github.com/cloudflare/next-on-pages/tree/main/packages/next-on-pages#3-deploy-your-application-to-cloudflare-pages) to install the Cloudflare CLI.
-
-This allows you to build and run a preview of your site on Pages without deploying it.
-
-Add the following scripts to the `apps/web/package.json` file:
-
-```
-"cloudflare:build": "pnpm dlx @cloudflare/next-on-pages",
-"cloudflare:preview": "pnpm dlx wrangler pages dev .next --compatibility-flag=nodejs_compat",
-```
-
-To build a preview, run:
-
-```bash
-pnpm run cloudflare:build
-```
-
-To run the preview, run:
-
-```bash
-pnpm run cloudflare:preview
-```
-
-### 4. Switching CMS
+### 3. Switching CMS
 
 By default, Makerkit uses Keystatic as a CMS. Keystatic's local mode (which relies on the file system) is not supported in the Edge runtime. Therefore, you will need to switch to another CMS or use Keystatic's Github mode - which uses Github as data provider.
 
@@ -100,44 +70,31 @@ At this time, the other CMS supported is WordPress. Set `CMS_CLIENT` to `wordpre
 CMS_CLIENT=wordpress
 ```
 
-More alternative CMS implementations will be added in the future.
+Alternatively, use the Keystatic remote mode through Github.
 
 Please check the CMS documentation for more information.
 
-### 5. Select "apps/web" as path to build
+### 4. Select "apps/web" as path to build
 
 When prompted to select the path to build, select `apps/web` as the path to build - since our Next.js app is located in the `apps/web` directory.
 
 If you have multiple apps, you can select the app you want to deploy.
 
-### 6. Setting Node.js Compatibility Flags
+### 5. Setting Node.js Compatibility Flags
 
 Cloudflare requires you to set the Node.js compatibility flags. Please follow the instructions on the [Cloudflare documentation](https://developers.cloudflare.com/workers/runtime-apis/nodejs).
 
 Please don't miss this step, as it's crucial for the application to work in the Edge runtime.
 
-### 7. Environment variables
+### 6. Environment variables
 
 When adding environment variables, make sure to add all of them from the Cloudflare dashboard instead of the `.env` file. I cannot understand why, but the Workers did not pick up the environment variables from the `.env` file. So please do make sure to add all the environment variables from the Cloudflare dashboard.
 
-### 8. Workarounds
+### 7. Workarounds
 
 An [issue with Cloudflare](https://github.com/cloudflare/workerd/issues/698) causes makes it impossible to deploy to Cloudflare Pages without two workarounds:
 
-1. Downgrading a version of Supabase Auth
-2. Monkey-patching the `fetch` function for Keystatic
-
-#### Downgrading Supabase Auth
-
-Place this override in the root package.json file:
-
-```json
-"pnpm": {
-  "overrides": {
-    "@supabase/auth-js": "2.62.0"
-  }
-}
-```
+1. Monkey-patching the `fetch` function for Keystatic
 
 #### Monkey-patching the `fetch` function
 

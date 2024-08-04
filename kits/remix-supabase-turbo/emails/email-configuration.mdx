@@ -60,22 +60,7 @@ The variables are:
 4. `EMAIL_PORT`: The SMTP server port. This is provider-specific so please check your email provider's documentation.
 5. `EMAIL_TLS`: The TLS configuration. This is provider-specific so please check your email provider's documentation. Generally, you can set it to `true`.
 
-
 If you want to use the Cloudflare Mailer or the Resend Mailer, you need to set the `MAILER_PROVIDER` environment variable to `cloudflare` or `resend`.
-
-## Cloudflare Mailer
-
-Since the default library `nodemailer` relies on Node.js, we cannot use it in the Edge runtime. Instead, we will use the Cloudflare Mailer or the Resend Mailer.
-
-To use the Cloudflare Mailer, you need to do the following. Set the `MAILER_PROVIDER` environment variable to `cloudflare` in the `apps/web/.env` file:
-
-```bash
-MAILER_PROVIDER=cloudflare
-```
-
-Setup SPF and DKIM records in your DNS settings.
-
-Please follow [the Vercel Email documentation](https://github.com/Sh4yy/vercel-email?tab=readme-ov-file#setup-spf) to set up the SPF and DKIM records.
 
 ## Resend API
 
@@ -91,4 +76,5 @@ And provide the Resend API key:
 
 ```bash
 RESEND_API_KEY=your-api-key
+EMAIL_USER=your-email
 ```

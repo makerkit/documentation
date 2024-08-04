@@ -34,7 +34,7 @@ If `KEYSTATIC_STORAGE_KIND` is set to `github`, the following environment variab
 KEYSTATIC_STORAGE_KIND=github
 KEYSTATIC_STORAGE_REPO=makerkit/remix-supabase-saas-kit-turbo-demo
 KEYSTATIC_GITHUB_TOKEN=github_*****************************************************
-KEYSTATIC_PATH_PREFIX=apps/web
+KEYSTATIC_PATH_PREFIX=apps/web/content
 ```
 
 Of course, you need to replace the `KEYSTATIC_STORAGE_REPO` and `KEYSTATIC_GITHUB_TOKEN` with your own values.
@@ -48,3 +48,5 @@ If your content folder is not at `content`, you can set the `VITE_KEYSTATIC_CONT
 ```bash
 VITE_KEYSTATIC_CONTENT_PATH=data/content
 ```
+
+**Note**: your Github token must have permissions to read to the repository (for read-only).

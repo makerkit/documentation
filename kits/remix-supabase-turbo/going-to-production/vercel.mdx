@@ -11,9 +11,25 @@ Deploying to Vercel should be straightforward. You can deploy the Remix SaaS boi
 2. Configure Environment Variables: the first time this may fail if you don't yet have a custom domain connected since you cannot place it in the environment variables yet. It's fine. Make the first deployment fail, then pick the domain and add it. Redeploy.
 3. Deploy the Project
 
-Vercel should be able to automatically infer the project settings and deploy it correctly.
+## Connect your Repository to Vercel
 
-<Image src="/assets/images/docs/vercel-turbo-preset.webp" width={1744} height={854} />
+To deploy the Remix SaaS boilerplate to Vercel, you need to connect your repository to Vercel.
+
+## Configure Environment Variables
+
+Add the environment variables required for the project to work correctly. You can build them from [our environment variables generation](production-environment-variables).
+
+## Set the correct Preset and Root Directory
+
+Please make sure to set the "Remix" preset in the Vercel settings and to set the root directory to `apps/web`.
+
+<Alert type='warn'>
+Failure to set the Preset to "Remix" will result in the project not working correctly.
+</Alert>
+
+## Update the Preset in your Vite Config
+
+Please do not use the Vercel preset in your Vite config. It breaks because it is not able to detect our index page (_marketing._index) correctly.
 
 ## Environment Variables
 
