@@ -110,7 +110,7 @@ For example, when a user performs an action that consumes credits, you can call 
 
 NB: the `callOpenAIApi` is a placeholder for your API call to OpenAI. You should replace it with your actual API call.
 
-NB: we assume this is in a route handler, so we use the `getSupabaseRouteHandlerClient` client. If you're in a server action, you should use the `getSupabaseServerActionClient` client. [Learn more about the Supabase clients here](supabase-clients).
+NB: we assume this is in a route handler, so we use the `getSupabaseRouteHandlerClient` client. If you're in a server action, you should use the `getSupabaseServerClient` client. [Learn more about the Supabase clients here](supabase-clients).
 
 ```tsx
 export function async consumeApi(accountId: string) {
@@ -155,7 +155,7 @@ In the example below, we extend the webook handler to listen to the `onInvoicePa
 import { getBillingEventHandlerService } from '@kit/billing-gateway';
 import { enhanceRouteHandler } from '@kit/next/routes';
 import { getLogger } from '@kit/shared/logger';
-import { getSupabaseRouteHandlerClient } from '@kit/supabase/route-handler-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 import billingConfig from '~/config/billing.config';
 import { Database } from '~/lib/database.types';
@@ -176,7 +176,7 @@ export const POST = enhanceRouteHandler(
     logger.info(ctx, `Received billing webhook. Processing...`);
 
     const supabaseClientProvider = () =>
-      getSupabaseRouteHandlerClient<Database>({ admin: true });
+      getSupabaseServerAdminClient();
 
     const service = await getBillingEventHandlerService(
       supabaseClientProvider,

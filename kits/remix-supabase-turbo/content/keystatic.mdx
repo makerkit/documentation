@@ -14,14 +14,14 @@ CMS_CLIENT=keystatic
 Additionally, the following environment variables may be required:
 
 ```bash
-KEYSTATIC_STORAGE_KIND=local # local, cloud, github
-KEYSTATIC_PATH_PREFIX=apps/web
+VITE_KEYSTATIC_STORAGE_KIND=local # local, cloud, github
 VITE_KEYSTATIC_CONTENT_PATH=content # apps/web/content
+KEYSTATIC_PATH_PREFIX=apps/web
 ```
 
 You can also use Keystatic Cloud or GitHub as the storage kind as remote storage.
 
-If `KEYSTATIC_STORAGE_KIND` is set to `cloud`, the following environment variables are required:
+If `VITE_KEYSTATIC_STORAGE_KIND` is set to `cloud`, the following environment variables are required:
 
 ```bash
 KEYSTATIC_STORAGE_KIND=cloud
@@ -31,13 +31,14 @@ KEYSTATIC_STORAGE_PROJECT=project-id
 If `KEYSTATIC_STORAGE_KIND` is set to `github`, the following environment variables are required:
 
 ```bash
-KEYSTATIC_STORAGE_KIND=github
-KEYSTATIC_STORAGE_REPO=makerkit/remix-supabase-saas-kit-turbo-demo
+VITE_KEYSTATIC_STORAGE_KIND=github
+VITE_KEYSTATIC_STORAGE_REPO=makerkit/remix-supabase-saas-kit-turbo-demo
 KEYSTATIC_GITHUB_TOKEN=github_*****************************************************
-KEYSTATIC_PATH_PREFIX=apps/web/content
+KEYSTATIC_PATH_PREFIX=apps/web
+VITE_KEYSTATIC_CONTENT_PATH=./content
 ```
 
-Of course, you need to replace the `KEYSTATIC_STORAGE_REPO` and `KEYSTATIC_GITHUB_TOKEN` with your own values.
+Of course, you need to replace the `VITE_KEYSTATIC_STORAGE_KIND` and `KEYSTATIC_GITHUB_TOKEN` with your own values.
 
 GitHub mode requires the installation of a GitHub app for displaying the admin.
 

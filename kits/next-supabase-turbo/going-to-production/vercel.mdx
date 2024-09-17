@@ -23,6 +23,16 @@ As you can see in the image, please make sure to:
   Please don't miss the steps above - they are crucial for the project to deploy correctly.
 </Alert>
 
+### Troubleshooting
+
+In some cases, users have reported issues with the deployment to Vercel using the default parameters. If this is the case, please try the following:
+
+1. Make sure to set the root directory to `apps/web`
+2. Make sure to set the preset to Next.js
+3. Manually enter the commands for installing and running the build, respectively: `pnpm i` for installing and `pnpm run build` for building the project. This is the case when Vercel tries to use `npm` instead of `pnpm`.
+
+If the above steps don't work, please check the logs and see what the issue is. The logs should give you a hint on what is wrong.
+
 ## Environment Variables
 
 Please make sure to set all the environment variables required for the project to work correctly.
@@ -67,4 +77,3 @@ cd ../.. && turbo run build --filter=<app-name>
 Please replace `<app-name>` with the name of the app you want to deploy.
 
 For more info refer to the [Vercel documentation](https://vercel.com/docs/monorepos/turborepo).
-

@@ -1,17 +1,13 @@
+---
+title: "Clone the Next.js Supabase SaaS Kit Turbo Repository"
+label: "Clone the Repository"
 position: 4
 description: "Clone the Next.js Supabase SaaS Kit Turbo repository to your local machine."
 ---
 ## Prerequisites
 
-## 0. Prerequisites
 To get started with Makerkit, ensure you have the following prerequisites installed and set up:
 
-- Node.js 18.x or later
-- Docker
-- Pnpm
-- Supabase account (optional for local development)
-- Payment Gateway account (Stripe/Lemon Squeezy)
-- Email Service account (optional for local development)
 - **Node.js 18.x or later**
 - **Docker**
 - **Pnpm**
@@ -19,7 +15,6 @@ To get started with Makerkit, ensure you have the following prerequisites instal
 - **Payment Gateway account** (Stripe or Lemon Squeezy)
 - **Email Service account** (optional for local development)
 
-Clone this repository with the command:
 ## Cloning the Repository
 
 Clone the repository using the following command:
@@ -28,19 +23,16 @@ Clone the repository using the following command:
 git clone git@github.com:makerkit/next-supabase-saas-kit-turbo
 ```
 
-NB: If your SSH key isn't set - then use the HTTPS.
 **Note:** If your SSH key isn't set up, use HTTPS instead:
 
 ```bash
 git clone https://github.com/makerkit/next-supabase-saas-kit-turbo
 ```
 
-NB: please switch to HTTPS for ALL commands if you are not using SSH, not just the clone command.
 ### Important: Use HTTPS for All Commands if Not Using SSH
 
 If you are not using SSH, ensure you switch to HTTPS for all Git commands, not just the clone command.
 
-Now, remove the original `origin`:
 ## Configuring Git Remotes
 
 After cloning the repository, remove the original `origin` remote:
@@ -49,21 +41,18 @@ After cloning the repository, remove the original `origin` remote:
 git remote rm origin
 ```
 
-Add upstream pointing to this repository so you can pull updates
 Add the upstream remote pointing to the original repository to pull updates:
 
 ```bash
 git remote add upstream git@github.com:makerkit/next-supabase-saas-kit-turbo
 ```
 
-Once you have your own repository, do the same but use `origin` instead of `upstream`
 Once you have your own repository set up, add your repository as the `origin`:
 
 ```bash
 git remote add origin <your-repository-url>
 ```
 
-To pull updates (please do this daily with your morning coffee):
 ### Keeping Your Repository Up to Date
 
 To pull updates from the upstream repository, run the following command daily (preferably with your morning coffee ☕):
@@ -72,20 +61,16 @@ To pull updates from the upstream repository, run the following command daily (p
 git pull upstream main
 ```
 
-This will keep your repository up to date.
 This ensures your repository stays up to date with the latest changes.
 
-### 0.1. Install Pnpm
 ## 0.1. Install Pnpm
 
 Install Pnpm globally with the following command:
 
 ```bash
-# Install pnpm
 npm i -g pnpm
 ```
 
-## 1. Setup dependencies
 ## 1. Setup Dependencies
 
 Install the necessary dependencies for the project:
@@ -101,9 +86,7 @@ With these steps completed, your development environment will be set up and read
 It's very useful to run the following command after pulling updates from the upstream repository:
 
 ```bash
-# Install dependencies
 pnpm i
-```
 ```
 
 This ensures that any new dependencies are installed and the project is up to date. We can run this command automatically after pulling updates by setting up a post-merge hook.

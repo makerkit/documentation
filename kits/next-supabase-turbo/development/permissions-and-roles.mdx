@@ -104,7 +104,7 @@ You can use the exact same function `has_permission` in your application code to
 async function hasPermissionToInsertTask(userId: string, accountId: string) {
   const { data: hasPermission, error } = await client.rpc('has_permission', {
     user_id: userId,
-    account_id: acocuntId,
+    account_id: accountId,
     permission: 'tasks.write',
   });
 

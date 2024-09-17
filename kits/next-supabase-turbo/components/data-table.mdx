@@ -62,10 +62,10 @@ Here's an example of how to use the DataTable component with ServerDataLoader:
 ```jsx
 import { ServerDataLoader } from '@makerkit/data-loader-supabase-nextjs';
 import { DataTable } from '@kit/ui/enhanced-data-table';
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 function AccountsPage({ searchParams }) {
-  const client = getSupabaseServerComponentClient({ admin: true });
+  const client = getSupabaseServerAdminClient();
   const page = searchParams.page ? parseInt(searchParams.page) : 1;
   const filters = getFilters(searchParams);
 

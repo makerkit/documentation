@@ -15,12 +15,12 @@ Here is a super simple example of how you can send a notification after a user s
 
 ```tsx
 import { createNotificationsApi } from '@kit/notifications';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(
   accountId: string,
 ) {
-  const client = getSupabaseServerActionClient({ admin: true });
+  const client = getSupabaseServerAdminClient();
   const api = createNotificationsApi(client);
 
   await api.createNotification({
@@ -44,12 +44,12 @@ The `createNotificationsApi` function takes the `client` parameter - eg. the Sup
 
 ```tsx
 import { createNotificationsApi } from '@kit/notifications';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(
   accountId: string,
 ) {
-  const client = getSupabaseServerActionClient({ admin: true });
+  const client = getSupabaseServerAdminClient();
   const api = createNotificationsApi(client);
 
   await api.createNotification({
@@ -76,12 +76,12 @@ By default, notifications are sent as `info`.
 
 ```tsx
 import { createNotificationsApi } from '@kit/notifications';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(
   accountId: string,
 ) {
-  const client = getSupabaseServerActionClient({ admin: true });
+  const client = getSupabaseServerAdminClient();
   const api = createNotificationsApi(client);
 
   await api.createNotification({

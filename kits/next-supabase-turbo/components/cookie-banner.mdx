@@ -14,7 +14,11 @@ The CookieBanner component displays a consent banner for cookies and tracking te
 ### Usage
 
 ```jsx
-import { CookieBanner } from '@kit/ui/cookie-banner';
+import dynamic from 'next/dynamic';
+
+const CookieBanner = dynamic(() => import('@kit/ui/cookie-banner').then(m => m.CookieBanner), {
+  ssr: false
+});
 
 function App() {
   return (

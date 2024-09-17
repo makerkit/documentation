@@ -1,17 +1,16 @@
 ---
 title: 'Deploy Remix Supabase to Cloudflare'
 label: 'Deploy to Cloudflare'
-position: 6
+position: 7
 description: 'Guide to deploy the Remix SaaS boilerplate to Cloudflare Pages.'
 ---
 
-**Cloudflare support is still a work in progress.**
+Makerkit supports deployment to Cloudflare for the Turbo versions. Cloudflare is a great choice for deploying your application due to its low cost and high performance.
 
 To deploy the application to Cloudflare, you need to do the following:
 
-1. Opt-in to the Edge runtime
-2. Using the Cloudflare Mailer
-3. Switching CMS
+1. Switch to a Cloudflare-compatible mailer (Resend)
+3. Switching CMS or use a remote strategy (Keystatic)
 4. Setting Node.js Compatibility Flags
 5. Environment variables
 6. Workarounds
@@ -30,35 +29,21 @@ One more thing to consider is that the Edge runtime does run close to your users
 
 If your mind is set on using Cloudflare, please follow the instructions below.
 
-### 0. Run the automated script
+### 1. Switch to the Cloudflare branch
 
-To deploy your Remix app to Cloudflare, you can run the automated script:
+Makerkit's Remix SaaS boilerplate has a branch that is compatible with Cloudflare. To switch to the Cloudflare branch, run the following command:
 
 ```bash
-turbo gen cloudflare
+git checkout cloudflare
 ```
 
-This script bootstraps some of the changes needed to deploy your Remix app to Cloudflare.
+This branch is optimized for Cloudflare and includes the necessary changes to run on Cloudflare.
 
-### 1. Update all "@remix-run/node" to "@remix-run/cloudflare"
-
-To opt-in to the Edge runtime, you need to do the following: open the root layout file of your app `apps/web/app/layout.tsx` and export the const runtime as `edge`:
-
-```tsx
-export const runtime = 'edge';
-```
-
-This will enable the Edge runtime for your application.
-
-### 2. Using the Cloudflare Mailer or Resend Mailer
+### 1. Using Resend Mailer
 
 Since the default library `nodemailer` relies on Node.js, we cannot use it in the Edge runtime. Instead, we will Resend Mailer.
 
-Set up SPF and DKIM records in your DNS settings.
-
-Please follow [the Vercel Email documentation](https://github.com/Sh4yy/vercel-email?tab=readme-ov-file#setup-spf) to set up the SPF and DKIM records.
-
-Alternatively, you can use the Resend Mailer. Set the `MAILER_PROVIDER` environment variable to `resend` in the `apps/web/.env` file:
+Set the `MAILER_PROVIDER` environment variable to `resend` in the `apps/web/.env` file:
 
 ```bash
 MAILER_PROVIDER=resend
@@ -70,11 +55,13 @@ And provide the Resend API key:
 RESEND_API_KEY=your-api-key
 ```
 
-Alternatively, implement your own mailer using the abstract class we provide in the `packages/mailers` package.
+Alternatively, please implement your own mailer using the abstract class we provide in the `packages/mailers` package. It is extremely straightforward to implement a mailer using the abstract class.
 
-### 3. Switching CMS
+### 2. Switching CMS
 
-By default, Makerkit uses Keystatic as a CMS. Keystatic's local mode (which relies on the file system) is not supported in the Edge runtime. Therefore, you will need to switch to another CMS or use Keystatic's Github mode - which uses Github as data provider.
+By default, Makerkit uses Keystatic as a CMS.
+
+Keystatic's local mode (which relies on the file system) is not supported in the Edge runtime. Therefore, you will need to switch to another CMS or use Keystatic's Github mode - which uses Github as data provider.
 
 At this time, the other CMS supported is WordPress. Set `CMS_CLIENT` to `wordpress` in the `apps/web/.env` file:
 
@@ -86,63 +73,22 @@ Alternatively, use the Keystatic remote mode through Github.
 
 Please check the CMS documentation for more information.
 
-### 4. Select "apps/web" as path to build
+### 3. Select "apps/web" as path to build
 
 When prompted to select the path to build, select `apps/web` as the path to build - since our Remix app is located in the `apps/web` directory.
 
 If you have multiple apps, you can select the app you want to deploy.
 
-### 5. Setting Node.js Compatibility Flags
+### 4. Setting Node.js Compatibility Flags
 
 Cloudflare requires you to set the Node.js compatibility flags. Please follow the instructions on the [Cloudflare documentation](https://developers.cloudflare.com/workers/runtime-apis/nodejs).
 
 Please don't miss this step, as it's crucial for the application to work in the Edge runtime.
 
-### 6. Environment variables
+### 5. Environment variables
 
 When adding environment variables, make sure to add all of them from the Cloudflare dashboard instead of the `.env` file. I cannot understand why, but the Workers did not pick up the environment variables from the `.env` file. So please do make sure to add all the environment variables from the Cloudflare dashboard.
 
-### 7. Workarounds
+## Conclusion
 
-An [issue with Cloudflare](https://github.com/cloudflare/workerd/issues/698) causes makes it impossible to deploy to Cloudflare Pages without two workarounds:
-
-1. Monkey-patching the `fetch` function for Keystatic
-
-#### Monkey-patching the `fetch` function
-
-The below is needed if you use Keystatic in Github mode. If you use Wordpress or another CMS, you can skip this step.
-
-Create a new file named `mock-workerd-fetch.ts` in the `packages/cms/keystatic/src` directory and add the following code:
-
-```tsx
-function mockWorkerdFetch() {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async function (...args) {
-    try {
-      return await originalFetch.apply(this, args);
-    } catch (e) {
-      if (!args[1] || typeof args[1] !== 'object') throw e;
-
-      const unimplementedCacheError =
-        e &&
-        typeof e === 'object' &&
-        'message' in e &&
-        e.message ===
-          "The 'cache' field on 'RequestInitializerDict' is not implemented.";
-      if (!unimplementedCacheError) throw e;
-
-      const newOpts = { ...args[1] };
-      delete newOpts.cache;
-      return originalFetch.apply(this, [args[0], newOpts]);
-    }
-  };
-}
-
-mockWorkerdFetch();
-```
-
-Open the file `packages/cms/keystatic/src/create-reader.ts` and add the following line at the top of the file:
-
-```tsx
-import './mock-workerd-fetch';
-```
+Deploying to Cloudflare is a great choice if you want to run your application close to your users. However, you need to keep in mind the limitations of the Edge runtime and adjust your application accordingly.

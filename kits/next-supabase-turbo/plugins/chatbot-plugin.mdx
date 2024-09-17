@@ -130,7 +130,11 @@ URL using the `CHATBOT_WEBSITE_SITEMAP_URL` environment variable.
 CHATBOT_WEBSITE_SITEMAP_URL=https://example.com/sitemap.xml
 ```
 
-To index your website's content, the chatbot will read the sitemap.xml file.
+To index your website's content, the chatbot will read the `sitemap.xml` file. If the sitemap of your website is not located at `/sitemap.xml`, you can set the `CHATBOT_WEBSITE_SITEMAP_URL` environment variable to the correct URL.
+
+```bash
+CHATBOT_WEBSITE_SITEMAP_URL=https://example.com/my-sitemap.xml
+```
 
 To launch the chatbot crawler, run the command:
 
@@ -150,7 +154,9 @@ It's highly recommended to include the `--exclude` flag to prevent the chatbot f
 
 ## Environment Variables
 
-You can customize the chatbot model by providing the following environment variables:
+### Chatbot Configuration
+
+You can customize the chatbot model by providing the following environment variables at `packages/plugins/chatbot/.env.local`:
 
 ```
 LLM_MODEL_NAME=gpt-3.5-turbo
@@ -159,3 +165,27 @@ LLM_API_KEY=
 ```
 
 The model needs to be compatible with the OpenAI API.
+
+1. `LLM_MODEL_NAME` - The model name to use. For example, `gpt-3.5-turbo`.
+2. `LLM_BASE_URL` - The base URL for the API. For example, `https://api.openai.com/v1`. If you use OpenAI, you can leave this empty.
+3. `LLM_API_KEY` - The API key to use. You can get this from OpenAI.
+
+If you use an OpenAI-compatible model, you can set the `LLM_BASE_URL` to the URL of the API. Otherwise, you can leave it empty.
+
+### Chatbot Indexer
+
+In addition, we need to provide the following environment variables for the chatbot indexer:
+
+```
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+```
+
+1. `SUPABASE_SERVICE_ROLE_KEY` - The service role key for the Supabase instance.
+2. `NEXT_PUBLIC_SUPABASE_URL` - The URL of the Supabase instance.
+
+By adjusting these variables, you can choose which Supabase instance to use for the chatbot indexer. Normally, you would use the same Supabase instance as your app.
+
+You can also use your local Supabase instance for development purposes.
+
+In that case, these values would be the same ones you're using for your app's Supabase instance in `apps/web/.env.development`.

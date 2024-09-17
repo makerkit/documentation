@@ -155,7 +155,7 @@ In the example below, we extend the webook handler to listen to the `onInvoicePa
 import { ActionFunctionArgs } from '@remix-run/node';
 import { getBillingEventHandlerService } from '@kit/billing-gateway';
 import { getLogger } from '@kit/shared/logger';
-import { getSupabaseRouteHandlerClient } from '@kit/supabase/route-handler-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 import billingConfig from '~/config/billing.config';
 import { Database } from '~/lib/database.types';
@@ -175,7 +175,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     logger.info(ctx, `Received billing webhook. Processing...`);
 
     const supabaseClientProvider = () =>
-      getSupabaseRouteHandlerClient<Database>({ admin: true });
+      getSupabaseServerAdminClient<Database>();
 
     const service = await getBillingEventHandlerService(
       supabaseClientProvider,

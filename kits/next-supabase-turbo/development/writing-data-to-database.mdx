@@ -46,7 +46,7 @@ import { z } from 'zod';
 
 import { getLogger } from '@kit/shared/logger';
 import { requireUser } from '@kit/supabase/require-user';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 import { WriteTaskSchema } from '~/(dashboard)/home/(user)/_lib/schema/write-task.schema';
 
@@ -56,7 +56,7 @@ export async function addTaskAction(params: z.infer<typeof WriteTaskSchema>) {
   const task = WriteTaskSchema.parse(params);
 
   const logger = await getLogger();
-  const client = getSupabaseServerActionClient();
+  const client = getSupabaseServerClient();
   const auth = await requireUser(client);
 
   if (!auth.data) {

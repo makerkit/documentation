@@ -60,6 +60,37 @@ Please [read Supabase's documentation](https://supabase.com/docs/guides/auth/soc
 
 For local development, also check out [Supabase's documentation on how to set up OAuth providers locally](https://supabase.com/docs/guides/cli/managing-config).
 
+### Scopes
+
+Scopes are used to request specific permissions from the user. Different providers support and require different scopes.
+
+To add your required scopes, please specify them in the `OAuthProviders` component.
+
+```tsx title="packages/features/auth/src/components/oauth-providers.tsx"
+/**
+ * @name OAUTH_SCOPES
+ * @description
+ * The OAuth scopes are used to specify the permissions that the application is requesting from the user.
+ *
+ * Please add your OAuth providers here and the scopes you want to use.
+ *
+ * @see https://supabase.com/docs/guides/auth/social-login
+ */
+const OAUTH_SCOPES: Partial<Record<Provider, string>> = {
+  azure: 'email',
+  // add your OAuth providers here
+};
+```
+
+For example, if you want to request the user's email address, you can add the `email` scope to the Google provider.
+
+```tsx title="packages/features/auth/src/components/oauth-providers.tsx"
+const OAUTH_SCOPES: Partial<Record<Provider, string>> = {
+  azure: 'email',
+  google: 'email',
+};
+```
+
 ## Password Requirements
 
 To set the password requirements, you can set the following environment variables:

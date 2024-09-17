@@ -8,15 +8,13 @@ description: "Update your Next.js Supabase application with new Shadcn UI compon
 To install a Shadcn UI component, you can use the following command:
 
 ```bash
-cd packages/ui
-npx shadcn-ui@latest add <component> --path=src/shadcn
+npx shadcn@latest add <component> -c ./packages/ui
 ```
 
 For example, to install the `Button` component, you can use the following command:
 
 ```bash
-cd packages/ui
-npx shadcn-ui@latest add button --path=src/shadcn
+npx shadcn@latest add button -c ./packages/ui
 ```
 
 We pass the `--path` flag to specify the path where the component should be installed. You may need to adjust the path based on your project structure.

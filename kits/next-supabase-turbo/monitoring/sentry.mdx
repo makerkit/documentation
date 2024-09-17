@@ -29,3 +29,32 @@ withSentryConfig(nextConfig);
 ```
 
 You can find your Sentry DSN in the Sentry dashboard.
+
+To upload source maps to Sentry, use the following options:
+
+```tsx title="next.config.mjs"
+import { withSentryConfig } from '@sentry/nextjs';
+
+export default withSentryConfig(
+  withBundleAnalyzer({
+    enabled: process.env.ANALYZE === 'true',
+  })(config),
+  {
+    org: 'your-sentry-org-name',
+    project: 'your-sentry-project-name',
+
+    // An auth token is required for uploading source maps.
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+
+    silent: !IS_PRODUCTION, // Used to suppress logs
+    autoInstrumentServerFunctions: false,
+    widenClientFileUpload: true,
+  },
+);
+```
+
+And make sure to add the `SENTRY_AUTH_TOKEN` to your CI environment variables.
+
+```bash
+SENTRY_AUTH_TOKEN=your_auth_token
+```

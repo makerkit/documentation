@@ -114,7 +114,7 @@ We assume you have created a metric in Stripe named `api_requests` that you use 
 
 ```tsx
 import { getBillingGatewayProvider } from '@kit/billing-gateway';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { createAccountsApi } from '@kit/accounts/api';
 
 async function reportUsage(
@@ -122,7 +122,7 @@ async function reportUsage(
   quantity: number
 ) {
   // use the correct client: in this case, the server action client
-  const client = getSupabaseServerActionClient();
+  const client = getSupabaseServerClient();
   const api = createAccountsApi(client);
 
   const subscription = await api.getSubscription(accountId);
@@ -164,7 +164,7 @@ Given an account ID - we need to retrieve the subscription ID and the line item 
 
 ```tsx
 import { getBillingGatewayProvider } from '@kit/billing-gateway';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { createAccountsApi } from '@kit/accounts/api';
 
 async function reportUsage(
@@ -172,7 +172,7 @@ async function reportUsage(
   quantity: number
 ) {
   // use the correct client: in this case, the server action client
-  const client = getSupabaseServerActionClient();
+  const client = getSupabaseServerClient();
   const api = createAccountsApi(client);
 
   const subscription = await api.getSubscription(accountId);

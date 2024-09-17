@@ -19,7 +19,7 @@ export default async function TasksPage() {}
 Let's now fetch some data from Supabase. To do so, we use the server component client.
 
 ```tsx
-const supabase = getSupabaseServerComponentClient();
+const supabase = getSupabaseServerClient();
 
 const { data, error } = await supabase.from('tasks').select('*');
 ```
@@ -28,7 +28,7 @@ Now, let's put it all together:
 
 ```tsx
 export default async function TasksPage() {
-  const supabase = getSupabaseServerComponentClient();
+  const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase.from('tasks').select('*');
 

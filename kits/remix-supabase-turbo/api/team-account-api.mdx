@@ -13,10 +13,10 @@ To use the Team Account API, you need to import the `createTeamAccountsApi` func
 
 ```tsx
 import { createTeamAccountsApi } from '@kit/team-accounts/api';
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
-async function ServerComponent() {
-  const client = getSupabaseServerComponentClient();
+export async function loader() {
+  const client = getSupabaseServerClient();
   const api = createTeamAccountsApi(client);
 
   // use api
@@ -29,10 +29,10 @@ If you're in a Server Action context, you'd use:
 'use server';
 
 import { createTeamAccountsApi } from '@kit/team-accounts/api';
-import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 export async function myServerAction() {
-  const client = getSupabaseServerActionClient();
+  const client = getSupabaseServerClient();
   const api = createTeamAccountsApi(client);
   
   // use api
