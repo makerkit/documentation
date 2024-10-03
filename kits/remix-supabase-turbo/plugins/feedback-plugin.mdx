@@ -21,6 +21,39 @@ Now, install the plugin from your main app:
 pnpm add --filter web @kit/feedback
 ```
 
+### Add the translations
+
+Add the following to your `apps/web/lib/i18n/locales/en/feedback.json` file:
+
+```json title="apps/web/lib/i18n/locales/en/feedback.json"
+{
+  "successTitle": "Thank you for your feedback!",
+  "close": "Close",
+  "errorTitle": "Sorry, Something went wrong!",
+  "errorDescription": "Please try again later or contact us directly.",
+  "contactUs": "Contact us about...",
+  "email": "Email",
+  "feedback": "Feedback",
+  "question": "Question",
+  "bug": "Bug",
+  "send": "Send",
+  "sending": "Sending...",
+  "attachFileOrScreenshot": "Attach file or screenshot",
+  "feedbackPlaceholder": "What do you like or dislike? What can we do better?",
+  "questionPlaceholder": "Ask us anything",
+  "bugPlaceholder": "What happened? What were you expecting to happen?",
+  "uploadImage": "Upload Image"
+}
+```
+
+Now, add the namespace to the loaded translations in your `apps/web/lib/i18n/i18n.settings.ts` file:
+
+```tsx title="apps/web/lib/i18n/i18n.settings.ts"
+export const defaultI18nNamespaces = [
+  'feedback',
+];
+```
+
 ### Create an API route
 
 Create an API route at `routes/api.feedback._index/route.ts` and call the action:

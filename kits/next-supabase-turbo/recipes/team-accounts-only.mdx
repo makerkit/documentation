@@ -21,23 +21,24 @@ To make sure that users are always redirected to the team selection page, you ne
 First, let's create these functions in the `apps/web/src/middleware.ts` file:
 
 ```tsx title="apps/web/src/middleware.ts"
+const createTeamCookie = (userId: string) => `${userId}-selected-team-slug`;
 
-function handleTeamAccountsOnly(request: NextRequest) {
+function handleTeamAccountsOnly(request: NextRequest, userId: string) {
   // always allow access to the teams page
   if (request.nextUrl.pathname === '/home/teams') {
     return NextResponse.next();
   }
 
   if (request.nextUrl.pathname === '/home') {
-    return redirectToTeam(request);
+    return redirectToTeam(request, userId);
   }
 
   if (isTeamAccountRoute(request) && !isUserRoute(request)) {
-    return storeTeamSlug(request);
+    return storeTeamSlug(request, userId);
   }
 
   if (isUserRoute(request)) {
-    return redirectToTeam(request);
+    return redirectToTeam(request, userId);
   }
 
   return NextResponse.next();
@@ -54,13 +55,15 @@ function isTeamAccountRoute(request: NextRequest) {
   return pathName.startsWith('/home/');
 }
 
-function storeTeamSlug(request: NextRequest): NextResponse {
+function storeTeamSlug(request: NextRequest, userId: string): NextResponse {
   const accountSlug = request.nextUrl.pathname.split('/')[2];
   const response = NextResponse.next();
 
   if (accountSlug) {
+    const cookieName = createTeamCookie(userId);
+
     response.cookies.set({
-      name: LAST_TEAM_COOKIE,
+      name: cookieName,
       value: accountSlug,
       path: '/',
     });
@@ -69,8 +72,9 @@ function storeTeamSlug(request: NextRequest): NextResponse {
   return response;
 }
 
-function redirectToTeam(request: NextRequest): NextResponse {
-  const lastTeamSlug = request.cookies.get(LAST_TEAM_COOKIE);
+function redirectToTeam(request: NextRequest, userId: string): NextResponse {
+  const cookieName = createTeamCookie(userId);
+  const lastTeamSlug = request.cookies.get(cookieName);
 
   if (lastTeamSlug) {
     return NextResponse.redirect(
@@ -115,7 +119,7 @@ We will now add the `handleTeamAccountsOnly` function to the middleware chain in
       );
     }
 
-    return handleTeamAccountsOnly(req);
+    return handleTeamAccountsOnly(req, user.id);
   },
 }
 ```

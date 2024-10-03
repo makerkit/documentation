@@ -14,6 +14,32 @@ description: "Clone the Remix Supabase SaaS Kit Turbo repository to your local m
 - Payment Gateway account (Stripe/Lemon Squeezy)
 - Email Service account (optional for local development)
 
+## Verify your Git username
+
+To verify you have access, you need to check that your local Git username is the same as set up in the Makerkit's Github organization.
+
+Please run the following command to check your Git username:
+
+```bash
+git config user.username
+```
+
+If the output is not your Github username, or does not match the username registered in Makerkit's Github organization, you can set it using the following command:
+
+```bash
+git config --global user.username "Your Github Username"
+```
+
+Ex. if your Github username is `johndoe`, you can set it using the following command:
+
+```bash
+git config --global user.username "johndoe"
+```
+
+This is important to ensure you can run the repository.
+
+## Cloning the Repository
+
 Clone this repository with the command:
 
 ```bash

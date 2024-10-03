@@ -15,7 +15,7 @@ Let's assume the following is your Next.js Index page, and we want to show the u
 The MakerKit default template does it for you, but you need to remember to add the following snippet to every page you want the authentication persisted.
 
 ```tsx
-import { withUserProps } from '~/lib/props/with-user-props';
+import { withUserProps } from '~/app/props/with-user-props';
 
 function Index({ user }) {
     // display user in your components

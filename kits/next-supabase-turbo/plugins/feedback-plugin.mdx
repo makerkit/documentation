@@ -29,6 +29,47 @@ Now, install the plugin from your main app by adding the following to your `pack
 
 And then run `pnpm install` to install the plugin.
 
+### Add the translations
+
+Add the following to your `apps/web/public/locales/en/feedback.json` file:
+
+```json title="apps/web/locales/en.json"
+{
+  "successTitle": "Thank you for your feedback!",
+  "close": "Close",
+  "errorTitle": "Sorry, Something went wrong!",
+  "errorDescription": "Please try again later or contact us directly.",
+  "contactUs": "Contact us about...",
+  "email": "Email",
+  "feedback": "Feedback",
+  "question": "Question",
+  "bug": "Bug",
+  "send": "Send",
+  "sending": "Sending...",
+  "attachFileOrScreenshot": "Attach file or screenshot",
+  "feedbackPlaceholder": "What do you like or dislike? What can we do better?",
+  "questionPlaceholder": "Ask us anything",
+  "bugPlaceholder": "What happened? What were you expecting to happen?",
+  "uploadImage": "Upload Image"
+}
+```
+
+Now, add the namespace to the loaded translations in your `apps/web/lib/i18n/i18n.settings.ts` file:
+
+```tsx title="apps/web/lib/i18n/i18n.settings.ts"
+export const defaultI18nNamespaces = [
+  'common',
+  'auth',
+  'account',
+  'teams',
+  'billing',
+  'marketing',
+
+  // Add the feedback namespace
+  'feedback',
+];
+```
+
 ### Add the migrations
 
 Since the feedback relies on a new table in the database, you will need to run the migrations to create the table. Please create a new migration file:

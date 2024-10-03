@@ -30,17 +30,3 @@ The key needs to be added to your environment variables settings. Please use you
 ```
 SERVICE_ACCOUNT_PRIVATE_KEY=
 ```
-
-## Google Login hang on Sign-in
-
-**Possible cause**: You are using the missing "Service Usage Consumer" role on the Firebase account that is the caller. 
-
-Here's how to resolve this:
-- Go to the Google Cloud Console: Visit https://console.developers.google.com/iam-admin/iam/project?project=yourproject changing to your project name
-- Navigate to IAM & Admin: Find the "IAM & Admin" section in the left-hand navigation menu.
-- Find Your Service Account: In the "IAM" section, locate the service account you're using for your Firebase Admin SDK. The email address should be similar to the one you logged in your initializeFirebaseAdminApp function.
-- Grant the Required Role:
-- Click on the edit (pencil) icon next to your service account.
-- Click on "Add another role."
-- Search for "Service Usage Consumer" and select the roles/serviceusage.serviceUsageConsumer role.
-- Click "Save" to apply the changes.

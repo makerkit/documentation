@@ -32,6 +32,68 @@ Since this plugin depends on the Kanban plugin, you need to install both. Please
 
 Then, please select the `roadmap` plugin from the list of available plugins.
 
+### Add the translations
+
+Add the following to your `apps/web/public/locales/en/roadmap.json` file:
+
+```json title="apps/web/locales/en.json"
+{
+  "loadingComments": "Loading comments...",
+  "noComments": "There are no comments on this feature request yet. Be the first to comment!",
+  "comments": "Comments ({{count}})",
+  "writtenOn": "Written on {{date}}",
+  "loadMoreComments": "Load More Comments",
+  "pleaseSignInComment": "Please sign in to leave a comment",
+  "pleaseSignIn": "Please sign in to submit a post",
+  "pleaseSignInDescription": "You must be signed in to submit a post to the community",
+  "submitComment": "Submit Comment",
+  "planned": "Planned",
+  "inProgress": "In Progress",
+  "completed": "Completed",
+  "closed": "Closed",
+  "underReview": "Under Review",
+  "submitPost": "Submit your Post",
+  "fillOutForm": "Fill out the form below to submit your post to the community",
+  "type": "Type",
+  "feature": "Feature",
+  "bug": "Bug",
+  "question": "Question",
+  "task": "Task",
+  "title": "Title",
+  "titleDescription": "A concise title will help others understand your suggestion",
+  "description": "Description",
+  "descriptionDescription": "Provide as much detail as possible to help others understand your suggestion or issue",
+  "submit": "Submit",
+  "cancel": "Cancel",
+  "votes": "{{votes}} votes",
+  "improvement": "Improvement",
+  "noIssues": "No feature requests found. Be the first to suggest a feature!",
+  "noIssuesWithFilters": "No issues found with the current filters.",
+  "clearFilters": "Clear Filters",
+  "all": "All",
+  "featureRequests": "Feature Requests",
+  "bugReports": "Bug Reports",
+  "recentlyCreated": "Recently Created",
+  "mostVotes": "Most Votes",
+  "allStatuses": "All Statuses",
+  "issues": "Issues",
+  "roadmap": "Roadmap",
+  "heroPill": "Propose a feature, report a bug, or share your ideas",
+  "subheading": "A place to share your ideas and collaborate on features."
+}
+```
+
+Please adjust the translations to your needs.
+
+Now, add the namespace to the loaded translations in your `apps/web/lib/i18n/i18n.settings.ts` file:
+
+```tsx title="apps/web/lib/i18n/i18n.settings.ts"
+export const defaultI18nNamespaces = [
+  // Add the 'roadmap' namespace
+  'roadmap',
+];
+```
+
 ### Migration
 
 Create a new migration file by running the following command:

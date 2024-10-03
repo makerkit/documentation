@@ -1,0 +1,382 @@
+---
+title: "Realtime Updates in Makerkit Next.js Supabase Turbo project"
+description: "Learn how to stream real-time updates in your Makerkit Next.js Supabase Turbo project."
+label: "Streaming Realtime updates"
+position: 6
+---
+
+👋 Hey, welcome to this module on Realtime Updates in Makerkit Next.js Supabase Turbo project. In this module, **we will explore how you can stream real-time updates** in your Makerkit Next.js Supabase Turbo project.
+
+## Introduction to Realtime Updates with Supabase
+
+In today's modern SaaS, users expect instant, dynamic experiences from web applications. This is where realtime updates come into play, transforming static web pages into living, breathing interfaces that respond to changes as they happen.
+
+Realtime functionality has become a crucial feature for many SaaS applications and thankfully Supabase makes it easy to implement.
+
+Supabase Realtime enables:
+
+1. **Improved User Experience**: Users receive updates instantly without needing to refresh the page, creating a more engaging and responsive application.
+2. **Enhanced Collaboration**: Multiple users can work together seamlessly, seeing each other's changes in real-time.
+3. **Timely Notifications**: Important updates or alerts can be pushed to users immediately, ensuring they always have the most current information.
+4. **Competitive Advantage**: Applications with realtime features often feel more modern and sophisticated, potentially giving them an edge in the market.
+
+## Use Case: Realtime Support Ticket System
+
+In our support ticket system, realtime updates will allow support agents to see new tickets and messages as they arrive, without needing to manually refresh the page. This leads to faster response times and a more efficient support process.
+
+### Supabase Realtime: An Overview
+
+Supabase, our backend platform of choice, provides powerful realtime capabilities out of the box. Supabase Realtime is built on top of Phoenix Channels and can handle millions of simultaneous connections.
+Key features of Supabase Realtime include:
+
+1. **Database Changes**: Subscribe to INSERT, UPDATE, and DELETE operations on your Supabase tables.
+2. **Presence**: Track which users are online and what they're doing.
+3. **Broadcast**: Send and receive messages to and from connected clients.
+
+Supabase Realtime uses WebSockets to maintain a persistent connection between the client and the server, allowing for bidirectional communication. This means that not only can the server push updates to the client, but the client can also send messages back to the server in real-time.
+
+### What We'll Build
+
+In this module, we'll enhance our support ticket system with realtime capabilities.
+
+Specifically, we'll:
+
+1. Implement realtime updates for new tickets and messages.
+2. Create a live chat feature for real-time communication between support agents and customers.
+
+By the end of this module, you'll have a solid understanding of how to implement realtime features in your Makerkit project using Supabase Realtime.
+
+## Setting up Supabase Realtime
+
+Before we start implementing realtime features in our Makerkit project, we need to ensure that Supabase is properly configured for realtime functionality. Luckily, Supabase makes this process straightforward.
+
+### Enabling Realtime for the Messages Table
+
+While Supabase allows realtime functionality for all tables by default, it's a good practice to be selective about which tables you want to enable for realtime updates. This helps optimize performance and reduce unnecessary data transfer.
+
+To do so, you have two options:
+
+1. **Enable Realtime in your Schema**: You can enable realtime for all tables in your schema by running the following SQL command:
+2. **Enable Realtime in the Dashboard**: Alternatively, you can enable realtime for specific tables in the Supabase Dashboard.
+
+Since we need this to work locally, it makes sense for us to update our schema and enable realtime for the messages table.
+
+```sql
+alter publication supabase_realtime add table messages;
+```
+
+**Action**: please add the above to our migration file with our schema. If you don't want to reset your Database, you can run the command above directly from Supabase Studio, or you can enable it from the Dashboard itself.
+
+You can now see that we have enabled realtime for the messages table (and on the notifications table, which Makerkit does by default).
+
+### Adding a Realtime subscription with Supabase Realtime
+
+Now that we have enabled realtime for the messages table, we can start listening for changes in our Next.js application.
+
+To do this, we need to **create a new channel in our Supabase client and subscribe to the changes in the messages table**. We can then update our UI whenever a new message is inserted into the table.
+
+Here's how we can set up a realtime subscription in our Next.js application:
+
+```tsx title="apps/web/app/home/[account]/tickets/[ticketId]/_components/ticket-messages-container.tsx"
+useEffect(() => {
+  const channel = client.channel(`messages-channel-${ticketId}`);
+
+  const subscription = channel
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        filter: `ticket_id=eq.${ticketId}`,
+        table: 'messages',
+      },
+      (payload) => {
+        const message = payload.new as Tables<'messages'>;
+
+        if (message.author === 'customer') {
+          appendMessage(message);
+        }
+      },
+    )
+    .subscribe();
+
+  return () => {
+    void subscription.unsubscribe();
+  };
+}, [client, ticketId, appendMessage]);
+```
+
+Let's explore the code snippet above:
+
+1. We create a new channel using the `client.channel` method, passing in a unique channel name based on the ticket ID.
+2. We then subscribe to the `postgres_changes` event on the `messages` table, filtering by the `ticket_id` field to only receive messages related to the current ticket.
+3. When a new message is inserted into the table, the `payload` object contains the new message data. We extract this data and append it to the existing messages using the `appendMessage` function.
+4. Finally, we return a cleanup function that unsubscribes from the channel when the component is unmounted.
+
+<Image src="/assets/courses/next-turbo/realtime-architecture.webp" width={"840"} height={"612"} />
+
+#### Why do we use `useEffect` to set up the subscription?
+
+Because we want to ensure that the subscription is created when the component mounts and removed when the component unmounts. This is a common pattern for managing side effects in React components and helps prevent memory leaks and other issues.
+
+If you added the subscription to the render function, it would execute every time the component re-renders, **leading to multiple subscriptions and potential performance issues**.
+
+#### Updating the UI with the new message
+
+Here's the full code snippet for the `useFetchTicketMessages` hook that fetches messages and sets up the realtime subscription:
+
+```tsx title="apps/web/app/home/[account]/tickets/[ticketId]/_components/ticket-messages-container.tsx"
+function useFetchTicketMessages(params: {
+  ticketId: string;
+  page: number;
+  queryKey: string[];
+}) {
+  const appendMessage = useAppendNewMessage({ queryKey: params.queryKey });
+  const client = useSupabase();
+
+  const { ticketId, page } = params;
+  const messagesPerPage = 25;
+
+  const queryFn = async () => {
+    const startOffset = (page - 1) * messagesPerPage;
+    const endOffset = startOffset + messagesPerPage;
+
+    const { data: messages, error } = await client
+      .from('messages')
+      .select<
+        string,
+        Message
+      >('*, account: author_account_id (email, name, picture_url)')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: false })
+      .range(startOffset, endOffset);
+
+    if (error) {
+      throw error;
+    }
+
+    return messages;
+  };
+
+  useEffect(() => {
+    const channel = client.channel(`messages-channel-${ticketId}`);
+
+    const subscription = channel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          filter: `ticket_id=eq.${ticketId}`,
+          table: 'messages',
+        },
+        (payload) => {
+          const message = payload.new as Tables<'messages'>;
+
+          if (message.author === 'customer') {
+            appendMessage(message);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void subscription.unsubscribe();
+    };
+  }, [client, ticketId, appendMessage]);
+
+  return useInfiniteQuery({
+    queryKey: params.queryKey,
+    queryFn,
+    initialPageParam: page,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage.length === 0) {
+        return;
+      }
+
+      return lastPageParam + 1;
+    },
+    getPreviousPageParam: (_, __, firstPageParam) => {
+      if (firstPageParam <= 1) {
+        return;
+      }
+
+      return firstPageParam - 1;
+    },
+  });
+}
+```
+
+You can now try to send messages in your application and see them appear in real-time without needing to refresh the page. This is a powerful feature that enhances the user experience and makes your application feel more dynamic and responsive.
+
+However, the customer's side is not yet implemented. We will implement this in the next section.
+
+## Polling updates from the Ticket Widget
+
+In the previous section, we implemented the support agent's side of the realtime updates. Now we will implement the customer's side, where they can see new messages from the support agent in real-time.
+
+We won't be using Supabase Realtime for the customer's side, as it's more complex to set up and maintain and we generally don't want to place the SDK client onto the customer's website.
+
+Instead, **we'll use a polling mechanism** to fetch new messages from the server at regular intervals.
+
+### Implementing Polling in the Ticket Widget
+
+Polling is a simple mechanism where the client sends a request to the server at regular intervals to check for new data. In our case, we'll fetch new messages from the server every few seconds to update the chat widget in real-time.
+
+While polling isn't as efficient as using WebSockets for real-time updates, it's a good alternative for scenarios where setting up WebSockets is not feasible or necessary.
+
+However, if you're planning on working on a more complex implementation, you could explore different ways to implement real-time updates for the customer's side based on your requirements: for example, a WebSocket connected to a  server that streams messages from Supabase Realtime.
+
+For the sake of simplicity, we'll use an interval. We will fetch new messages every 10 seconds based on the last message's timestamp. This way, we can ensure that we only fetch new messages and avoid unnecessary data transfer.
+
+Let's go on and update our `useFetchTicketMessages` hook to include polling in our widget `packages/ticket-widget/src/components/support-ticket-widget-container.tsx`:
+
+```tsx title="packages/ticket-widget/src/components/support-ticket-widget-container.tsx"
+function useFetchTicketMessages({
+  ticketId,
+  isOpen,
+}: {
+  ticketId: string | undefined;
+  isOpen: boolean;
+}) {
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: Error | null;
+    messages: Message[];
+  }>({
+    loading: true,
+    error: null,
+    messages: [],
+  });
+
+  useEffect(() => {
+    if (!ticketId || !isOpen) {
+      return setState((state) => {
+        return {
+          ...state,
+          loading: false,
+          error: null,
+        };
+      });
+    }
+
+    function fetchMessages(lastCreatedAt?: string) {
+      setState({ loading: true, error: null, messages: [] });
+
+      fetch(`${API_URL}/messages?ticketId=${ticketId}&lastCreatedAt=${lastCreatedAt}`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch messages');
+          }
+
+          return response.json();
+        })
+        .then((messages) => {
+          setState({
+            loading: false,
+            error: null,
+            messages: messages as Message[],
+          });
+        })
+        .catch((error) => {
+          setState({
+            loading: false,
+            error,
+            messages: [],
+          });
+        });
+    }
+
+    // Fetch messages on mount
+    fetchMessages();
+
+    // Fetch messages every 10 seconds
+    const interval = setInterval(() => {
+      const lastMessage = state.messages[state.messages.length - 1];
+      const lastCreatedAt = lastMessage?.createdAt;
+
+      fetchMessages(lastCreatedAt);
+    }, 10_000);
+
+    return () => clearInterval(interval);
+  }, [ticketId, isOpen, state.messages]);
+
+  return {
+    ...state,
+    appendMessage: (message: Message) => {
+      setState((state) => ({
+        ...state,
+        messages: [...state.messages, message],
+      }));
+    },
+  };
+}
+```
+
+As you may have noticed, we did the following:
+
+1. Added a `fetchMessages` function that fetches messages from the server based on the last message's timestamp.
+2. Called `fetchMessages` on mount to fetch the initial set of messages.
+3. Set up an interval that fetches new messages every 10 seconds based on the last message's timestamp.
+4. Cleared the interval when the component is unmounted to prevent memory leaks.
+5. When a new message is detected, we append it to the existing messages using the `appendMessage` function.
+
+There is one missing piece to this: updating the API handler to fetch messages based on the last message's timestamp. Let's update the API handler to include this functionality:
+
+First, we want to update the Zod schema to include the `lastCreatedAt` field:
+
+```ts title="apps/web/app/api/ticket/messages/route.ts"
+const GetTicketMessagesSchema = z.object({
+  ticketId: z.string().uuid(),
+  lastCreatedAt: z.string().or(z.literal('')).transform((value) => {
+    if (value === 'undefined') {
+      return;
+    }
+
+    return value;
+  })
+});
+```
+
+Next, we want to update the handler to fetch messages based on the `lastCreatedAt` field:
+
+```ts title="apps/web/app/api/ticket/messages/route.ts"
+const searchParams = new URL(request.url).searchParams;
+
+const { ticketId, lastCreatedAt } = GetTicketMessagesSchema.parse({
+  ticketId: searchParams.get('ticketId') ?? '',
+  lastCreatedAt: searchParams.get('lastCreatedAt') ?? '',
+});
+
+let query = client
+  .from('messages')
+  .select(
+    `
+    id,
+    ticketId: ticket_id,
+    content,
+    author,
+    createdAt: created_at
+    `,
+  )
+  .eq('ticket_id', ticketId)
+  .order('created_at', { ascending: true });
+
+if (lastCreatedAt) {
+  query = query.gt('created_at', lastCreatedAt);
+}
+
+const { data, error } = await query;
+```
+
+We used the `gt` (greater than) filter to fetch messages that were created after the `lastCreatedAt` timestamp. This ensures that we only fetch new messages and avoid duplicates.
+
+---
+
+This implementation ensures that the customer's side of the chat widget is updated in real-time without needing to refresh the page. Customers can see new messages from the support agent as they arrive, creating a more engaging and interactive experience.
+
+## Conclusion
+
+In this module, we explored the importance of realtime updates in modern web applications and how Supabase Realtime can enhance the user experience. We implemented realtime features in our support ticket system, allowing support agents and customers to communicate in real-time without needing to refresh the page.
+
+By setting up Supabase Realtime and implementing polling for the customer's side, we created a dynamic and responsive chat widget that enhances the support experience for both agents and customers.

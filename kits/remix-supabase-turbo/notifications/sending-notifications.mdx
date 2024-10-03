@@ -14,7 +14,7 @@ The service is a server-side service, so you can use it in your server actions o
 Here is a super simple example of how you can send a notification after a user signs up.
 
 ```tsx
-import { createNotificationsApi } from '@kit/notifications';
+import { createNotificationsApi } from '@kit/notifications/api';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(
@@ -43,7 +43,7 @@ You can send notifications to different channels using the `channel` field. For 
 The `createNotificationsApi` function takes the `client` parameter - eg. the Supabase client.
 
 ```tsx
-import { createNotificationsApi } from '@kit/notifications';
+import { createNotificationsApi } from '@kit/notifications/api';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(
@@ -75,7 +75,7 @@ You can send different types of notifications using the `type` field. For exampl
 By default, notifications are sent as `info`.
 
 ```tsx
-import { createNotificationsApi } from '@kit/notifications';
+import { createNotificationsApi } from '@kit/notifications/api';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 async function sendNotificationAfterSignup(

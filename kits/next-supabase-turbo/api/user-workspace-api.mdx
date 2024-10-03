@@ -14,7 +14,7 @@ To access the data, you can use the `loadUserWorkspace` loader function. This fu
 While multiple calls to this function are deduped within a single request, bear in mind that this request will be called when navigating to the page. If you only require a small subset of data, it would be best to make more granular requests.
 
 ```tsx
-import { loadUserWorkspace } from '~/home/_lib/server/load-user-workspace';
+import { loadUserWorkspace } from '~/home/(user)/_lib/server/load-user-workspace';
 
 export default async function SomeUserPage() {
   const data = await loadUserWorkspace();
@@ -26,7 +26,7 @@ export default async function SomeUserPage() {
 The data returned from the `loadUserWorkspace` function is an object with the following properties:
 
 - `user`: The user object coming from Supabase Auth
-- `account`: The account object of the user
+- `workspace`: The account object of the user
 - `accounts`: An array of all accounts the user is a member of
 
 Here is an example of the data structure:
@@ -35,7 +35,7 @@ Here is an example of the data structure:
 import type { User } from '@supabase/supabase-js';
 
 {
-  account: {
+  workspace: {
     id: string | null;
     name: string | null;
     picture_url: string | null;
@@ -55,7 +55,7 @@ import type { User } from '@supabase/supabase-js';
 }
 ```
 
-The `account` object contains the following properties:
+The `workspace` object contains the following properties:
 - `id`: The account ID
 - `name`: The account name
 - `picture_url`: The account picture URL
@@ -73,7 +73,7 @@ The data fetched from the user workspace API is available in the context. You ca
 import { useUserWorkspace } from '@kit/accounts/hooks/use-user-workspace';
 
 export default function SomeComponent() {
-  const { account, user, accounts } = useUserWorkspace();
+  const { workspace, user, accounts } = useUserWorkspace();
 
   // use account, user, and accounts
 }

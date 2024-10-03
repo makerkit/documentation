@@ -1,0 +1,426 @@
+---
+title: "Going to Production with Makerkit Next.js Supabase Turbo"
+description: "Learn how to configure your Makerkit Next.js Supabase Turbo project to production"
+label: "Deploy to Production"
+position: 8
+---
+
+Hi there! 👋 You made it to the end of the course! 🎉
+
+Welcome to this module to deploying your Makerkit Next.js Supabase Turbo project to production.
+
+In this module, we'll cover the following:
+
+1. **Setting up your environment variables**: We'll cover how to set up your environment variables for your production environment.
+2. **Deploying your project**: We'll cover how to deploy your project to Vercel.
+3. **Setting up your Supabase project**: We'll cover how to set up your Supabase project for production.
+4. **Stripe integration**: We'll cover how to set up your Stripe account for production.
+5. **Minor changes for production**: We'll cover some minor changes you might need to make for your project to work in production.
+
+In addition to this module, you will find the [official documentation](/docs/next-supabase-turbo/checklist) extremely helpful. The documentation covers everything you need to know about deploying your project to production.
+
+The estimated time to complete this module is around 1 hour, but it could take longer if you're setting up your accounts for the first time.
+
+Without further ado, let's get started! 🚀
+
+## Requirements
+
+Before we get started, make sure you have the following:
+
+1. A Vercel account - you can sign up for one [here](https://vercel.com/signup).
+2. A Supabase account - you can sign up for one [here](https://supabase.io/).
+3. A Stripe account - you can sign up for one [here](https://stripe.com/).
+4. Optionally, an SMTP server for sending emails.
+
+Without these, you won't be able to complete this module. If you don't have these accounts, please sign up for them before continuing.
+
+## High-level overview of our production deployment
+
+Our production deployment will look like this 👇
+
+<Image src="/assets/courses/next-turbo/production-services-overview.webp" width={"707"} height={"790"} />
+
+1. **User**: the user visits your website that sits on Vercel / or on any other hosting provider you choose.
+2. **Vercel**: hosts your Next.js application and serves it to the user.
+3. **Supabase**: the application will communicate with Supabase for the database, authentication and storage.
+
+## Creating a Supabase project for production
+
+Before we deploy our project to production, we need to set up a Supabase project for production. This involves setting up the database, authentication, storage, and SMTP service.
+
+If you haven't yet, please create a new [Supabase](https://supabase.com) account and create a new project. **You can do this on the free tier**, no need to upgrade to a paid plan.
+
+Now that you have created a new Project, Supabase will provide you with some environment variables that you need to set up in your project.
+
+### Keeping your Supabase Database Password safe
+
+When you create a new Supabase project, Supabase will prompt you to create a Database Password.
+
+Please store the Database Password and keep it safe - you will need it to authenticate your project with the Supabase CLI later on.
+
+### Navigating to the Supabase API settings
+
+To retrieve the environment variables you will need to retrieve the following:
+
+1. **Supabase URL**: this is the URL of your Supabase project.
+2. **Anon Key**: this is the public key of your Supabase project. The client will use it to access your Supabase project.
+3. **Service Role Key**: this is the secret key that grants administrative access to your Supabase project.
+
+Navigate to `Project Settings` -> `API` to retrieve the Supabase URL, Anon Key, and Service Role Key.
+
+<Image src="/assets/courses/next-turbo/supabase-api-settings.webp" width={"2500"} height={"1262"} />
+
+Keep this values safe, you will need them to set up your environment variables.
+
+### Setting up your Supabase project authentication
+
+We need to set up the authentication for our Supabase project. This involves setting our application's URL, and a return URL for callbacks when a user logs in or signs up.
+
+Navigate to `Authentication` -> `URL Configuration` to set up the authentication settings.
+
+Please fill the `Site URL` and `Redirect URL` fields with your application's URL if you have it.
+
+If you don't yet have a URL (as you may still need to deploy your project), you can fill in the URL later, but remember to update it before you go live with your project.
+
+#### Redirect URL
+
+The Redirect URL is the URL that Supabase will redirect the user to after they log in or sign up. This URL should be the URL of your application.
+
+You can use the following Redirect URL format: `https://<your-url>/auth/callback`. This is the default endpoint Makerkit uses for authentication.
+
+### Setting up your Supabase project SMTP service
+
+If you don't yet have an SMTP service, please skip this step. However - please remember to set up an SMTP service before you go live with your project.
+
+Navigate to `Project Settings` -> `Authentication` -> `SMTP Settings` to set up your SMTP service.
+
+Enable the SMTP service and fill in the SMTP settings. You can use a service like [Resend](https://resend.com/) to set up your SMTP service, which Makerkit supports natively.
+
+This is extremely important to ensure that your users receive emails from your application, as Supabase's email service is not reliable and only meant for development purposes.
+
+### Setting the Emails in your Supabase project
+
+Makerkit provides with pre-designed emails that you can use in your Supabase project. You can find the emails in the `apps/web/supabase/templates` folder in your project.
+
+These emails are nicer than the default Supabase emails and provide a better user experience. I do recommend using them in your project.
+
+For more information, please visit the [official documentation to set up emails](/docs/next-supabase-turbo/authentication-emails).
+
+### Linking your Supabase project
+
+Now that you have set up your Supabase project, you need to link it to your project with the Supabase CLI.
+
+To do this, you need to run the following command:
+
+```bash
+pnpm --filter web supabase login
+```
+
+Please follow the prompts and login to your Supabase account.
+
+Now, you need to link your project to your Supabase project. To do this, run the following command:
+
+```bash
+pnpm --filter web supabase link
+```
+
+You can choose the project you want to link to, and the Supabase CLI will link your project to your Supabase project.
+
+The CLI will prompt you for the Database Password you created earlier. Please enter it to authenticate your project with Supabase.
+
+### Pushing the Migration to Supabase for production
+
+If you have followed the previous steps, you have linked your project to your Supabase project. Now, you need to push the migration to your Supabase project.
+
+To do this, run the following command:
+
+```bash
+pnpm --filter web supabase db push
+```
+
+The Supabase CLI will now ask you to confirm the migrations. If it all looks good (you should see the core migrations and the migration wr created for this course) please proceed.
+
+Once succeeded, your Supabase Database is now set up for production.
+
+### Adding Supabase Database Webhooks pointing to your Vercel project
+
+The last step is to add the Database Webhooks to your Supabase project. These webhooks will notify our application when certain records get created, updated, or deleted in the database. Makerkit uses these notifications for various reasons, such as cleaning up subscriptions after an account is deleted, or to send emails when a new invitation gets created.
+
+To add the Database Webhooks, please [follow the official documentation](/docs/next-supabase-turbo/configuring-supabase-database-webhooks).
+
+Once set up, you should see the Webhooks in your Supabase project.
+
+<Image src="/assets/courses/next-turbo/supabase-webhooks.webp" width={"2062"} height={"876"} />
+
+### Set up Google Auth [Optional]
+
+If you want to use Google Auth in your project, [you need to set up Google Auth in your Supabase project](https://supabase.com/docs/guides/auth/social-login/auth-google).
+
+This is a little bit more convoluted as you need a Google Cloud project, so I recommend to do this later on.
+
+However, I am writing it here as a reminder to do it before you go live with your project.
+
+## Setting up Stripe
+
+Before we deploy our project to production, we need to set up our Stripe account. This involves setting up our Stripe keys and adding a webhook to our Stripe account.
+
+If you don't yet have a Stripe account, please create one [here](https://stripe.com/).
+
+### Getting up your Stripe keys
+
+Navigate to the `Developers` -> `API keys` section in your Stripe account to retrieve your Stripe keys.
+
+In this section - you will retrieve two keys:
+
+1. **Publishable Key**: this is the public key that the client will use to communicate with Stripe. We use it to display the embedded Stripe Checkout on the client-side.
+2. **Secret Key**: this is the secret key that the server will use to communicate with Stripe server-side. We use it to create subscriptions, update subscriptions, and more.
+
+<Image src="/assets/courses/next-turbo/stripe-api-keys.webp" width={"1742"} height={"864"} />
+
+### Adding a Webhook to your Stripe account
+
+We now need to add a webhook to our Stripe account. This webhook will notify our application when certain events happen in Stripe, such as a subscription being created, updated, or deleted.
+
+Additionally, we will need the signing secret that we will use to verify the webhook events - to make sure they are coming from Stripe.
+
+To add a webhook to your Stripe account, follow these steps:
+
+1. Navigate to the `Developers` -> `Webhooks` section in your Stripe account.
+2. Click on the `Add endpoint` button.
+3. Fill in the `Endpoint URL` with your application's URL. You can use the following format: `https://<your-url>/api/billing/webhook`. If you don't have one yet, you can fill it in later and get back to this step.
+4. Select the following events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. Select more if your app depends on more events.
+
+Once created a webhook, you will see the webhook in your Stripe account. Click on the webhook to display the `Signing Secret`. This key is what we name `STRIPE_WEBHOOK_SECRET` in our environment variables. Hold on it until you set up your environment variables.
+
+<Image src="/assets/courses/next-turbo/stripe-signing-secret.webp" width={"1310"} height={"208"} />
+
+## Create Stripe Products
+
+Before you go live with your project, you need to create the products in your Stripe account. These products are what your users will subscribe to.
+
+I will show you how to create one of the products, and you can create the rest of the products in the same way.
+
+### Flat-rate Subscription
+
+If you remember, we created a flat-rate subscription in our project. This subscription is a fixed price subscription that your users can subscribe to.
+
+Let's add the Starter Products to your Stripe account. To do this, follow these steps:
+
+1. Navigate to the `Product Catalog` section in your Stripe account.
+2. Click on the `Add product` button.
+3. Fill in the `Name` with `Starter Plan`.
+4. Set it as a `Recurring` product at a `Monthly` interval with a price of `49.00` USD. You can also add a Yearly interval if you want.
+
+Once you have created your `Product` (Starter Plan) and your `Prices` (Monthly and Yearly), you can retrieve the Price IDs which we will define in our environment variables as we've seen in the previous section.
+
+```bash title="apps/web/.env.production"
+NEXT_PUBLIC_STARTER_PLAN_MONTHLY_VARIANT_ID=<your-monthly-price-id>
+NEXT_PUBLIC_STARTER_PLAN_YEARLY_VARIANT_ID=<your-yearly-price-id>
+```
+
+### Per Seat Subscription
+
+Our application charges $10 per user per month. To set this up, you need to create a `Product` in your Stripe account.
+
+To create a Per Seat Subscription, we can create a `Product` in our Stripe account. To do this, follow these steps:
+
+1. Navigate to the `Product Catalog` section in your Stripe account.
+2. Click on the `Add product` button.
+3. Fill in the `Name` with `Per Seat Plan`.
+4. Set it as a `Recurring` product at a `Monthly` interval with a price of `10.00` USD.
+
+When each user gets added to a Team Account, Makerkit will increase the quantity of the subscription by 1. This way, you can charge $10 per user per month. When a user gets removed from a plan, Makerkit will decrease the quantity of the subscription by 1. When a team subscribes to a Pro Plan (say with 5 users), the quantity will be set to 5 and they will be charged $50 per month.
+
+Once you have created your `Product` (Per Seat Plan) and your `Prices` (Monthly and Yearly), you can retrieve the Price IDs which we will define in our environment variables as we've seen in the previous section.
+
+```bash title="apps/web/.env.production"
+NEXT_PUBLIC_PER_SEAT_PLAN_MONTHLY_VARIANT_ID=<your-monthly-price-id>
+NEXT_PUBLIC_PER_SEAT_PLAN_YEARLY_VARIANT_ID=<your-yearly-price-id>
+```
+
+You can set these environment variables in your `.env` files depending on which environment you are deploying to.
+
+## Setting up your environment variables
+
+One of the most important tasks in deploying you project to production is setting up your environment variables. A wrong environment variable can lead to your project not working as expected. In this section, we'll cover how to set up your environment variables for your production environment.
+
+### Exporting environment variables using the Turbo generator
+
+Makerkit provides a generator that will prompt you for your environment variables and generate a `.env.local` file for you, which you can then use within your Vercel/Cloudflare/any other hosting provider.
+
+To use the generator, run the following command:
+
+```bash
+turbo gen env
+```
+
+The generator will prompt you for your environment variables and generate a `.env.local` file for you.
+
+Now, you can validate the `.env.local` file and make sure all the environment variables are correct.
+
+```
+turbo gen validate-env
+```
+
+If it passes, you can now copy the environment variables into your Vercel project. You can also feel free to remove the ones that are already set in your `.env` and `.env.production` files, since they will simply be overwritten.
+
+## Pushing your Repository to Github
+
+Before deploying your project to Vercel, you need to push your repository to Github. If you haven't done this yet, you can do so by running the following commands:
+
+### Deleting the origin remote
+
+Delete the origin remote:
+
+```bash
+git remote rm origin
+```
+
+### Adding the Github remote
+
+Add the Github remote to your project:
+
+```bash
+git remote add origin <your-github-repo-url>
+```
+
+Now, commit your changes and push your repository to Github:
+
+```bash
+git add .
+git commit -m "<your-commit-message>"
+git push origin main
+```
+
+Now that your repository is on Github, you can deploy your project to Vercel.
+
+## Deploying your project to Vercel
+
+Once we have a Supabase project set up and our environment variables configured, we can deploy our project to [Vercel](https://vercel.com). Vercel is a cloud platform that allows you to deploy your projects with ease.
+
+### Connecting the Repository to Vercel
+
+To deploy your project to Vercel, you need to connect your Github repository to Vercel. To do this, follow these steps:
+1. Go to [Vercel](https://vercel.com/).
+2. Click on the `Import Project` button.
+3. Select the repository you want to deploy. You need to tweak your settings to make sure the repository can be read by Vercel.
+4. Click on the `Import` button.
+5. Configure your project settings.
+
+When configuring your project settings, make sure to set the following settings:
+1. The preset to `Next.js`.
+2. The root directory to `apps/web`.
+
+Now, copy/paste your environment variables from the `.env.local` file into the Vercel project settings.
+
+Now you can deploy your project to Vercel by clicking on the `Deploy` button. If the build fails, you can check the logs to see what went wrong.
+
+Once deployed, you should finally see your project live on Vercel. Congratulations! 🎉
+
+### Trial and Error while deploying
+
+If you encounter any issues during the deployment process, don't worry.
+
+Deployment can be tricky, and it's normal to encounter issues along the way. I myself have to redeploy a few times due to some misconfigured option. It's also totally possible I'm forgetting something here, so please let me know if you encounter any issues.
+
+Take a deep breath, analyze the error message, and try to fix the issue. If you can't fix it, don't hesitate to ask for help. The Makerkit community is here to help you.
+
+## Minor changes for production
+
+Before you go live with your project, there are some minor changes you might need to make to your project to make it production-ready.
+
+### Update your Legal Pages
+
+Before you go live with your project, you need to update your legal pages. This includes your Privacy Policy, Terms of Service, and Cookie Policy.
+
+You can find the legal pages in the `apps/web/(marketing)/(legal)` folder in your project. You can update these pages to reflect your company's policies.
+
+### Update your FAQ
+
+Before you go live with your project, you need to update your FAQ. This includes the questions and answers that your users might have about your product.
+
+You can find the FAQ in the `apps/web/(marketing)/faq/page.tsx` file in your project. You can update these questions and answers to reflect your product.
+
+### Update the static content (Blog, Docs)
+
+Before you go live with your project, you need to update the static content in your project and replace the placeholders used by Makerkit. This includes the blog posts and documentation that your users might read.
+
+### Make it truly YOURS
+
+Add your own touch to Makerkit and make it truly yours. The great thing about Makerkit is its vanilla nature - you can customize it to your heart's content. You can change the colors, the fonts, the layout, and more to make it your own.
+
+## Deployment Checklist
+
+**Supabase Setup**
+
+1. Create a new Supabase project
+2. Save the Database Password securely
+3. Retrieve Supabase URL, Anon Key, and Service Role Key
+4. Configure authentication settings (Site URL and Redirect URL)
+5. Set up SMTP service for emails
+6. Update email templates in Supabase
+7. Link local project to Supabase using CLI
+8. Push database migrations to Supabase
+9. Add Database Webhooks pointing to your application
+
+**Stripe Setup**
+
+1. Create a Stripe account (if not already done)
+2. Retrieve Publishable Key and Secret Key
+3. Add webhook endpoint in Stripe dashboard
+4. Save Stripe Webhook Signing Secret
+5. Create Stripe products and pricing plans
+6. Note down Price IDs for each plan
+
+**Environment Variables**
+
+1. Run turbo gen env to generate .env.local
+2. Validate environment variables with turbo gen validate-env
+3. Ensure all required variables are set correctly
+
+**Github**
+
+1. Remove existing origin remote
+2. Add new Github remote
+3. Commit and push changes to Github
+
+**Vercel Deployment**
+
+1. Connect Github repository to Vercel
+2. Set project configuration (Next.js preset, root directory)
+3. Copy environment variables to Vercel project settings
+4. Deploy project
+5. Verify successful deployment
+
+**Post-Deployment Tasks**
+
+1. Update legal pages (Privacy Policy, Terms of Service, Cookie Policy)
+2. Update FAQ page
+3. Replace placeholder content in blog and docs
+4. Customize design elements (colors, fonts, layout)
+5. Test all features in the production environment
+6. Set up Google Auth (if using)
+7. Verify all webhooks are working correctly
+8. Check email functionality
+
+**Final Checks**
+
+1. Ensure all environment variables are correctly set
+2. Verify database connections and queries are working
+3. Test authentication flow (sign up, sign in, password reset)
+4. Confirm Stripe integration is functioning (test subscription)
+5. Check that all pages are loading correctly
+6. Verify mobile responsiveness
+7. Run final checks on security settings
+
+This checklist covers all the major steps discussed in the deployment lesson. It can serve as a quick reference guide to ensure nothing is overlooked during the deployment process.
+
+## You made it to the end!
+
+Congratulations! 🎉 You made it to the end of the course!
+
+You have successfully deployed your Makerkit Next.js Supabase Turbo project to production. You have set up your Supabase project, Stripe account, and environment variables. You have also made some minor changes to your project to make it production-ready.
+
+I hope you enjoyed this course and learned a lot about deploying your project to production. If you have any questions or feedback, please let me know. I would love to hear from you!
+
+Thank you for taking this course, and I wish you all the best with your project! 🚀
