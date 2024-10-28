@@ -874,8 +874,8 @@ We can display this information on the whole `[account]` layout, so that the use
 ```typescript title="apps/web/app/home/[account]/layout.tsx" {37,77-85,102-110}
 import { use } from 'react';
 
-import Link from "next/link";
 import { cookies } from 'next/headers';
+import Link from 'next/link';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { TeamAccountWorkspaceContextProvider } from '@kit/team-accounts/components';
@@ -897,19 +897,18 @@ import { TeamAccountLayoutSidebar } from './_components/team-account-layout-side
 import { TeamAccountNavigationMenu } from './_components/team-account-navigation-menu';
 import { loadTeamWorkspace } from './_lib/server/team-account-workspace.loader';
 
-interface Params {
-  account: string;
-}
+type TeamWorkspaceLayoutProps = React.PropsWithChildren<{
+  params: Promise<{ account: string }>;
+}>;
 
 function TeamWorkspaceLayout({
   children,
   params,
-}: React.PropsWithChildren<{
-  params: Params;
-}>) {
-  const data = use(loadTeamWorkspace(params.account));
+}: React.PropsWithChildren<TeamWorkspaceLayoutProps>) {
+  const account = use(params).account;
+  const data = use(loadTeamWorkspace(account));
   const remainingTickets = use(getRemainingTicketsForAccount(data.account.id));
-  const style = getLayoutStyle(params.account);
+  const style = use(getLayoutStyle(account));
 
   const accounts = data.accounts.map(({ name, slug, picture_url }) => ({
     label: name,
@@ -922,8 +921,7 @@ function TeamWorkspaceLayout({
       <PageNavigation>
         <If condition={style === 'sidebar'}>
           <TeamAccountLayoutSidebar
-            collapsed={false}
-            account={params.account}
+            account={account}
             accountId={data.account.id}
             accounts={accounts}
             user={data.user}
@@ -942,19 +940,23 @@ function TeamWorkspaceLayout({
           <TeamAccountLayoutMobileNavigation
             userId={data.user.id}
             accounts={accounts}
-            account={params.account}
+            account={account}
           />
         </div>
       </PageMobileNavigation>
 
       <TeamAccountWorkspaceContextProvider value={data}>
-        <If condition={remainingTickets >=0 && remainingTickets < 10}>
+        <If condition={remainingTickets >= 0 && remainingTickets < 10}>
           <div
             className={
-              'text-center bg-red-500 py-1 text-xs font-medium text-white'
+              'bg-red-500 py-1 text-center text-xs font-medium text-white'
             }
           >
-            You have {remainingTickets} tickets remaining. <Link className={'underline'} href={`billing`}>Please upgrade your plan to continue receiving tickets</Link>.
+            You have {remainingTickets} tickets remaining.{' '}
+            <Link className={'underline'} href={`billing`}>
+              Please upgrade your plan to continue receiving tickets
+            </Link>
+            .
           </div>
         </If>
 
@@ -964,9 +966,11 @@ function TeamWorkspaceLayout({
   );
 }
 
-function getLayoutStyle(account: string) {
+async function getLayoutStyle(account: string) {
+  const cookieStore = await cookies();
+
   return (
-    (cookies().get('layout-style')?.value as PageLayoutStyle) ??
+    (cookieStore.get('layout-style')?.value as PageLayoutStyle) ??
     getTeamAccountSidebarConfig(account).style
   );
 }
@@ -977,7 +981,7 @@ async function getRemainingTicketsForAccount(accountId: string) {
   const client = getSupabaseServerClient();
 
   const { data } = await client.rpc('get_remaining_tickets', {
-    account_id: accountId,
+    target_account_id: accountId,
   });
 
   return data ?? 0;

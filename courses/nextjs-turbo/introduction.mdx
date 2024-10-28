@@ -7,11 +7,9 @@ position: 0
 
 Hi there! 👋 Giancarlo here. I'm the creator of Makerkit.
 
-Welcome to this course on building and launching your SaaS product quickly using Makerkit, the leading Next.js Supabase SaaS Starter Kit.
+Welcome to this course on building and launching your SaaS product quickly using Makerkit, the leading Next.js Supabase SaaS Starter Kit. This course will guide you through the process of setting up your SaaS product using Makerkit.
 
-This course will guide you through the process of setting up your SaaS product using Makerkit.
-
-You will learn how to:
+Here is a quick preview of what you will learn:
 
 1. **Setting up your project**:  How to set up your project using Makerkit Turbo and Supabase
 2. **Customization**: How to customize the design of your app and apply your branding to it
@@ -20,7 +18,9 @@ You will learn how to:
 5. **Billing**: How to add billing to your app using Stripe and setup your pricing plans and how to handle limits and quotas for your users
 6. **Production**: How to deploy your app to production using Vercel
 
-We will be building together a SaaS for Customer Support - a simple helpdesk application that allows users to create tickets and chat with support agents.
+### What do we build?
+
+We will be building together **a SaaS for Customer Support** - a simple helpdesk application that allows users to create tickets and chat with support agents.
 
 This guide can be used as documentation, but it's a more practical approach. For the nitty-gritty details, you can always refer to the [official documentation](/docs/next-supabase-turbo/introduction) - which should cover everything you need to know.
 
@@ -28,11 +28,11 @@ This guide can be used as documentation, but it's a more practical approach. For
 
 Together, **they make a killer tech stack for building ambitious SaaS products** - for both large teams and solo developers.
 
-**This is an early draft of this course - so some things may not be fully working. Please bear with me. It will be fully completed by the end of August 2024.**
-
 ---
 
-This course will take approximately 8 hours to complete. It's divided into multiple sections, each covering a different aspect of building a SaaS product using Makerkit. It is highly recommended to follow along using the complete repository at [makerkit/next-supabase-saas-kit-turbo-course](https://github.com/makerkit/next-supabase-saas-kit-turbo-course).
+This course will take approximately 8 hours to complete. It's divided into multiple sections, each covering a different aspect of building a SaaS product using Makerkit.
+
+It is highly recommended to follow along using the complete repository at [makerkit/next-supabase-saas-kit-turbo-course](https://github.com/makerkit/next-supabase-saas-kit-turbo-course). You need a valid license to use the course.
 
 Let's get started! 🚀
 
@@ -44,7 +44,7 @@ Please use our [Discord channel](https://discord.gg/3hBn3nhbgD) to report any of
 
 Makerkit is **a Next.js SaaS Starter Kit that helps you build and launch a SaaS product**. Unlike other SaaS kits, Makerkit is opinionated, offers a scalable architecture, and is easily extendable.
 
-The Turbo version is Makerkit's v2, built on top of the learnings and experience gained from the v1, used by 1000s of customers.
+The Turbo version is Makerkit's v2, built on top of the learnings and experience gained from the v1, used by thousands of customers every day.
 
 Makerkit Turbo uses Turborepo, a tool that helps you manage multiple packages in a single repository. Turborepo makes it easy to manage the project and add new features - and keeping the codebase clean and organized.
 
@@ -131,7 +131,7 @@ Before you start this course, you should have the following:
 - Basic knowledge of Supabase
 - A Makerkit license to access the Makerkit Turbo repository
 
-If you're new to Next.js, Supabase, or Makerkit, I suggest you take a look at the official documentation to get familiar with the tools. You can also check out the [Next.js](https://nextjs.org/docs/getting-started) and [Supabase](https://supabase.io/docs) documentation to get started.
+If you're new to Next.js, Supabase, or Makerkit, I suggest you take a look at the official documentation to get familiar with the tools. You can also check out the [Next.js](https://nextjs.org/docs/getting-started) and [Supabase](https://supabase.io/docs) documentation to get started. Once you have a good understanding of the tools, you can move on to the next section.
 
 ## Getting Started
 
@@ -143,7 +143,7 @@ To get started, you will need some software installed on your computer:
 
 Docker is needed so we can run Supabase locally. If you don't want to use Docker, you can also use the hosted version of Supabase.
 
-I suggest to install Docker Desktop or [Orbstack](https://orbstack.dev/) (a lighter alternative). Please make sure you have Docker installed and running before proceeding.
+I suggest to install Docker Desktop or [Orbstack](https://orbstack.dev/) (a lighter alternative). Please make sure you have Docker installed and running before proceeding, otherwise you will not be able to run the course.
 
 ### Step 1: Clone the Makerkit Turbo repository
 
@@ -191,9 +191,39 @@ Next, we need to start the Next.js development server. To do this, run the follo
 pnpm run dev
 ```
 
-This will start the Next.js development server on `http://localhost:3000`. You can now open your browser and navigate to this URL to see the project running.
+This will start the Next.js development server at [http://localhost:3000](http://localhost:3000). You can now open your browser and navigate to this URL to see the project running.
 
-Congratulations! You have successfully started the project. You can now explore the project and start customizing it to your needs. Yay! 🎉
+**Congratulations! You have successfully started the project**. You can now explore the project and start customizing it to your needs. Yay! 🎉
+
+#### Quick Introduction to Turborepo and PNPM
+
+Turborepo is a monorepo tool that allows you to manage multiple packages in a single repository. It provides a set of commands to manage the packages and dependencies in your project. PNPM is the package manager we use in combination with Turborepo to manage the dependencies and packages in your project.
+
+There's not too much you need to know to use Makerkit effectively, however it's worth taking a moment to understand the basics of Turborepo and PNPM.
+
+Thanks to Turborepo, we can split the codebase into multiple packages (and apps) which allows us to manage the dependencies and packages in a more efficient way, and use incremental builds to speed up the development process (such as, linting, formatting, and type checking).
+
+In fact, Turborepo is able to detect changes that affect the dependencies and packages in your project and cache. For example, try running `pnpm run typecheck`: the first time, it will check all the packages. Now, run it again: it will feel instantaneous, as all the packages were cached. However, let's make a change to any package: now, the package and its dependents will be computed again.
+
+##### PNPM - A faster alternative to NPM
+
+PNPM is a faster alternative to NPM, capable of using less disk space and being faster. It also provides great tooling for working with monorepos.
+
+With PNPM, we can run commands inside apps or packages by using the `--filter` argument. This is something you'll be encountering often.
+
+For example, the package `@kit/stripe` contains a script called `start`, which allows us to start the Stripe CLI.
+
+You can call this command anywhere by specifying the package:
+
+```bash
+pnpm --filter '@kit/stripe' start
+```
+
+Similarly, you can run commands inside an app by specifying the app:
+
+```bash
+pnpm --filter web dev
+```
 
 ### Step 3: Explore the project
 
@@ -409,6 +439,8 @@ So the user home page would be `/home/user` and the account home page would be `
 The `(user)` and `[account]` directories are used to separate the user pages from the account pages. The `(user)` directory is used for the personal account pages, while the `[account]` directory is used for the team account pages.
 
 Imagine you want to add some settings that are specific to the user - you would add them to the `(user)` directory. If you want to add some settings that are specific to the account - you would add them to the `[account]` directory.
+
+#### My SaaS is exclusively B2C, what should I do?
 
 If your app is exclusively B2C, you have the freedom to ignore the `[account]` directory and just use the `(user)` directory.
 

@@ -692,7 +692,11 @@ create policy message_attachments
 );
 ```
 
-When it comes to writing RLS policies for the Storage buckets, we need to do things a bit differently. We need to check if the user has the required permissions to read the attachment based on the account that owns the message. To achieve this, we can create a custom function `public.can_read_message` that checks if the authenticated user has a role on the account that owns the message. This function is used in the RLS policy to determine if the user has the required permissions to read the attachment.
+When it comes to writing RLS policies for the Storage buckets, we need to do things a bit differently.
+
+In fact, we need to check **if the user has the required permissions to read the attachment based on the account that owns the message**.
+
+To achieve this, we can create a custom function `public.can_read_message` that checks if the authenticated user has a role on the account that owns the message. This function is used in the RLS policy to determine if the user has the required permissions to read the attachment.
 
 Let's break down the function and the RLS policy in the context of a Storage bucket:
 

@@ -185,14 +185,14 @@ import { TicketPriorityBadge } from '../_components/ticket-priority-badge';
 import { TicketStatusBadge } from '../_components/ticket-status-badge';
 
 interface TicketDetailPageProps {
-  params: {
+  params: Promise<{
     ticketId: string;
     account: string;
-  };
+  }>;
 
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
-  };
+  }>;
 }
 
 export default function TicketDetailPage({
@@ -202,12 +202,13 @@ export default function TicketDetailPage({
   const client = getSupabaseServerClient();
   const service = createTicketsService(client);
 
-  const page = Number(searchParams.page ?? '1');
+  const { ticketId, account } = use(params);
+  const page = Number(use(searchParams).page ?? '1');
 
   const ticket = use(
     service.getTicket({
-      ticketId: params.ticketId,
-      account: params.account,
+      ticketId,
+      account,
     }),
   );
 
@@ -338,13 +339,13 @@ export function TicketMessagesContainer(props: {
   ticketId: string;
   page: number;
 }) {
-  const [state, setState] = useState<{
+  const [state] = useState<{
     page: number;
   }>({
     page: props.page,
   });
 
-  const scrollingDiv = useRef<HTMLDivElement | null>();
+  const scrollingDiv = useRef<HTMLDivElement | null>(null);
   const queryKey = ['ticket-messages', props.ticketId, props.page.toString()];
   const appendMessage = useAppendNewMessage({ queryKey });
 
@@ -418,7 +419,7 @@ function SendMessageInput({
 
   return (
     <form
-      className={'sticky bottom-4 mt-auto z-10'}
+      className={'sticky bottom-8 mt-auto z-10'}
       onSubmit={form.handleSubmit((data) => {
         startTransition(async () => {
           // const message = await insertTicketMessageAction(data);
@@ -432,7 +433,7 @@ function SendMessageInput({
         disabled={pending}
         placeholder={'Send a reply...'}
         type="text"
-        className={'h-16 border pr-36 bg-background shadow-xl'}
+        className={'h-16 border pr-36 bg-background focus:shadow-xl'}
       />
 
       <Button disabled={pending} className={'absolute right-4 top-3.5'}>
@@ -674,7 +675,7 @@ This component uses React Hook Form for form management and will use a server ac
 Minor, but worth noting: we use a ref to scroll to the bottom of the message container when new messages are added:
 
 ```tsx
-const scrollingDiv = useRef<HTMLDivElement | null>();
+const scrollingDiv = useRef<HTMLDivElement | null>(null);
 ```
 
 ```tsx

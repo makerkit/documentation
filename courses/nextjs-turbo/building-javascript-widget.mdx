@@ -127,7 +127,7 @@ export default function SupportTicketWidgetContainer(props: {
   accountId: string;
 }) {
   const state = useWidgetState();
-  const scrollingDiv = useRef<HTMLDivElement>();
+  const scrollingDiv = useRef<HTMLDivElement>(null);
 
   const { messages, appendMessage } = useFetchTicketMessages({
     ticketId: state.ticketId,
@@ -1356,7 +1356,7 @@ class CustomerTicketService {
 
       return response.choices[0]?.text ?? 'New ticket';
     } catch (error) {
-      console.warn(`Failed to generate ticket title: ${error}`);
+      console.warn(`Failed to generate ticket title:`, error);
 
       return 'New ticket';
     }
