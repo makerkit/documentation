@@ -559,14 +559,14 @@ NB: this is valid for Stripe, but you can adapt it to any other payment provider
 ```typescript title="packages/billing/stripe/src/services/stripe-webhook-handler.service.ts"
 async function completeOnboarding(accountId: string) {
   const logger = await getLogger();
-  const client = getSupabaseServerAdminClient();
+  const adminClient = getSupabaseServerAdminClient();
 
   logger.info(
     { accountId },
     `Checkout comes from onboarding. Processing onboarding data...`,
   );
 
-  const onboarding = await client
+  const onboarding = await adminClient
     .from('onboarding')
     .select('*')
     .eq('account_id', accountId)
@@ -595,7 +595,7 @@ async function completeOnboarding(accountId: string) {
       `Assigning membership...`,
     );
 
-    const assignMembershipResponse = await client
+    const assignMembershipResponse = await adminClient
       .from('accounts_memberships')
       .insert({
         account_id: teamAccountId,
@@ -614,7 +614,7 @@ async function completeOnboarding(accountId: string) {
       logger.info({ accountId }, `Membership assigned. Updating account...`);
     }
 
-    const accountResponse = await client
+    const accountResponse = await adminClient
       .from('accounts')
       .update({
         name: data.userName,
@@ -634,8 +634,6 @@ async function completeOnboarding(accountId: string) {
         `Account updated. Cleaning up onboarding data...`,
       );
     }
-
-    const adminClient = getSupabaseServerAdminClient();
 
     // set onboarded flag on user account
     const updateUserResponse = await adminClient.auth.admin.updateUserById(
@@ -687,7 +685,7 @@ Now, we handle this function in the `handleCheckoutSessionCompleted` method, rig
 // ...
 
 const subscriptionData =
-await stripe.subscriptions.retrieve(subscriptionId);
+  await stripe.subscriptions.retrieve(subscriptionId);
 
 const metadata = subscriptionData.metadata as {
   source: string;
@@ -851,6 +849,23 @@ Update the `apps/web/app/auth/middleware.ts` file:
 ```
 
 This code checks if the user is logged in and has completed onboarding. If the user has not completed onboarding, they are redirected to the onboarding flow.
+
+### Marking invited users as onboarded
+
+When a user gets invited to a team account, you don't want to show them the onboarding flow again. You can use the `onboarded` property to mark the user as onboarded.
+
+Update the `packages/features/team-accounts/src/server/actions/team-invitations-server-actions.ts` server action `acceptInvitationAction` at line 125 (eg. before increasing seats):
+
+```tsx
+// mark user as onboarded
+await adminClient.auth.admin.updateUserById(user.id, {
+  app_metadata: {
+    onboarded: true,
+  },
+});
+```
+
+In this way, the user will be redirected to the `/home` page after accepting the invite.
 
 ### Considerations
 

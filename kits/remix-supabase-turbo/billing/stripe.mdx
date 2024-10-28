@@ -29,12 +29,6 @@ First - login to your Stripe account using the project you want to run:
 docker run --rm -it --name=stripe -v ~/.config/stripe:/root/.config/stripe stripe/stripe-cli:latest login
 ```
 
-Copy the webhook secret displayed in the terminal and set it as the `STRIPE_WEBHOOK_SECRET` environment variable in your `.env.local` file:
-
-```bash
-STRIPE_WEBHOOK_SECRET=*your_webhook_secret*
-```
-
 Now, you can listen to Stripe events running the following command:
 
 ```bash
@@ -44,6 +38,14 @@ pnpm run stripe:listen
 **If you have not logged in - the first time you set it up, you are required to sign in**. This is a one-time process. Once you sign in, you can use the CLI to listen to Stripe events.
 
 **Please sign in and then re-run the command**. Now, you can listen to Stripe events.
+
+Once you start listening to Stripe events, you can use the CLI to listen to Stripe events.
+
+Now, please copy the webhook secret displayed in the terminal and set it as the `STRIPE_WEBHOOK_SECRET` environment variable in your `.env.local` file:
+
+```bash
+STRIPE_WEBHOOK_SECRET=*your_webhook_secret*
+```
 
 If you're not receiving events, please make sure that:
 

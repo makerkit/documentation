@@ -29,12 +29,6 @@ First - login to your Stripe account using the project you want to run:
 docker run --rm -it --name=stripe -v ~/.config/stripe:/root/.config/stripe stripe/stripe-cli:latest login
 ```
 
-Copy the webhook secret displayed in the terminal and set it as the `STRIPE_WEBHOOK_SECRET` environment variable in your `.env.local` file:
-
-```bash
-STRIPE_WEBHOOK_SECRET=*your_webhook_secret*
-```
-
 Now, you can listen to Stripe events running the following command:
 
 ```bash
@@ -42,6 +36,14 @@ pnpm run stripe:listen
 ```
 
 **If you have not logged in - the first time you set it up, you are required to sign in**. This is a one-time process. Once you sign in, you can use the CLI to listen to Stripe events.
+
+Once you start listening to Stripe events, you can use the CLI to listen to Stripe events.
+
+Now, please copy the webhook secret displayed in the terminal and set it as the `STRIPE_WEBHOOK_SECRET` environment variable in your `.env.local` file:
+
+```bash
+STRIPE_WEBHOOK_SECRET=*your_webhook_secret*
+```
 
 **Please sign in and then re-run the command**. Now, you can listen to Stripe events.
 
@@ -79,3 +81,15 @@ Only if you're using one-off payments, please add:
 If your application needs more events, please add them, [but remember to handle them](billing-webhooks).
 
 You can [handle additional events](billing-webhooks) by adding the required handlers in the `api/billing/webhook/route.ts` file.
+
+### Setting Stripe Trials without collecting a card
+
+Makerkit allows you to set trials without collecting a card. This is useful if you want to offer a free trial for your users.
+
+To do so, you need to set the `STRIPE_ENABLE_TRIAL_WITHOUT_CC` environment variable to `true`.
+
+```bash
+STRIPE_ENABLE_TRIAL_WITHOUT_CC=true
+```
+
+Of course - you also must set a trial period for the plan you want to offer a free trial for.

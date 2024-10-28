@@ -16,7 +16,7 @@ This process may take a few hours and some trial and error, so buckle up—you'r
 5. **Auth Emails**: It is very much recommended to update the auth emails using the [following documentation](authentication-emails). The kit already implements the `confirm` route, but you need to update the emails in your Supabase settings.
 6. **Deploy Next.js**: Deploy the Next.js app to Vercel or any another hosting provider. Copy the URL and set it in the Supabase project settings.
 7. **Environment Variables**: The initial deploy **will likely fail** because you may not yet have a URL to set in your environment variables. This is normal. Once you have the URL, set the URL in the environment variables and redeploy.
-8. **Webhooks**: [Set the DB Webhooks in Supabase](configuring-supabase-database-webhooks) pointing against your Next.js app at `/api/db/webhooks`.
+8. **Webhooks**: [Set the DB Webhooks in Supabase](supabase) pointing against your Next.js app at `/api/db/webhooks`.
 9. **Emails**: Get some SMTP details from an email service provider like SendGrid or Mailgun or Resend and configure the emails in both the Environment Variables and the [Supabase project settings](https://supabase.com/docs/guides/auth/auth-smtp).
 10. **Billing**: Create a Stripe/Lemon Squeezy account, make sure to update the environment variables with the correct values. Point webhooks from these to `/api/billing/webhook`. Please use the relative documentation for more details.
 

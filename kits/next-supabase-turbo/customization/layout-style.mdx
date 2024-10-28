@@ -16,9 +16,34 @@ NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=header
 NEXT_PUBLIC_USER_NAVIGATION_STYLE=header
 ```
 
+## Sidebar Layout
+
 The default layout style is `sidebar`:
 
 <Image src='/assets/images/docs/turbo-sidebar-layout.webp' width="2522" height="1910" />
+
+You can customize the sidebar layout to set it as expanded or collapsed. By default, it is always set to expanded.
+
+```
+NEXT_PUBLIC_HOME_SIDEBAR_COLLAPSED=true
+NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED=true
+```
+
+You can decide the configuration granularly for the each workspace.
+
+### Auto-expanding the Sidbar on Hover
+
+You can set the sidebar to auto-expand on hover by setting the following environment variable:
+
+```
+NEXT_PUBLIC_EXPAND_SIDEBAR_ON_HOVER=true
+```
+
+This is a commonly used pattern in many SaaS apps - such as Supabase, or OpenAI.
+
+<Video src="/assets/videos/expand-sidebar.mp4" />
+
+## Header Layout
 
 And here is `header` layout:
 

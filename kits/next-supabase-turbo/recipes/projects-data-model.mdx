@@ -1,214 +1,202 @@
 ---
-title: 'A Data Model for Projects in Supabase and Next.js'
+title: 'Adding a Projects Data Model to Your Next.js Supabase Application'
 label: 'Projects Data Model'
 position: 4
-description: 'Learn how to create a data model for projects in the Next.js Supabase Starter Kit.'
+description: 'Learn how to add a Projects data model to your Next.js Supabase application using Supabase'
 ---
 
-Today, we're adding a powerful Projects feature to your Makerkit Next.js Supabase Turbo project. This feature will allow users to create, manage, and collaborate on projects within their team accounts.
+Team Accounts allow you to manage several members in a single account. These usually share a subscription and other common attributes. However, you may need to go deeper than that, and allow team accounts to have a set of projects that they can collaborate on.
 
-We'll cover everything from database design to frontend implementation, with a focus on security and best practices. Let's get started!
+This guide will walk you through implementing a robust project system in your Makerkit application using Supabase. We'll cover everything from setting up the necessary database tables to implementing role-based access control.
 
-Adding a Projects feature to your SaaS application can greatly enhance its functionality, allowing users to organize their work and collaborate effectively. In this tutorial, we'll implement a basic Projects system where:
+## Overview of the Projects Data Model
 
-- Projects belong to a Team Account
-- Projects can have multiple members (who must be part of the team account)
-- Projects have their own set of permissions
+The Projects feature allows users to create and manage projects within your application. It includes:
 
-We'll focus on creating a solid foundation that you can easily expand upon. Let's dive in!
+- Project creation and management
+- Role-based access control (owner, admin, member)
+- Permissions system
+- Database schema and functions
 
-## Database Schema and Migrations
+Let's dive in!
 
-Let's set up our database schema with detailed explanations for each part.
+## Database Schema and Functions
 
-Create a new migration file in `apps/web/supabase/migrations` using the command:
+We'll start by setting up the database schema. This involves creating tables, enums, and functions.
 
-```bash
-pnpm --filter web supabase migration new add_projects
-```
+### Enums
 
-Let's assume the command creates a file named `apps/web/supabase/migrations/20230821000000_add_projects.sql`. We can now populate the file with the migration code.
-
-You're absolutely right. I apologize for the rushed explanation. Let's start over with a more thorough and professional approach to this tutorial.
-
-# Mastering Project Management in Makerkit: A Comprehensive Guide
-
-Welcome to our in-depth tutorial on the project management system in Makerkit. Whether you're a developer looking to understand the intricacies of the system or a project manager wanting to leverage its full potential, this guide will walk you through every aspect of the database schema, key functions, and how to effectively use and extend this system in your own applications.
-
-## Introduction to the Database Schema
-
-At the heart of Makerkit's project management system lies a robust and flexible database schema. This schema is designed to handle various aspects of project management, from basic project information to complex permission systems. Let's dive into each component, exploring its purpose and potential for customization.
-
-### Defining Project Roles and Actions
-
-The foundation of our project management system is built on clearly defined roles and actions. These are implemented using PostgreSQL's powerful ENUM types, which provide type safety and clarity in our database design.
+First, let's create two enum types:
 
 ```sql
+-- Project roles
 CREATE TYPE public.project_role AS ENUM ('owner', 'admin', 'member');
+
+-- Project actions
 CREATE TYPE public.project_action AS ENUM (
-  'view_project', 'edit_project', 'delete_project', 'invite_member', 'remove_member'
+  'view_project',
+  'edit_project',
+  'delete_project',
+  'invite_member',
+  'remove_member'
 );
 ```
 
-The `project_role` ENUM defines the possible roles a user can have within a project. Currently, we have three roles: owner, admin, and member. Each role comes with its own set of permissions and responsibilities within a project.
+These enums define the possible roles and actions within a project.
 
-The `project_action` ENUM, on the other hand, defines the various actions that can be performed within a project. These actions form the basis of our permission system, allowing us to granularly control what each role can do.
+### Tables
 
-#### Extending Roles and Actions
+Now, let's create the main tables.
 
-One of the strengths of this system is its extensibility. As your project management needs evolve, you can easily add new roles or actions. Here's how you might do that:
+We will create two tables: `projects` and `project_members`.
 
-```sql
--- Adding a new role
-ALTER TYPE public.project_role ADD VALUE 'viewer';
+The `projects` table stores project information, while the `project_members` table manages the relationship between projects and users.
 
--- Adding a new action
-ALTER TYPE public.project_action ADD VALUE 'export_project';
-```
-
-By adding a 'viewer' role, for example, you could implement a read-only access level for certain project members. The 'export_project' action could be used to control who has the ability to export project data.
-
-### The Projects Table: The Core of Project Information
-
-Moving on to the heart of our schema, let's examine the `public.projects` table:
+### Projects Table
 
 ```sql
+-- Projects table
 CREATE TABLE IF NOT EXISTS public.projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
 
-This table stores the essential information for each project. Let's break down each field:
+Let's dive into the `projects` table:
 
-- `id`: A unique identifier for each project, automatically generated as a UUID.
-- `name`: The project's name, limited to 255 characters.
-- `description`: An optional text field for more detailed project information.
-- `account_id`: Links the project to a specific account, with a foreign key relationship.
-- `created_at` and `updated_at`: Timestamps to track when the project was created and last updated.
+- `id` is a unique identifier for each project.
+- `name` is the name of the project.
+- `description` is an optional description for the project.
+- `account_id` is a foreign key referencing the `accounts` table.
+- `created_at` and `updated_at` are timestamps for when the project was created and updated, respectively.
 
-#### Customizing the Projects Table
+### Project Members Table
 
-As your project management needs grow, you might find that you need to store additional information about each project. The `public.projects` table can be easily extended to accommodate these needs. Here's an example of how you might add new fields:
-
-```sql
-ALTER TABLE public.projects
-ADD COLUMN status VARCHAR(50) DEFAULT 'active',
-ADD COLUMN due_date DATE,
-ADD COLUMN budget DECIMAL(10, 2);
-```
-
-In this example, we've added fields for project status, due date, and budget. These additions allow for more comprehensive project tracking and reporting capabilities.
-
-### Managing Project Membership: The Project Members Table
-
-The `public.project_members` table is crucial for managing who has access to each project and what level of access they have:
+The `project_members` table stores the relationship between projects and users:
 
 ```sql
+-- Project members table
 CREATE TABLE IF NOT EXISTS public.project_members (
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role public.project_role NOT NULL DEFAULT 'member',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (project_id, user_id)
 );
+```
 
+Let's clarify the `project_members` table:
+
+- The `project_id` column is a foreign key referencing the `projects` table.
+- The `user_id` column is a foreign key referencing the `auth.users` table.
+- The `role` column is an enum type that can have three values: `owner`, `admin`, or `member`.
+
+These columns ensure that each project has a unique owner, and that each member can have a role of `owner`, `admin`, or `member`.
+
+### Indexes
+
+To optimize query performance, let's add some indexes:
+
+```sql
+CREATE INDEX projects_account_id ON public.projects (account_id);
+CREATE INDEX project_members_project_id ON public.project_members (project_id);
+CREATE INDEX project_members_user_id ON public.project_members (user_id);
+```
+
+We also need a unique index to ensure only one owner per project:
+
+```sql
 CREATE UNIQUE INDEX projects_unique_owner ON public.project_members (project_id) WHERE role = 'owner';
 ```
 
-This table creates a many-to-many relationship between projects and users, with each relationship assigned a specific role. Let's examine its structure:
+### Permissions
 
-- `project_id` and `user_id`: Together, these form the primary key, ensuring each user has only one role per project.
-- `role`: Assigns one of the roles from our `project_role` ENUM to this project-user relationship.
-- `created_at` and `updated_at`: Timestamps for auditing purposes.
-
-The unique index `projects_unique_owner` ensures that each project has only one owner, maintaining a clear chain of responsibility.
-
-#### Extending Project Membership
-
-As your system grows, you might want to add more information about each project membership. For example:
+Set up default permissions. This is useful to make sure we can granularly control access to the tables.
 
 ```sql
-ALTER TABLE public.project_members
-ADD COLUMN last_accessed TIMESTAMPTZ,
-ADD COLUMN contribution_level INT DEFAULT 0;
+alter table public.projects enable row level security;
+alter table public.project_members enable row level security;
+
+-- Revoke all permissions by default
+REVOKE ALL ON public.projects FROM public, service_role;
+REVOKE ALL ON public.project_members FROM public, service_role;
+
+-- Grant access to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.projects TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.project_members TO authenticated;
 ```
 
-These additions would allow you to track when each member last accessed the project and potentially implement a contribution scoring system.
+## Functions
 
-In the next sections, we'll delve into the key functions that bring this schema to life, exploring how to check membership, manage permissions, and handle project member operations. Stay tuned as we uncover the full potential of this robust project management system.
+Now, let's create several helper functions to manage projects and permissions.
 
-Certainly! Let's dive into the public functions that customers can utilize via Supabase's Remote Procedure Call (RPC) feature. These functions form the backbone of your project management system's API, allowing for secure and efficient interactions with your database.
+### Is Project Member
 
-## Public Functions
-
-In this section, we'll explore the key public functions that power your project management system. These functions can be called directly from your application code using Supabase's RPC feature, providing a secure and efficient way to interact with your database.
-
-### Checking Project Membership and Permissions
-
-#### 1. Is User a Project Member?
+This function checks if a user is a member of a specific project:
 
 ```sql
 CREATE OR REPLACE FUNCTION public.is_project_member(p_project_id UUID)
 RETURNS BOOLEAN
-LANGUAGE SQL SECURITY DEFINER
+SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.project_members
     WHERE project_id = p_project_id
-    AND user_id = auth.uid()
+    AND user_id = (SELECT auth.uid())
   );
-$$;
+$$ LANGUAGE sql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.is_project_member(UUID) TO authenticated;
 ```
 
-This function checks if the currently authenticated user is a member of a specific project. Here's how you might use it in your application:
+### Is Project Admin
 
-```typescript
-const { data, error } = await supabase
-  .rpc('is_project_member', { p_project_id: 'your-project-uuid' });
-
-if (data) {
-  console.log('User is a member of this project');
-} else {
-  console.log('User is not a member of this project');
-}
-```
-
-#### 2. Is User a Project Admin?
+This function checks if a user is an admin or owner of a specific project:
 
 ```sql
 CREATE OR REPLACE FUNCTION public.is_project_admin(p_project_id UUID)
 RETURNS BOOLEAN
-LANGUAGE SQL
+SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.project_members
     WHERE project_id = p_project_id
-    AND user_id = auth.uid()
+    AND user_id = (SELECT auth.uid())
     AND role IN ('owner', 'admin')
   );
-$$;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION public.is_project_admin TO authenticated;
 ```
 
-This function checks if the current user has admin privileges (either 'owner' or 'admin' role) for a given project. You can use it like this:
+### Is Project Owner
 
-```typescript
-const { data, error } = await supabase
-  .rpc('is_project_admin', { p_project_id: 'your-project-uuid' });
+This function checks if a user is the owner of a project:
 
-if (data) {
-  console.log('User has admin rights for this project');
-} else {
-  console.log('User does not have admin rights for this project');
-}
+```sql
+CREATE OR REPLACE FUNCTION public.is_project_owner(project_id UUID)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.project_members
+    WHERE project_id = $1
+    AND user_id = (SELECT auth.uid())
+    AND role = 'owner'
+  );
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION public.is_project_owner TO authenticated;
 ```
 
-#### 3. Checking Specific User Permissions
+### User Has Project Permission
+
+This function checks if a user has the required permissions to perform a specific action on a project:
 
 ```sql
 CREATE OR REPLACE FUNCTION public.user_has_project_permission(
@@ -217,12 +205,12 @@ CREATE OR REPLACE FUNCTION public.user_has_project_permission(
   p_action public.project_action
 )
 RETURNS BOOLEAN
-LANGUAGE PLPGSQL
+SET search_path = ''
 AS $$
 DECLARE
   v_role public.project_role;
 BEGIN
-  -- Get the user's role for this project
+  -- First, check if the user is a member of the project
   SELECT role INTO v_role
   FROM public.project_members
   WHERE project_id = p_project_id AND user_id = p_user_auth_id;
@@ -234,47 +222,327 @@ BEGIN
   -- Check permissions based on role and action
   CASE v_role
     WHEN 'owner' THEN
-      RETURN TRUE;  -- owners can do everything
+      RETURN TRUE;  -- Owners can do everything
     WHEN 'admin' THEN
-      RETURN p_action != 'delete_project';  -- admins can do everything except delete the project
+      RETURN p_action != 'delete_project';  -- Admins can do everything except delete the project
     WHEN 'member' THEN
       RETURN p_action IN ('view_project');
     ELSE
-      RAISE EXCEPTION 'Unknown role: %', v_role;
+      RAISE EXCEPTION 'User must be a member of the project to perform this action';
   END CASE;
 END;
-$$;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.user_has_project_permission TO authenticated;
 ```
 
-This function provides granular permission checking. It's particularly useful for complex authorization scenarios. Here's an example of how to use it:
+In the above, we use the `CASE` statement to check the role of the user and the action they are trying to perform. If the user is a member of the project and has the required permissions, we return `TRUE`. Otherwise, we raise an exception.
 
-```typescript
-const { data, error } = await supabase
-  .rpc('user_has_project_permission', {
-    p_user_auth_id: 'user-uuid',
-    p_project_id: 'project-uuid',
-    p_action: 'edit_project'
-  });
+Please feel free to modify the `user_has_project_permission` function to fit your specific use case and your project's requirements.For example, you may want to add more roles or actions, or restrict the permissions based on the project's settings.
 
-if (data) {
-  console.log('User has permission to edit this project');
-} else {
-  console.log('User does not have permission to edit this project');
-}
+### Current User Has Project Permission
+
+This function is a wrapper around `user_has_project_permission` for the current user:
+
+```sql
+CREATE OR REPLACE FUNCTION public.current_user_has_project_permission(
+  p_project_id UUID,
+  p_action public.project_action
+)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+DECLARE
+  v_role public.project_role;
+BEGIN
+  SELECT public.user_has_project_permission((SELECT auth.uid()), p_project_id, p_action);
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.current_user_has_project_permission TO authenticated;
 ```
 
-### Managing Project Members
+### Current User Can Manage Project Member
 
-#### 4. Adding a Project Member
+This function checks if the current user can manage another user in a project:
+
+```sql
+CREATE OR REPLACE FUNCTION public.current_user_can_manage_project_member(
+  p_target_member_role public.project_role,
+  p_project_id UUID
+)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+DECLARE
+  v_current_user_role public.project_role;
+BEGIN
+  SELECT role INTO v_current_user_role
+  FROM public.project_members
+  WHERE project_id = p_project_id AND user_id = (SELECT auth.uid());
+
+  IF v_current_user_role IS NULL OR p_target_member_role IS NULL THEN
+    RAISE EXCEPTION 'User not found';
+  END IF;
+
+  -- Check if the manager has a higher role
+  RETURN (v_current_user_role = 'owner' AND p_target_member_role != 'owner') OR
+         (v_current_user_role = 'admin' AND p_target_member_role = 'member');
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.current_user_can_manage_project_member TO authenticated;
+```
+
+This project is extremely useful to verify that a user can perform actions that affect another user in a project.
+
+### Update Project Member Role
+
+This function updates the role of a project member:
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_project_member_role(
+  p_user_id UUID,
+  p_new_role public.project_role,
+  p_project_id UUID
+)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+DECLARE
+  v_current_role public.project_role;
+BEGIN
+  -- Get the current role of the member
+  SELECT role INTO v_current_role
+  FROM public.project_members
+  WHERE project_id = p_project_id AND user_id = p_user_id;
+
+  -- Check if the manager can manage this member
+  IF NOT public.current_user_can_manage_project_member(v_current_role, p_project_id) THEN
+    RAISE EXCEPTION 'Permission denied';
+  END IF;
+
+  IF p_new_role = 'owner' THEN
+    RAISE EXCEPTION 'Owner cannot be updated to a different role';
+  END IF;
+
+  -- Update the member's role
+  UPDATE public.project_members
+  SET role = p_new_role
+  WHERE project_id = p_project_id AND user_id = p_user_id;
+
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.update_project_member_role TO authenticated;
+```
+
+### Can Edit Project
+
+This function checks if a user can edit a project:
+
+```sql
+CREATE OR REPLACE FUNCTION public.can_edit_project(p_user_auth_id UUID, p_project_id UUID)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+  SELECT public.user_has_project_permission(p_user_auth_id, p_project_id, 'edit_project'::public.project_action);
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION public.can_edit_project TO authenticated;
+```
+
+This is a simple wrapper around the `user_has_project_permission` function that checks if the current user can edit a project.
+
+### Can Delete Project
+
+This function checks if a user can delete a project:
+
+```sql
+CREATE OR REPLACE FUNCTION public.can_delete_project(p_user_auth_id UUID, p_project_id UUID)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+  SELECT public.user_has_project_permission(p_user_auth_id, p_project_id, 'delete_project'::public.project_action);
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION public.can_delete_project TO authenticated;
+```
+
+This is a simple wrapper around the `user_has_project_permission` function that checks if the current user can delete a project.
+
+### Can Invite Project Member
+
+This function checks if a user can invite a new member to the project:
+
+```sql
+CREATE OR REPLACE FUNCTION public.can_invite_project_member(p_user_auth_id UUID, p_project_id UUID)
+RETURNS BOOLEAN
+SET search_path = ''
+AS $$
+  SELECT public.user_has_project_permission(p_user_auth_id, p_project_id, 'invite_member'::public.project_action);
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION public.can_invite_project_member TO authenticated;
+```
+
+This is also a simple wrapper around the `user_has_project_permission` function that checks if the current user can invite a new member to the project.
+
+## Row Level Security (RLS) Policies
+
+Now, let's set up RLS policies to secure our tables. RLS policies are used to control access to specific columns and rows in a table. The functions we defined earlier are used to check if a user has the required permissions to perform a specific action on a project.
+
+### Projects Table Policies
+
+```sql
+-- SELECT
+CREATE POLICY select_projects
+  ON public.projects
+  FOR SELECT
+  TO authenticated
+  USING (
+    public.is_project_member(id)
+  );
+
+-- INSERT
+CREATE POLICY insert_new_project
+  ON public.projects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    public.has_role_on_account(account_id)
+  );
+
+-- DELETE
+CREATE POLICY delete_project
+  ON public.projects
+  FOR DELETE
+  TO authenticated
+  USING (
+    public.can_delete_project((SELECT auth.uid()), id)
+  );
+
+-- UPDATE
+CREATE POLICY update_project
+  ON public.projects
+  FOR UPDATE
+  TO authenticated
+  USING (
+    public.can_edit_project((SELECT auth.uid()), id)
+  )
+  WITH CHECK (
+    public.can_edit_project((SELECT auth.uid()), id)
+  );
+```
+
+Alright, let's break down the policies:
+
+1. **Select Projects**: This policy allows authenticated users to select projects from the `projects` table. If a user is not a member of the project, they will not be able to see the project.
+2. **Insert New Project**: This policy allows authenticated users to insert new projects into the `projects` table. It does so by checking if the current user is currently a member of the team account associated with the project.
+3. **Delete Project**: This policy allows authenticated users to delete projects from the `projects` table. It verifies that the user can delete the project using the `can_delete_project` function.
+4. **Update Project**: This policy allows authenticated users to update projects in the `projects` table. It does so by checking if the current user has the required permissions to edit the project using the `can_edit_project` function.
+
+### Project Members Table Policies
+
+```sql
+-- SELECT
+CREATE POLICY select_project_members
+  ON public.project_members
+  FOR SELECT
+  TO authenticated
+  USING (
+    public.is_project_member(project_id)
+  );
+
+-- INSERT
+CREATE POLICY insert_project_member
+  ON public.project_members
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    public.can_invite_project_member(
+      (SELECT auth.uid()),
+      project_id
+    )
+  );
+
+-- UPDATE
+CREATE POLICY update_project_members
+  ON public.project_members
+  FOR UPDATE
+  TO authenticated
+  USING (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  )
+  WITH CHECK (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  );
+
+-- DELETE
+CREATE POLICY delete_project_members
+  ON public.project_members
+  FOR DELETE
+  TO authenticated
+  USING (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  );
+```
+
+Let's break down the policies:
+
+1. **Select Project Members**: This policy allows authenticated users to select project members from the `project_members` table. If a user is not a member of the project, they will not be able to see the project members.
+2. **Insert Project Member**: This policy allows authenticated users to insert new project members into the `project_members` table. It does so by checking if the current user can invite a new member to the project using the `can_invite_project_member` function.
+3. **Update Project Members**: This policy allows authenticated users to update project members in the `project_members` table. It does so by checking if the current user can manage the project member using the `current_user_can_manage_project_member` function.
+4. **Delete Project Members**: This policy allows authenticated users to delete project members from the `project_members` table. It does so by checking if the current user can manage the project member using the `current_user_can_manage_project_member` function.
+
+## Additional Functions
+
+Let's add a few more helpful functions:
+
+### Add Project Owner
+
+This function adds the owner of the project as the first project member:
+
+```sql
+CREATE OR REPLACE FUNCTION kit.add_project_owner()
+RETURNS TRIGGER
+AS $$
+BEGIN
+  INSERT INTO public.project_members (project_id, user_id, role)
+  VALUES (NEW.id, auth.uid(), 'owner'::public.project_role);
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to add owner of the project creator as the first project member
+CREATE TRIGGER add_project_owner_on_insert
+    AFTER INSERT ON public.projects
+    FOR EACH ROW
+    EXECUTE PROCEDURE kit.add_project_owner();
+```
+
+### Add Project Member
+
+This function adds a new member to a project:
 
 ```sql
 CREATE OR REPLACE FUNCTION public.add_project_member(
   p_project_id UUID,
   p_user_id UUID,
   p_role public.project_role DEFAULT 'member'
-)
-RETURNS BOOLEAN
-LANGUAGE PLPGSQL
+) RETURNS BOOLEAN
+SET search_path = ''
 AS $$
 DECLARE
   v_account_id UUID;
@@ -297,7 +565,7 @@ BEGIN
     RAISE EXCEPTION 'User is not a member of the team account';
   END IF;
 
-  -- Add the new member
+  -- Add the new member (the trigger will enforce the team membership check)
   INSERT INTO public.project_members (project_id, user_id, role)
   VALUES (p_project_id, p_user_id, p_role)
   ON CONFLICT (project_id, user_id) DO UPDATE
@@ -305,86 +573,115 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.add_project_member TO authenticated;
 ```
 
-This function allows project admins to add new members to a project. It includes several checks to ensure the operation is valid. Here's how you might use it:
+### Check Project Member in Team
 
-```typescript
-const { data, error } = await supabase
-  .rpc('add_project_member', {
-    p_project_id: 'project-uuid',
-    p_user_id: 'new-member-uuid',
-    p_role: 'member'
-  });
-
-if (data) {
-  console.log('New member added successfully');
-} else {
-  console.error('Failed to add new member:', error);
-}
-```
-
-### 5. Updating a Project Member's Role
+This trigger function ensures that a user being added to a project is already a member of the associated team account:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.update_project_member_role(
-  p_user_id UUID,
-  p_new_role public.project_role,
-  p_project_id UUID
-)
-RETURNS BOOLEAN
-LANGUAGE PLPGSQL
+CREATE OR REPLACE FUNCTION kit.check_project_member_in_team()
+RETURNS TRIGGER
 AS $$
 DECLARE
-  v_current_role public.project_role;
+  v_account_id UUID;
 BEGIN
-  -- Get the current role of the member
-  SELECT role INTO v_current_role
-  FROM public.project_members
-  WHERE project_id = p_project_id AND user_id = p_user_id;
+  SELECT account_id FROM public.projects
+  WHERE id = NEW.project_id
+  INTO v_account_id;
 
-  -- Check if the current user can manage this member
-  IF NOT public.current_user_can_manage_project_member(v_current_role, p_project_id) THEN
-    RAISE EXCEPTION 'Permission denied';
+  IF NOT EXISTS (
+    SELECT 1 FROM public.accounts_memberships
+    WHERE account_id = v_account_id AND user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION 'User must be a member of the team account to be added to the project';
   END IF;
 
-  IF p_new_role = 'owner' THEN
-    RAISE EXCEPTION 'Owner role cannot be assigned this way';
-  END IF;
-
-  -- Update the member's role
-  UPDATE public.project_members
-  SET role = p_new_role
-  WHERE project_id = p_project_id AND user_id = p_user_id;
-
-  RETURN TRUE;
+  RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create a trigger that uses the above function
+CREATE TRIGGER ensure_project_member_in_team
+BEFORE INSERT OR UPDATE ON public.project_members
+FOR EACH ROW EXECUTE FUNCTION kit.check_project_member_in_team();
 ```
 
-This function allows for updating a project member's role, with appropriate permission checks. Here's an example of its usage:
+## Implementing the Projects Feature
 
-```typescript
-const { data, error } = await supabase
-  .rpc('update_project_member_role', {
-    p_user_id: 'member-uuid',
-    p_new_role: 'admin',
-    p_project_id: 'project-uuid'
-  });
+Now that we've set up all the necessary database objects, let's walk through how to use this Projects feature in your Makerkit application.
 
-if (data) {
-  console.log('Member role updated successfully');
-} else {
-  console.error('Failed to update member role:', error);
-}
+### Creating a New Project
+
+To create a new project, you'll insert a row into the `public.projects` table. The `kit.add_project_owner()` trigger will automatically add the creating user as the owner.
+
+```sql
+INSERT INTO public.projects (name, description, account_id)
+VALUES ('My New Project', 'This is a description of my project', :account_id);
 ```
 
-## Implementing the Projects Service
+Replace `:account_id` with the actual account ID.
 
-Now, let's create a Project service to interact with our new tables. Create a new file `apps/web/lib/server/projects/projects.service.ts`:
+### Adding Members to a Project
 
-```typescript
+Use the `public.add_project_member` function to add new members to a project:
+
+```sql
+SELECT public.add_project_member(:project_id, :user_id, 'member'::public.project_role);
+```
+
+Replace `:project_id` and `:user_id` with actual values. The role can be 'member' or 'admin'.
+
+### Updating a Member's Role
+
+To change a member's role, use the `public.update_project_member_role` function:
+
+```sql
+SELECT public.update_project_member_role(:user_id, 'admin'::public.project_role, :project_id);
+```
+
+### Querying Projects
+
+To get all projects a user is a member of:
+
+```sql
+SELECT * FROM public.projects
+WHERE id IN (
+  SELECT project_id
+  FROM public.project_members
+  WHERE user_id = auth.uid()
+);
+```
+
+### Checking Permissions
+
+You can use the various permission-checking functions in your application logic. For example:
+
+```sql
+-- Check if the current user can edit a project
+SELECT public.can_edit_project(auth.uid(), :project_id);
+
+-- Check if the current user can delete a project
+SELECT public.can_delete_project(auth.uid(), :project_id);
+
+-- Check if the current user can invite members to a project
+SELECT public.can_invite_project_member(auth.uid(), :project_id);
+```
+
+## Application-Level Logic
+
+Now that we've covered the database schema and functions, let's move on to the application-level logic.
+
+### The ProjectsService
+
+To provide a better API for interacting with the database, we can create a service layer (`ProjectsService`) that encapsulates all the database operations related to projects. This is a great practice as it separates concerns and makes your code more maintainable.
+
+The `ProjectsService` class encapsulates all the database operations related to projects. This is a great practice as it separates concerns and makes your code more maintainable.
+
+```tsx title="apps/web/lib/server/projects/projects.service.ts"
 import { SupabaseClient } from '@supabase/supabase-js';
 
 import { Database } from '~/lib/database.types';
@@ -423,8 +720,8 @@ class ProjectsService {
   async getProjects(accountSlug: string) {
     const { data, error } = await this.client
       .from('projects')
-      .select('*, account_id ! inner (slug)')
-      .eq('account_id.slug', accountSlug);
+      .select('*, account: account_id ! inner (slug)')
+      .eq('account.slug', accountSlug);
 
     if (error) {
       throw error;
@@ -496,22 +793,57 @@ class ProjectsService {
 }
 ```
 
-This service provides methods to create projects, fetch projects for an account, get project members, and add new members to a project.
+Let's look at some key methods:
 
-### Using the Projects Service
+1. **createProject**: This method inserts a new project into the `projects` table.
+2. **getProjects**: Fetches all projects for a given account.
+3. **getProjectMembers**: Retrieves all members of a specific project.
+4. **getProject**: Fetches details of a single project.
+5. **hasPermission**: Checks if the current user has a specific permission for a project.
+6. **addProjectMember**: Adds a new member to a project.
 
-To use the service, provide a Supabase instance:
+These methods utilize the Supabase client to interact with the database, leveraging the SQL functions and RLS policies we set up earlier.
 
-```tsx
-const supabase = getSupabaseServerClient();
-const projectsService = createProjectsService(supabase);
+### Using the ProjectsService in a Next.js Page
 
-const projects = await projectsService.getProjects(accountSlug);
-```
+The `ProjectsPage` component demonstrates how to use the `ProjectsService` in a Next.js server component:
 
-## Creating the Projects List Page
+1. We create an instance of `ProjectsService` using the Supabase client:
 
-Let's create a page to list projects for a team account. Create a new file `apps/web/app/home/[account]/projects/page.tsx`:
+   ```typescript
+   const client = getSupabaseServerComponentClient();
+   const service = createProjectsService(client);
+   ```
+
+2. We fetch the projects for the current account:
+
+   ```typescript
+   const projects = use(service.getProjects(params.account));
+   ```
+
+   The `use` function is a React hook that allows us to use async data in a synchronous-looking way in server components.
+
+3. We render the projects, showing an empty state if there are no projects:
+
+   ```tsx
+   <If condition={projects.length === 0}>
+     <EmptyState>
+       {/* Empty state content */}
+     </EmptyState>
+   </If>
+
+   <div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
+     {projects.map((project) => (
+       <CardButton key={project.id} asChild>
+         <Link href={`/home/${params.account}/projects/${project.id}`}>
+           {project.name}
+         </Link>
+       </CardButton>
+     ))}
+   </div>
+   ```
+
+Here is a page that shows a list of projects for a given account:
 
 ```tsx title="apps/web/app/home/[account]/projects/page.tsx"
 import { use } from 'react';
@@ -562,11 +894,7 @@ export default function ProjectsPage({ params }: ProjectsPageProps) {
               now!
             </EmptyStateText>
 
-            <EmptyStateButton asChild>
-              <Link href={`/home/${params.account}/projects/new`}>
-                Create Project
-              </Link>
-            </EmptyStateButton>
+            <EmptyStateButton>Create Project</EmptyStateButton>
           </EmptyState>
         </If>
 
@@ -585,187 +913,632 @@ export default function ProjectsPage({ params }: ProjectsPageProps) {
 }
 ```
 
-This page displays a list of projects for the current team account and provides a link to create new projects.
+The page will display a list of projects for the current account, with a link to create a new project. If there are no projects, it will display an empty state with a button to create a new project, which is a link to the new project page.
 
-## Building the New Project Form
+### Implementing Other Features
 
-Now, let's create a form to add new projects. Create a new file `apps/web/app/home/[account]/projects/new/page.tsx`:
+Based on the `ProjectsService`, you can implement other features:
 
-```tsx title="apps/web/app/home/[account]/projects/new/page.tsx"
-'use client';
+1. **Creating a New Project**:
+   You could create a form that calls `service.createProject()` when submitted.
+2. **Project Details Page**:
+   Use `service.getProject()` to fetch and display details of a single project.
+3. **Managing Project Members**:
+   Use `service.getProjectMembers()` to list members, and `service.addProjectMember()` to add new ones.
+4. **Permission Checking**:
+   Before performing actions, use `service.hasPermission()` to check if the user is allowed to do so.
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Button } from '@kit/ui/button';
-import { Input } from '@kit/ui/input';
-import { Textarea } from '@kit/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kit/ui/form';
-import { useSupabase } from '@kit/supabase/hooks/use-supabase';
-import { createProjectsService } from '~/lib/server/projects/projects.service';
+## Going beyond Projects
 
-const schema = z.object({
-  name: z.string().min(1, 'Project name is required'),
-  description: z.string().optional(),
-});
+The reason why you're adding Projects is likely because yoyu want to group more entities into a projects, so to better organizate a team's work. You can extend the Projects feature to support other entities, such as Tasks, Documents, and more.
 
-export default function NewProjectPage({ params }: { params: { account: string } }) {
-  const router = useRouter();
-  const client = useSupabase();
-  const service = createProjectsService(client);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+To do so, your project-related entities will need to be related to the Projects entity. This can be done using the `project_id` column in the related tables.
 
-  const form = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      name: '',
-      description: '',
-    },
-  });
+For example, if you want to add Tasks to a Project, you can create a new table `tasks` and add a foreign key to the `project_id` column in the `projects` table.
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    setIsSubmitting(true);
-    try {
-      await service.createProject({
-        name: data.name,
-        description: data.description,
-        accountId: params.account,
-      });
-      router.push(`/home/${params.account}/projects`);
-    } catch (error) {
-      console.error('Failed to create project:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Project Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Project'}
-        </Button>
-      </form>
-    </Form>
-  );
-}
+```sql
+-- Table: public.tasks
+CREATE TABLE if not exists public.tasks (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text NOT NULL,
+  description text,
+  project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT NOW(),
+  updated_at timestamptz NOT NULL DEFAULT NOW()
+);
 ```
 
-This page provides a form for users to create new projects.
+With this setup, you can now create Tasks that are related to a Project. You can also use the Supabase client to interact with the database, leveraging the SQL functions and RLS policies we set up earlier.
 
-## Updating Navigation
+Remember, the database schema and functions we've created provide a solid foundation for these features. As you build out your UI, you'll be calling the methods in `ProjectsService` to interact with the database in a secure, permission-controlled way.
 
-Finally, let's add a link to the Projects page in the team account navigation. Update the file `apps/web/config/team-account-navigation.config.tsx`:
+This approach allows you to create a robust, scalable application while keeping your business logic cleanly separated from your UI components.
 
-```tsx title="apps/web/config/team-account-navigation.config.tsx"
-import { CreditCard, LayoutDashboard, Settings, Users, FolderKanban } from 'lucide-react';
+### RLS Policies
 
-const getRoutes = (account: string) => [
-  // ... existing routes
-  {
-    label: 'Projects',
+When it comes to RLS, you can use the permissions system we've set up to control access to your database.
+
+This allows you to create fine-grained access control for your users, ensuring that only those who should have access to certain data can do so.
+
+```sql
+create policy select_projects_tasks
+  on public.tasks
+  for select
+  to authenticated
+  using (
+    public.is_project_member(project_id)
+  );
+```
+
+In short, if a user can view a Project, they can also view the Tasks related to that Project.
+
+You can extend the permissions system further to allow for more granular access control based on the specific requirements of your application, such as `can_edit_task` or `can_delete_task`.
+
+### Best Practices
+
+1. **Error Handling**: The service methods throw errors when something goes wrong. Make sure to catch and handle these errors appropriately in your components.
+2. **Type Safety**: The service uses TypeScript, leveraging the `Database` type to ensure type safety when interacting with Supabase.
+3. **Separation of Concerns**: By using a service layer, we keep our database logic separate from our UI components, making the code more maintainable and testable.
+4. **Server Components**: By using Next.js server components, we can fetch data on the server, reducing the amount of JavaScript sent to the client and improving initial page load times.
+5. **Reusability**: The `ProjectsService` can be used across different parts of your application, promoting code reuse.
+
+## Full Schema
+
+Below is the full schema:
+
+```sql
+-- enums for project roles: owner, admin, member
+create type public.project_role as enum ('owner', 'admin', 'member');
+
+-- enums for project actions
+create type public.project_action as enum (
+  'view_project',
+  'edit_project',
+  'delete_project',
+  'invite_member',
+  'remove_member'
+);
+
+/*
+# public.projects
+# This table stores the projects for the account
+*/
+create table if not exists public.projects (
+  id uuid default gen_random_uuid() primary key,
+  name varchar(255) not null,
+  description text,
+  account_id uuid not null references public.accounts(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- revoke access by default to public.projects
+revoke all on public.projects from public, service_role;
+-- grant access to authenticated users
+grant select, insert, update, delete on public.projects to authenticated;
+
+-- indexes on public.projects
+create index projects_account_id on public.projects (account_id);
+
+-- RLS policies on public.projects
+alter table public.projects enable row level security;
+
+/*
+# public.project_members
+# This table stores the members of a project
+*/
+create table if not exists public.project_members (
+  project_id uuid not null references public.projects(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role public.project_role not null default 'member',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (project_id, user_id)
+);
+
+-- make sure there is only one owner per project
+create unique index projects_unique_owner on public.project_members (project_id) where role = 'owner';
+
+-- indexes on public.project_members
+create index project_members_project_id on public.project_members (project_id);
+create index project_members_user_id on public.project_members (user_id);
+
+-- revoke access by default to public.project_members
+revoke all on public.project_members from public, service_role;
+
+-- grant access to authenticated users to public.project_members
+grant select, insert, update, delete on public.project_members to authenticated;
+
+-- RLS policies on public.project_members
+alter table public.project_members enable row level security;
+
+-- public.is_project_member
+-- this function checks if a user is a member of a specific project
+create or replace function public.is_project_member(p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = p_project_id
+    and user_id = (select auth.uid())
+  );
+$$ language sql security definer;
+
+grant execute on function public.is_project_member(uuid) to authenticated;
+
+-- public.is_project_admin
+-- this function checks if a user is an admin or owner of a specific project
+create or replace function public.is_project_admin(p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = p_project_id
+    and user_id = (select auth.uid())
+    and role in ('owner', 'admin')
+  );
+$$ language sql;
+
+grant execute on function public.is_project_admin to authenticated;
+
+-- public.is_project_owner
+-- check if a user is the owner of a project
+create or replace function public.is_project_owner(project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = $1
+    and user_id = (select auth.uid())
+    and role = 'owner'
+  );
+$$ language sql;
+
+grant execute on function public.is_project_owner to authenticated;
+
+-- public.user_has_project_permission
+-- check if the current user has the required permissions to perform a specific action on a project
+create or replace function public.user_has_project_permission(
+  p_user_auth_id uuid,
+  p_project_id uuid,
+  p_action public.project_action
+)
+returns boolean
+set search_path = ''
+as $$
+declare
+  v_role public.project_role;
+begin
+  -- first, check if the user is a member of the project
+  select role into v_role
+  from public.project_members
+  where project_id = p_project_id and user_id = p_user_auth_id;
+
+  if v_role is null then
+    return false;
+  end if;
+
+  -- check permissions based on role and action
+  case v_role
+    when 'owner' then
+      return true;  -- owners can do everything
+    when 'admin' then
+      return p_action != 'delete_project';  -- admins can do everything except delete the project
+    when 'member' then
+      return p_action in ('view_project');
+    else
+      raise exception 'user must be a member of the project to perform this action';
+  end case;
+end;
+$$ language plpgsql;
+
+grant execute on function public.user_has_project_permission to authenticated;
+
+-- public.current_user_has_project_permission
+create or replace function public.current_user_has_project_permission(
+  p_project_id uuid,
+  p_action public.project_action
+)
+returns boolean
+set search_path = ''
+as $$
+declare
+  v_role public.project_role;
+begin
+  select public.user_has_project_permission((select auth.uid()), p_project_id, p_action);
+end;
+$$ language plpgsql;
+
+grant execute on function public.current_user_has_project_permission to authenticated;
+
+-- public.current_user_can_manage_project_member
+-- Function to check if a user can manage another user in a project
+create or replace function public.current_user_can_manage_project_member(
+  p_target_member_role public.project_role,
+  p_project_id uuid
+)
+returns boolean
+set search_path = ''
+as $$
+declare
+  v_current_user_role public.project_role;
+begin
+  select role into v_current_user_role
+  from public.project_members
+  where project_id = p_project_id and user_id = (select auth.uid());
+
+  if v_current_user_role is null or p_target_member_role is null then
+    raise exception 'User not found';
+  end if;
+
+  -- Check if the manager has a higher role
+  return (v_current_user_role = 'owner' and p_target_member_role != 'owner') or
+         (v_current_user_role = 'admin' and p_target_member_role = 'member');
+end;
+$$ language plpgsql;
+
+grant execute on function public.current_user_can_manage_project_member to authenticated;
+
+-- public.update_project_member_role
+-- function to update the role of a project member
+create or replace function public.update_project_member_role(
+  p_user_id uuid,
+  p_new_role public.project_role,
+  p_project_id uuid
+)
+returns boolean
+set search_path = ''
+as $$
+declare
+  v_current_role public.project_role;
+begin
+  -- Get the current role of the member
+  select role into v_current_role
+  from public.project_members
+  where project_id = p_project_id and user_id = p_user_id;
+
+  -- Check if the manager can manage this member
+  if not public.current_user_can_manage_project_member(v_current_role, p_project_id) then
+    raise exception 'Permission denied';
+  end if;
+
+  if p_new_role = 'owner' then
+    raise exception 'Owner cannot be updated to a different role';
+  end if;
+
+  -- Update the member's role
+  update public.project_members
+  set role = p_new_role
+  where project_id = p_project_id and user_id = p_user_id;
+
+  return true;
+end;
+$$ language plpgsql;
+
+grant execute on function public.update_project_member_role to authenticated;
+
+-- public.can_edit_project
+-- check if the user can edit the project
+create or replace function public.can_edit_project(p_user_auth_id uuid, p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select public.user_has_project_permission(p_user_auth_id, p_project_id, 'edit_project'::public.project_action);
+$$ language sql;
+
+grant execute on function public.can_edit_project to authenticated;
+
+-- public.can_delete_project
+-- check if the user can delete the project
+create or replace function public.can_delete_project(p_user_auth_id uuid, p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select public.user_has_project_permission(p_user_auth_id, p_project_id, 'delete_project'::public.project_action);
+$$ language sql;
+
+grant execute on function public.can_delete_project to authenticated;
+
+-- public.can_invite_project_member
+-- check if the user can invite a new member to the project
+create or replace function public.can_invite_project_member(p_user_auth_id uuid, p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select public.user_has_project_permission(p_user_auth_id, p_project_id, 'invite_member'::public.project_action);
+$$ language sql;
+
+grant execute on function public.can_invite_project_member to authenticated;
+
+/*
+RLS POLICIES
+*/
+
+-- SELECT(public.projects)
+create policy select_projects
+  on public.projects
+  for select
+  to authenticated
+  using (
+    public.is_project_member(id)
+  );
+
+-- INSERT(public.projects)
+create policy insert_new_project
+  on public.projects
+  for insert
+  to authenticated
+  with check (
+    public.has_role_on_account(account_id)
+  );
+
+-- DELETE(public.projects)
+create policy delete_project
+  on public.projects
+  for delete
+  to authenticated
+  using (
+    public.can_delete_project((select auth.uid()), id)
+  );
+
+-- UPDATE(public.projects)
+create policy update_project
+  on public.projects
+  for update
+  to authenticated
+  using (
+    public.can_edit_project((select auth.uid()), id)
+  )
+  with check (
+    public.can_edit_project((select auth.uid()), id)
+  );
+
+-- SELECT(public.project_members)
+create policy select_project_members
+  on public.project_members
+  for select
+  to authenticated
+  using (
+    public.is_project_member(project_id)
+  );
+
+-- INSERT(public.project_members)
+create policy insert_project_member
+  on public.project_members
+  for insert
+  to authenticated
+  with check (
+    public.can_invite_project_member(
+      (select auth.uid()),
+      project_id
+    )
+  );
+
+-- UPDATE(public.project_members)
+create policy update_project_members
+  on public.project_members
+  for update
+  to authenticated
+  using (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  )
+  with check (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  );
+
+-- DELETE(public.project_members)
+create policy delete_project_members
+  on public.project_members
+  for delete
+  to authenticated
+  using (
+    public.current_user_can_manage_project_member(
+      role,
+      project_id
+    )
+  );
+
+/*
+# FUNCTIONS
+*/
+-- function to add owner of the project creator as the first project member
+create or replace function kit.add_project_owner()
+returns trigger
+as $$
+begin
+  insert into public.project_members (project_id, user_id, role)
+  values (new.id, auth.uid(), 'owner'::public.project_role);
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- trigger to add owner of the project creator as the first project member
+create trigger add_project_owner_on_insert
+    after insert on public.projects
+    for each row
+    execute procedure kit.add_project_owner();
+
+create or replace function public.add_project_member(
+  p_project_id uuid,
+  p_user_id uuid,
+  p_role public.project_role default 'member'
+) returns boolean
+set search_path = ''
+as $$
+declare
+  v_account_id uuid;
+begin
+  -- check if the current user has permission to add members
+  if not public.is_project_admin(p_project_id) or p_role = 'owner' then
+    raise exception 'permission denied';
+  end if;
+
+  -- get the account_id for the project
+  select account_id into v_account_id
+  from public.projects
+  where id = p_project_id;
+
+  -- check if the user is a member of the team account
+  if not exists (
+    select 1 from public.accounts_memberships
+    where account_id = v_account_id and user_id = p_user_id
+  ) then
+    raise exception 'user is not a member of the team account';
+  end if;
+
+  -- add the new member (the trigger will enforce the team membership check)
+  insert into public.project_members (project_id, user_id, role)
+  values (p_project_id, p_user_id, p_role)
+  on conflict (project_id, user_id) do update
+  set role = excluded.role;
+
+  return true;
+end;
+$$ language plpgsql;
+
+grant execute on function public.add_project_member to authenticated;
+
+-- TRIGGERS on public.project_members
+-- this trigger function ensures that a user being added to a project
+-- is already a member of the associated team account
+create or replace function kit.check_project_member_in_team()
+returns trigger
+as $$
+declare
+  v_account_id uuid;
+begin
+  select account_id from public.projects
+  where id = new.project_id
+  into v_account_id;
+
+  if not exists (
+    select 1 from public.accounts_memberships
+    where account_id = v_account_id and user_id = new.user_id
+  ) then
+    raise exception 'user must be a member of the team account to be added to the project';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- we create a trigger that uses the above function
+create trigger ensure_project_member_in_team
+before insert or update on public.project_members
+for each row execute function kit.check_project_member_in_team();
+```
+
+## User Interface
+
+Now that we have a data model, let's create the UI for managing projects. We will create a new page at `app/dashboard/[account]/projects/page.tsx` that will display a list of projects for the current account.
+
+### Adding the Page to the Navigation
+
+Let's update the navigation menu to add a new link to the projects page. We will create a new file at `apps/web/config/team-account-navigation.config.tsx` with the following content:
+
+```tsx title="apps/web/config/team-account-navigation.config.tsx" {7-11}
+{
+    label: 'common:routes.dashboard',
+    path: pathsConfig.app.accountHome.replace('[account]', account),
+    Icon: <LayoutDashboard className={iconClasses} />,
+    end: true,
+},
+{
+    label: 'common:routes.projects',
     path: `/home/${account}/projects`,
     Icon: <FolderKanban className={iconClasses} />,
-  },
-  // ... other routes
-];
-
-// ... rest of the file
+},
 ```
 
-This update adds a new "Projects" link to the team account navigation, making it easy for users to access the projects feature.
+NB: you need to the component `FolderKanban` from `lucide-react` to use the icon.
 
-Certainly! I'll create content for these two sections, detailing how to add a Project Page and a Project Members Page to your Makerkit application.
+### Creating the Projects List Page
 
-## Adding a Project Page
+We can now create the page at `app/dashboard/[account]/projects/page.tsx` with the following content:
 
-Let's create a page to display the details of a single project. This page will show the project's information and provide options to edit the project.
-
-Create a new file `apps/web/app/home/[account]/projects/[projectId]/page.tsx`:
-
-```tsx title="apps/web/app/home/[account]/projects/[projectId]/page.tsx"
+```tsx title="app/dashboard/[account]/projects/page.tsx"
 import { use } from 'react';
+
 import Link from 'next/link';
+
 import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
-import { PageBody, PageHeader } from '@kit/ui/page';
+import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
 import { Button } from '@kit/ui/button';
+import {
+  CardButton,
+  CardButtonHeader,
+  CardButtonTitle,
+} from '@kit/ui/card-button';
+import {
+  EmptyState,
+  EmptyStateButton,
+  EmptyStateHeading,
+  EmptyStateText,
+} from '@kit/ui/empty-state';
+import { If } from '@kit/ui/if';
+import { PageBody, PageHeader } from '@kit/ui/page';
+
+import { CreateProjectDialog } from '~/home/[account]/projects/_components/create-project-dialog';
 import { createProjectsService } from '~/lib/server/projects/projects.service';
 
-interface ProjectPageProps {
+interface ProjectsPageProps {
   params: {
     account: string;
-    projectId: string;
   };
 }
 
-export default function ProjectPage({ params }: ProjectPageProps) {
+export default function ProjectsPage({ params }: ProjectsPageProps) {
   const client = getSupabaseServerComponentClient();
   const service = createProjectsService(client);
 
-  const project = use(service.getProject(params.projectId));
-
-  if (!project) {
-    return <div>Project not found</div>;
-  }
+  const projects = use(service.getProjects(params.account));
 
   return (
     <>
-      <PageHeader
-        title={project.name}
-        description={project.description || 'No description provided'}
-      >
-        <Link href={`/home/${params.account}/projects/${params.projectId}/edit`}>
-          <Button>Edit Project</Button>
+      <PageHeader title="Projects" description={<AppBreadcrumbs />}>
+        <Link href={`/home/${params.account}/projects/new`}>
+          <CreateProjectDialog>
+            <Button>New Project</Button>
+          </CreateProjectDialog>
         </Link>
       </PageHeader>
 
       <PageBody>
-        <div className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Project Details</h2>
-            <p>Created at: {new Date(project.created_at).toLocaleString()}</p>
-            <p>Last updated: {new Date(project.updated_at).toLocaleString()}</p>
-          </div>
+        <If condition={projects.length === 0}>
+          <EmptyState>
+            <EmptyStateHeading>No projects found</EmptyStateHeading>
 
-          <div>
-            <h2 className="text-lg font-semibold">Project Actions</h2>
-            <div className="space-x-2">
-              <Link href={`/home/${params.account}/projects/${params.projectId}/members`}>
-                <Button variant="outline">Manage Members</Button>
+            <EmptyStateText>
+              You still have not created any projects. Create your first project
+              now!
+            </EmptyStateText>
+
+            <CreateProjectDialog>
+              <EmptyStateButton>Create Project</EmptyStateButton>
+            </CreateProjectDialog>
+          </EmptyState>
+        </If>
+
+        <div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
+          {projects.map((project) => (
+            <CardButton key={project.id} asChild>
+              <Link href={`/home/${params.account}/projects/${project.id}`}>
+                <CardButtonHeader>
+                  <CardButtonTitle>{project.name}</CardButtonTitle>
+                </CardButtonHeader>
               </Link>
-              <Link href={`/home/${params.account}/projects/${params.projectId}/tasks`}>
-                <Button variant="outline">View Tasks</Button>
-              </Link>
-            </div>
-          </div>
+            </CardButton>
+          ))}
         </div>
       </PageBody>
     </>
@@ -773,390 +1546,331 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 }
 ```
 
-This page displays the project details and provides links to edit the project, manage members, and view tasks. You'll need to implement these additional pages (edit project, tasks) separately.
+This page is pretty straightforward, it just displays a list of projects for the account. We can now build the `ProjectsDataTable` component that will display the list of projects.
 
-## Adding the Project Members Page
+When we have a list of projects, we display them in the following way:
 
-Now, let's create a page to display and manage the members of a project.
+<Image src="/assets/images/docs/projects-list.webp" width="2858" height="1920" />
 
-1. Create a new file `apps/web/app/home/[account]/projects/[projectId]/members/page.tsx`:
+Instead, we can also display a message when there are no projects:
 
-```tsx title="home/[account]/projects/[projectId]/members/page.tsx"
-import { use } from 'react';
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
-import { PageBody, PageHeader } from '@kit/ui/page';
-import { Button } from '@kit/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@kit/ui/table';
-import { createProjectsService } from '~/lib/server/projects/projects.service';
-import { AddMemberForm } from './_components/add-member-form';
+<Image src="/assets/images/docs/projects-empty-state.webp" width="2858" height="1920" />
 
-interface ProjectMembersPageProps {
-  params: {
-    account: string;
-    projectId: string;
-  };
-}
+### Creating the Dialog to Create a Project
 
-export default function ProjectMembersPage({ params }: ProjectMembersPageProps) {
-  const client = getSupabaseServerComponentClient();
-  const service = createProjectsService(client);
+We can now create the dialog to create a project. We will create a new file at `apps/web/home/[account]/projects/_components/create-project-dialog.tsx` with the following content:
 
-  const members = use(service.getProjectMembers(params.projectId));
-
-  return (
-    <>
-      <PageHeader
-        title="Project Members"
-        description="Manage the members of this project"
-      >
-        <AddMemberForm projectId={params.projectId} />
-      </PageHeader>
-
-      <PageBody>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.user.email}</TableCell>
-                <TableCell>{member.role}</TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm">Change Role</Button>
-                  <Button variant="outline" size="sm" className="ml-2">Remove</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </PageBody>
-    </>
-  );
-}
-```
-
-2. Create a new component for adding members in `apps/web/app/home/[account]/projects/[projectId]/members/_components/add-member-form.tsx`:
-
-```tsx title="home/[account]/projects/[projectId]/members/_components/add-member-form.tsx"
+```tsx title="apps/web/home/[account]/projects/_components/create-project-dialog.tsx"
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useTransition } from 'react';
+
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+
+import { useTeamAccountWorkspace } from '@kit/team-accounts/hooks/use-team-account-workspace';
 import { Button } from '@kit/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@kit/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@kit/ui/form';
 import { Input } from '@kit/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@kit/ui/form';
-import { useSupabase } from '@kit/supabase/hooks/use-supabase';
-import { createProjectsService } from '~/lib/server/projects/projects.service';
 
-const schema = z.object({
-  email: z.string().email('Invalid email address'),
-});
+import { CreateProjectSchema } from '../_lib/schema/create-project-schema';
+import { createProjectAction } from '../_lib/server/server-actions';
 
-export function AddMemberForm({ projectId }: { projectId: string }) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const client = useSupabase();
-  const service = createProjectsService(client);
+export function CreateProjectDialog(props: React.PropsWithChildren) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Project</DialogTitle>
+
+          <DialogDescription>
+            Create a new project for your team.
+          </DialogDescription>
+        </DialogHeader>
+
+        <CreateProjectDialogForm
+          onCancel={() => setIsOpen(false)}
+          onCreateProject={() => setIsOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CreateProjectDialogForm(props: {
+  onCreateProject?: (name: string) => unknown;
+  onCancel?: () => unknown;
+}) {
+  const {
+    account: { id: accountId },
+  } = useTeamAccountWorkspace();
 
   const form = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(CreateProjectSchema),
     defaultValues: {
-      email: '',
+      name: '',
+      accountId,
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof schema>) => {
-    setIsSubmitting(true);
-    try {
-      await service.addProjectMember({
-        projectId,
-        email: data.email,
-      });
-      form.reset();
-      // You might want to add some success feedback here
-    } catch (error) {
-      console.error('Failed to add member:', error);
-      // You might want to add some error feedback here
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const [pending, startTransition] = useTransition();
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex space-x-2">
+      <form
+        className={'flex flex-col space-y-4'}
+        onSubmit={form.handleSubmit((data) => {
+          startTransition(async () => {
+            await createProjectAction(data);
+          });
+        })}
+      >
         <FormField
-          control={form.control}
-          name="email"
+          name={'name'}
           render={({ field }) => (
             <FormItem>
+              <FormLabel>Project Name</FormLabel>
+
               <FormControl>
-                <Input {...field} placeholder="Enter email" />
+                <Input
+                  data-test={'project-name-input'}
+                  required
+                  min={3}
+                  max={50}
+                  type={'text'}
+                  placeholder={''}
+                  {...field}
+                />
               </FormControl>
-              <FormMessage />
+
+              <FormDescription>Enter a name for your project (Ex. Accounting)</FormDescription>
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Adding...' : 'Add Member'}
-        </Button>
+
+        <div className={'flex justify-end space-x-2'}>
+          <Button variant={'outline'} type={'button'} onClick={props.onCancel}>
+            Cancel
+          </Button>
+
+          <Button disabled={pending}>Create Project</Button>
+        </div>
       </form>
     </Form>
   );
 }
 ```
 
-Now, let's update our `ProjectsService` to include these new methods:
+We can now create the server action to create a project. We will create a new file at `apps/web/home/[account]/projects/_lib/server/server-actions.ts` with the following content:
 
-```typescript
-class ProjectsService {
-  // ... existing methods
+```tsx title="apps/web/home/[account]/projects/_lib/server/server-actions.ts"
+'use server';
 
-  async updateProjectMemberRole(params: {
-    projectId: string;
-    memberId: string;
-    newRole: 'member' | 'admin';
-  }) {
-    const { error } = await this.client.rpc('update_project_member_role', {
-      p_manager_id: this.client.auth.user()?.id,
-      p_member_id: params.memberId,
-      p_project_id: params.projectId,
-      p_new_role: params.newRole,
+import { revalidatePath } from 'next/cache';
+
+import { enhanceAction } from '@kit/next/actions';
+import { getLogger } from '@kit/shared/logger';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+import { CreateProjectSchema } from '../schema/create-project-schema';
+
+export const createProjectAction = enhanceAction(
+  async (data) => {
+    const client = getSupabaseServerClient();
+    const logger = await getLogger();
+
+    logger.info(
+      {
+        accountId: data.accountId,
+        name: data.name,
+      },
+      'Creating project...',
+    );
+
+    const response = await client.from('projects').insert({
+      account_id: data.accountId,
+      name: data.name,
     });
 
-    if (error) {
-      throw error;
+    if (response.error) {
+      logger.error(
+        {
+          accountId: data.accountId,
+          name: data.name,
+          error: response.error,
+        },
+        'Failed to create project',
+      );
+
+      throw response.error;
     }
 
-    return true;
-  }
+    logger.info(
+      {
+        accountId: data.accountId,
+        name: data.name,
+      },
+      'Project created',
+    );
 
-  async removeProjectMember(params: {
-    projectId: string;
-    memberId: string;
-  }) {
-    const { error } = await this.client.rpc('remove_project_member', {
-      p_manager_id: this.client.auth.user()?.id,
-      p_member_id: params.memberId,
-      p_project_id: params.projectId,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    return true;
-  }
-}
+    revalidatePath('/home/[account]/projects', 'layout');
+  },
+  {
+    schema: CreateProjectSchema,
+    auth: true,
+  },
+);
 ```
 
-Now, let's update our ProjectMembersPage component to include these new features:
+When the user submits the form, we call the `createProjectAction` server action. This action will insert a new project into the database. To refresh the data, we use the `revalidatePath` function to revalidate the `/home/[account]/projects` path.
 
-```tsx title="home/[account]/projects/[projectId]/members/page.tsx"
+### Project Detail Page
+
+Now, we want to create a detail page for each project.
+
+In this case, we will use an outer layout to wrap the project detail page, so that we can display an inner navigation menu that will reuse the same layout.
+
+
+We will create a new file at `apps/web/home/[account]/projects/[id]/layout.tsx` with the following content:
+
+```tsx
 import { use } from 'react';
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
-import { PageBody, PageHeader } from '@kit/ui/page';
-import { Button } from '@kit/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@kit/ui/table';
-import { createProjectsService } from '~/lib/server/projects/projects.service';
-import { AddMemberForm } from './_components/add-member-form';
-import { MemberActions } from './_components/member-actions';
 
-interface ProjectMembersPageProps {
+import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
+import {
+  BorderedNavigationMenu,
+  BorderedNavigationMenuItem,
+} from '@kit/ui/bordered-navigation-menu';
+import { PageBody, PageHeader } from '@kit/ui/page';
+
+import { getProject } from './_lib/server/get-project';
+
+interface ProjectDetailLayoutProps {
   params: {
+    id: string;
     account: string;
-    projectId: string;
   };
 }
 
-export default function ProjectMembersPage({ params }: ProjectMembersPageProps) {
-  const client = getSupabaseServerComponentClient();
-  const service = createProjectsService(client);
-
-  const members = use(service.getProjectMembers(params.projectId));
-  const currentUser = use(client.auth.getUser());
+export default function ProjectDetailLayout({
+  params,
+  children,
+}: React.PropsWithChildren<ProjectDetailLayoutProps>) {
+  const project = use(getProject(params.id));
 
   return (
     <>
       <PageHeader
-        title="Project Members"
-        description="Manage the members of this project"
-      >
-        <AddMemberForm projectId={params.projectId} />
-      </PageHeader>
+        title={project.name}
+        description={<AppBreadcrumbs values={{ [project.id]: project.name }} />}
+      />
 
       <PageBody>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.user.email}</TableCell>
-                <TableCell>{member.role}</TableCell>
-                <TableCell>
-                  <MemberActions
-                    projectId={params.projectId}
-                    member={member}
-                    currentUserId={currentUser.id}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className={'border-b px-4 pb-2.5'}>
+          <BorderedNavigationMenu>
+            <BorderedNavigationMenuItem
+              path={`/home/${params.account}/projects/${project.id}`}
+              label={'Documents'}
+            />
+
+            <BorderedNavigationMenuItem
+              path={`/home/${params.account}/projects/${project.id}/members`}
+              label={'Members'}
+            />
+          </BorderedNavigationMenu>
+        </div>
+
+        {children}
       </PageBody>
     </>
   );
 }
 ```
 
-Finally, let's create a new `MemberActions` component to handle role updates and member removal:
+#### Navigation Menu
 
-```tsx title="home/[account]/projects/[projectId]/members/_components/member-actions.tsx"
-// apps/web/app/home/[account]/projects/[projectId]/members/_components/member-actions.tsx
+Just as an example, we have added a navigation menu with two links: Documents and Members. You can customize this menu to fit your needs.
 
-'use client';
+#### Using the "getProject" function
 
-import { useState } from 'react';
-import { useSupabase } from '@kit/supabase/hooks/use-supabase';
-import { Button } from '@kit/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kit/ui/select';
+As you may have noticed, we have a `getProject` function that will fetch the project from the database.
+
+We use this to make use of caching and reuse this function across all the pages in the Project layout, so we don't re-fetch the data from the database when avigating between pages.
+
+```tsx title="apps/web/app/home/[account]/projects/[id]/_lib/server/get-project.ts"
+import { cache } from 'react';
+
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
 import { createProjectsService } from '~/lib/server/projects/projects.service';
 
-interface MemberActionsProps {
-  projectId: string;
-  member: {
-    id: string;
-    role: 'owner' | 'admin' | 'member';
-    user_id: string;
-  };
-  currentUserId: string;
-}
+export const getProject = cache(projectLoader);
 
-export function MemberActions({ projectId, member, currentUserId }: MemberActionsProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const client = useSupabase();
+async function projectLoader(id: string) {
+  const client = getSupabaseServerClient();
   const service = createProjectsService(client);
 
-  const canManageMember =
-    (member.role !== 'owner' && currentUserId !== member.user_id) &&
-    (member.role === 'member' || (member.role === 'admin' && currentUserId === member.user_id));
+  return service.getProject(id);
+}
+```
 
-  const handleRoleChange = async (newRole: 'admin' | 'member') => {
-    if (!canManageMember) return;
+### Project Detail Page
 
-    setIsUpdating(true);
-    try {
-      await service.updateProjectMemberRole({
-        projectId,
-        memberId: member.user_id,
-        newRole,
-      });
-      // You might want to add some success feedback here and refresh the members list
-    } catch (error) {
-      console.error('Failed to update member role:', error);
-      // You might want to add some error feedback here
-    } finally {
-      setIsUpdating(false);
-    }
+Now, we want to create a detail page for each project.
+
+We will create a new file at `apps/web/app/home/[account]/projects/[id]/page.tsx` with the following content:
+
+```tsx title="apps/web/app/home/[account]/projects/[id]/page.tsx"
+import { use } from 'react';
+
+import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
+import { PageBody, PageHeader } from '@kit/ui/page';
+
+import { createProjectsService } from '~/lib/server/projects/projects.service';
+
+interface ProjectDetailPageProps {
+  params: {
+    id: string;
+    account: string;
   };
+}
 
-  const handleRemoveMember = async () => {
-    if (!canManageMember) return;
+export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const client = getSupabaseServerComponentClient();
+  const service = createProjectsService(client);
 
-    setIsUpdating(true);
-    try {
-      await service.removeProjectMember({
-        projectId,
-        memberId: member.user_id,
-      });
-      // You might want to add some success feedback here and refresh the members list
-    } catch (error) {
-      console.error('Failed to remove member:', error);
-      // You might want to add some error feedback here
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  if (!canManageMember) {
-    return null;
-  }
+  const project = use(service.getProject(params.id));
 
   return (
-    <div className="space-x-2">
-      <Select
-        disabled={isUpdating}
-        value={member.role}
-        onValueChange={(value) => handleRoleChange(value as 'admin' | 'member')}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Select a role" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="admin">Admin</SelectItem>
-          <SelectItem value="member">Member</SelectItem>
-        </SelectContent>
-      </Select>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleRemoveMember}
-        disabled={isUpdating}
-      >
-        Remove
-      </Button>
-    </div>
+    <></>
   );
 }
 ```
 
+Generally speaking, it is up to you to decide how you want to display the project data. This is the inner part of the layout, so we can use the same layout for the detail page.
+
 ## Conclusion
 
-Congratulations! 🎉 You've successfully implemented a robust Projects feature in your Makerkit Next.js Supabase Turbo project. Let's recap what we've accomplished:
+In this tutorial, we've covered how to create a simple (yet powerful) data model for managing Projects in your Makerkit application. We've also explored how to implement this data model using Supabase and Next.js, and how to use the Supabase client to interact with the database.
 
-1. Created a solid database schema with proper relationships and permissions
-2. Implemented Row Level Security (RLS) policies to ensure data protection
-3. Created reusable functions for common permission checks
-4. Built a Projects service to interact with the database
-5. Developed pages to list and create projects
-6. Updated the navigation to include the new Projects feature
-
-This implementation provides a strong foundation for managing projects within team accounts. Here are some ideas for further enhancements:
-
-- Implement a project details page
-- Add functionality to edit and delete projects
-- Create a user interface for managing project members
-- Implement project-specific permissions and roles
-- Add task or issue tracking within projects
-
-### Best Practices Highlights
-
-Throughout this tutorial, we've adhered to several best practices:
-
-1. **Security**: We've used RLS policies and custom functions to ensure that users can only access data they're authorized to see.
-2. **Modularity**: By creating a separate Projects service, we've kept our code organized and easy to maintain.
-3. **Type Safety**: We've used TypeScript and Zod for type checking and validation, reducing the chance of runtime errors.
-4. **Reusability**: Our reusable RLS functions make it easy to implement consistent permission checks across different tables.
-5. **Error Handling**: We've implemented proper error handling in our service and UI components.
-6. **User Experience**: We've added loading states and intuitive navigation to enhance the user experience.
-
-### Final Thoughts
-
-Building features like this in Makerkit showcases the power and flexibility of the Next.js Supabase Turbo stack. By leveraging server-side rendering, efficient data fetching, and Supabase's powerful database features, you can create robust, scalable applications with relative ease.
-
-Remember, this is just the beginning! Feel free to expand on this foundation to create even more powerful project management features tailored to your specific use case.
-
-Happy coding, and don't hesitate to reach out if you have any questions or need further clarification on any part of this tutorial. Keep building awesome things with Makerkit! 🚀👨‍💻👩‍💻
+By following these steps, you can create a robust, scalable application that leverages the power of Supabase and Next.js to manage your team's projects in a secure, permission-controlled way.

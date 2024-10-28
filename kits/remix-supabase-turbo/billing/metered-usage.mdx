@@ -110,14 +110,14 @@ Makerkit uses the newest [usage reporting API in Stripe](https://docs.stripe.com
 
 Unlike the previous version of the API, you don't need a subscription item ID, but the customer ID and the metric name you're reporting.
 
-We assume you have created a metric in Stripe named `api_requests` that you use to report the usage.
+We assume you have created a metric in Stripe named `api_requests` that you use to report the usage. Let's create a function that reports the usage for this metric caling it `reportUsageForApiRequests`:
 
 ```tsx
 import { getBillingGatewayProvider } from '@kit/billing-gateway';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { createAccountsApi } from '@kit/accounts/api';
 
-async function reportUsage(
+async function reportUsageForApiRequests(
   accountId: string,
   quantity: number
 ) {
@@ -167,8 +167,8 @@ import { getBillingGatewayProvider } from '@kit/billing-gateway';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { createAccountsApi } from '@kit/accounts/api';
 
-async function reportUsage(
-  accountId: string, 
+async function reportUsageForApiRequests(
+  accountId: string,
   quantity: number
 ) {
   // use the correct client: in this case, the server action client

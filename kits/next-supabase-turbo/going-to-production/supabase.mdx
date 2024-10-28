@@ -1,0 +1,171 @@
+---
+title: "Deploy Supabase to Production"
+label: "Deploy Supabase"
+position: 1
+description: "Guide on how to setup your Supabase environment for production deployment."
+---
+
+Unless you're self-hosting Supabase, you will need to create an account on Supabase. You can do so by visiting [supabase.com](https://supabase.com).
+
+Once you have created an account, you will need to create a project. You can do so by clicking on the "Create Project" button.
+
+Supabase will promptly create a project and the API Keys required to connect your project to the Supabase API.
+
+### Keeping your Supabase Database Password safe
+
+When you create a new Supabase project, Supabase will prompt you to create a Database Password.
+
+Please store the Database Password and keep it safe - you will need it to authenticate your project with the Supabase CLI later on.
+
+### Navigating to the Supabase API settings
+
+To retrieve the environment variables you will need to retrieve the following:
+
+1. **Supabase URL**: this is the URL of your Supabase project.
+2. **Anon Key**: this is the public key of your Supabase project. The client will use it to access your Supabase project.
+3. **Service Role Key**: this is the secret key that grants administrative access to your Supabase project.
+
+Navigate to `Project Settings` -> `API` to retrieve the Supabase URL, Anon Key, and Service Role Key.
+
+<Image src="/assets/courses/next-turbo/supabase-api-settings.webp" width={"2500"} height={"1262"} />
+
+Keep this values safe, you will need them to set up your environment variables.
+
+### Setting up your Supabase project authentication
+
+We need to set up the authentication for our Supabase project. This involves setting our application's URL, and a return URL for callbacks when a user logs in or signs up.
+
+Navigate to `Authentication` -> `URL Configuration` to set up the authentication settings.
+
+Please fill the `Site URL` and `Redirect URL` fields with your application's URL if you have it.
+
+If you don't yet have a URL (as you may still need to deploy your project), you can fill in the URL later, but remember to update it before you go live with your project.
+
+#### Redirect URL
+
+The Redirect URL is the URL that Supabase will redirect the user to after they log in or sign up. This URL should be the URL of your application.
+
+You can use the following Redirect URL format: `https://<your-url>/auth/callback`. This is the default endpoint Makerkit uses for authentication.
+
+### Setting up your Supabase project SMTP service
+
+If you don't yet have an SMTP service, please skip this step. However - please remember to set up an SMTP service before you go live with your project.
+
+Navigate to `Project Settings` -> `Authentication` -> `SMTP Settings` to set up your SMTP service.
+
+Enable the SMTP service and fill in the SMTP settings. You can use a service like [Resend](https://resend.com/) to set up your SMTP service, which Makerkit supports natively.
+
+This is extremely important to ensure that your users receive emails from your application, as Supabase's email service is not reliable and only meant for development purposes.
+
+### Setting the Emails in your Supabase project
+
+Makerkit provides with pre-designed emails that you can use in your Supabase project. You can find the emails in the `apps/web/supabase/templates` folder in your project.
+
+These emails are nicer than the default Supabase emails and provide a better user experience. I do recommend using them in your project.
+
+For more information, please visit the [official documentation to set up emails](/docs/next-supabase-turbo/authentication-emails).
+
+### Linking your Supabase project
+
+Now that you have set up your Supabase project, you need to link it to your project with the Supabase CLI.
+
+To do this, you need to run the following command:
+
+```bash
+pnpm --filter web supabase login
+```
+
+Please follow the prompts and login to your Supabase account.
+
+Now, you need to link your project to your Supabase project. To do this, run the following command:
+
+```bash
+pnpm --filter web supabase link
+```
+
+You can choose the project you want to link to, and the Supabase CLI will link your project to your Supabase project.
+
+The CLI will prompt you for the Database Password you created earlier. Please enter it to authenticate your project with Supabase.
+
+### Pushing the Migration to Supabase for production
+
+If you have followed the previous steps, you have linked your project to your Supabase project. Now, you need to push the migration to your Supabase project.
+
+To do this, run the following command:
+
+```bash
+pnpm --filter web supabase db push
+```
+
+The Supabase CLI will now ask you to confirm the migrations. If it all looks good (you should see the core migrations and the migration wr created for this course) please proceed.
+
+<Image src="/assets/courses/next-turbo/supabase-webhooks.webp" width={"2062"} height={"876"} />
+
+## Database Webhooks
+
+Makerkit uses Database Webhooks in response to changes in the database.
+
+This allows the app to intercept events and handle them for various purposes, such as sending emails after an invitation, or canceling a subscription after a user deletes their account.
+
+As such, it is mandatory to set up the Database Webhooks in your Supabase instance for the app to work correctly.
+
+First, you need to generate a secret and set it using the environment variable `SUPABASE_DB_WEBHOOK_SECRET`.
+
+We use this varable in two places:
+1. In the Supabase webhooks headers, so the server can authenticate the request is coming from Supabase
+2. In the server, so we can authenticate the request is coming from Supabase
+
+Please set the `SUPABASE_DB_WEBHOOK_SECRET` environment variable:
+
+```bash
+SUPABASE_DB_WEBHOOK_SECRET=**************************************************
+```
+
+**Note**: Make it a strong secret key - and make sure to keep it secret!
+
+Once you have set the environment variable, you need to deploy the Supabase DB webhooks to your Supabase instance.
+
+Make sure to add the following header `X-Supabase-Event-Signature` with the value of the `SUPABASE_DB_WEBHOOK_SECRET` to the request.
+
+In this way - your server will be able to authenticate the request and be sure it's coming from your Supabase instance.
+
+As the endpoint, remember to use the `/api/db/webhook` endpoint. If your APP URL is `https://myapp.vercel.app`, the endpoint will be `https://myapp.vercel.app/api/db/webhook`. Please be sure to use your real APP URL.
+
+#### Adding Database Webhooks from Supabase Studio
+
+The below is only needed when going to production. The local development seed.sql script will add the webhooks for you.
+
+While you can create a migration to add the database webhooks, you can also add them from the Supabase Studio.
+
+Here are the steps to add the webhooks from the Supabase Studio:
+
+1. Go to the Supabase Studio
+2. Go to Database->Webhooks
+3. Click on "Enable Webhooks"
+4. Click on "Create a new hook"
+
+Now, replicate the webhooks at `apps/web/supabase/seed.sql` using the UI:
+
+1. Please remember to set the `X-Supabase-Event-Signature` header with the value of the `SUPABASE_DB_WEBHOOK_SECRET` to the request.
+2. Please remember to set the endpoint to `/api/db/webhook` using your real APP URL. If your APP URL is `https://myapp.vercel.app`, the endpoint will be `https://myapp.vercel.app/api/db/webhook`.
+3. Use 5000 as the timeout.
+
+Alternatively, you can also set these using a migration - but it's not recommended since you'd need to store the secret in the migration file.
+
+##### Webhooks to add
+
+We need to add the following webhooks:
+
+1. `delete` on `public.accounts`
+2. `delete` on `public.subscriptions`
+3. `insert` on `public.invitations`
+
+Please make sure to add these webhooks to your Supabase instance.
+
+## Set up Google Auth [Optional]
+
+If you want to use Google Auth in your project, [you need to set up Google Auth in your Supabase project](https://supabase.com/docs/guides/auth/social-login/auth-google).
+
+This is a little bit more convoluted as you need a Google Cloud project, so I recommend to do this later on.
+
+However, I am writing it here as a reminder to do it before you go live with your project.
