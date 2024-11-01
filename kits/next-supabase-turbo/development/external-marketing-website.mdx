@@ -39,3 +39,35 @@ function isMarketingPage(req: NextRequest) {
 ```
 
 Should you add a new marketing page, you need to update the `isMarketingPage` function with the new page path.
+
+## Using Next.js Rewrites
+
+You can use Next.js rewrite functionality to seamlessly redirect to an external marketing website without changing the visible URL. 
+
+Here's a sample configuration for setting up Next.js rewrites:
+
+```js
+rewrites: async () => {
+  return {
+    beforeFiles: [
+      // These rewrites are checked after headers/redirects
+      // and before all files including _next/public files which
+      // allows overriding page files
+      {
+        source: '/pricing',
+        destination: 'https://your-external-website.com/pricing',
+      },
+    ],
+  };
+};
+```
+
+To implement this, add the rewrite configuration to your `next.config.js` file. This setup allows you to redirect to your external marketing site's homepage without altering the URL path seen by users.
+
+When deciding between using middleware or the rewrite functionality, consider the specific requirements of your application. The middleware method is useful when you need to conditionally redirect specific pages, while the rewrite method is more suited for overriding entire paths seamlessly.
+
+### Additional Considerations
+
+While using URL rewrites, ensure that it aligns with your SEO and analytics strategies, as the visible URL remains unchanged. Keep a clear list of routes affected by these integrations to ease updates and management.
+
+For more information on Next.js rewrites, please refer to the official documentation [here](https://nextjs.org/docs/pages/api-reference/next-config-js/rewrites).
