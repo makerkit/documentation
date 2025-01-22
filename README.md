@@ -24,10 +24,18 @@ node index.js courses
 
 This will generate markdown files in the `dist` folder.
 
-You can configure how many words per file by passing a second argument to the script, e.g.:
+### Output Configuration
 
+You can configure the output in two ways:
+
+1. **Words per file**: Pass a number as the second argument to set how many words per file:
 ```bash
 node index.js kits 4000
 ```
-
 By default, it will generate 5000 words per file.
+
+2. **Folder-based**: Pass 'folder' as the second argument to generate one file per folder, maintaining the directory structure:
+```bash
+node index.js kits folder
+```
+This will create files like `dist/next-supabase-turbo/admin.md`, `dist/next-supabase-turbo/analytics.md`, etc.
