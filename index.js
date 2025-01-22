@@ -39,12 +39,25 @@ async function getWordCount(filePath) {
 }
 
 /**
- * Concatenate all files into a single file
+ * Concatenate files based on strategy (word count or folder-based)
  * @param files
- * @param wordsPerFile
+ * @param strategy - number for word count or string for special handling
  * @returns {Promise<void>}
  */
-async function concatenateFiles(files, wordsPerFile) {
+async function concatenateFiles(files, strategy) {
+    if (typeof strategy === 'number') {
+        await concatenateByWordCount(files, strategy);
+    } else if (strategy === 'folder') {
+        await concatenateByFolder(files);
+    } else {
+        throw new Error(`Unknown concatenation strategy: ${strategy}`);
+    }
+}
+
+/**
+ * Original word count based concatenation
+ */
+async function concatenateByWordCount(files, wordsPerFile) {
     let concatenatedContent = '';
     let fileCounter = 1;
     let wordCounter = 0;
@@ -84,6 +97,46 @@ async function concatenateFiles(files, wordsPerFile) {
     }
 }
 
+/**
+ * New folder-based concatenation
+ */
+async function concatenateByFolder(files) {
+    await fs.mkdir(DIST_FOLDER, {recursive: true});
+    
+    // Group files by their full relative path
+    const filesByFolder = files.reduce((acc, file) => {
+        // Get the relative path from the source directory
+        const relativePath = path.relative(process.argv[2], path.dirname(file));
+        if (!acc[relativePath]) {
+            acc[relativePath] = [];
+        }
+        acc[relativePath].push(file);
+        return acc;
+    }, {});
+
+    // Create one file per folder, maintaining folder structure
+    for (const [folderPath, folderFiles] of Object.entries(filesByFolder)) {
+        let concatenatedContent = '';
+        
+        for (const file of folderFiles) {
+            const content = await fs.readFile(file, 'utf-8');
+            concatenatedContent += `-----------------\n`;
+            concatenatedContent += `FILE PATH: ${file}\n\n${content}\n\n`;
+        }
+
+        // Create the full output directory path
+        const outputDir = path.dirname(path.join(DIST_FOLDER, folderPath));
+        await fs.mkdir(outputDir, {recursive: true});
+
+        // Use the last folder name as the file name
+        const folderName = path.basename(folderPath);
+        const outputFileName = path.join(outputDir, `${sanitizeFileName(folderName)}${OUTPUT_EXTENSION}`);
+        
+        await fs.writeFile(outputFileName, concatenatedContent);
+        console.log(`Created folder-based file: ${outputFileName}`);
+    }
+}
+
 function sanitizeFileName(name) {
     return name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
 }
@@ -110,7 +163,10 @@ async function createDistFolder() {
  */
 async function main() {
     const sourcePath = process.argv[2];
-    const wordsPerFile = parseInt(process.argv[3]) || WORDS_PER_FILE;
+    const strategyParam = process.argv[3];
+    
+    // Parse strategy - either number or keyword
+    const strategy = isNaN(strategyParam) ? strategyParam : parseInt(strategyParam) || WORDS_PER_FILE;
 
     if (!sourcePath) {
         console.error('Please provide a source path as an argument.');
@@ -119,9 +175,8 @@ async function main() {
 
     try {
         await createDistFolder();
-
         const mdxFiles = await findMdxFiles(sourcePath);
-        await concatenateFiles(mdxFiles, wordsPerFile);
+        await concatenateFiles(mdxFiles, strategy);
         console.log('Files have been concatenated and saved in the "dist" folder.');
     } catch (error) {
         console.error('An error occurred:', error);
