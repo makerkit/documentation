@@ -1,0 +1,109 @@
+---
+status: "published"
+title: "How to change Authentication strategy | Next.js Supabase Lite SaaS Kit"
+label: Change Authentication strategy
+order: 0
+description: "Learn how to change the authentication strategy in Makerkit. Choose between email and password, phone number, email link, and OAuth."
+---
+
+Makerkit supports various authentication strategies supported by Supabase. We can customize these using the global configuration at `src/configurationt.ts`.
+
+In the configuration file, you can find the following code:
+
+```ts
+import type { Provider } from '@supabase/gotrue-js/src/lib/types';
+
+// in your configuration JSON
+auth: {
+  // ensure this is the same as your Supabase project. By default - it's true
+  requireEmailConfirmation:
+    process.env.NEXT_PUBLIC_REQUIRE_EMAIL_CONFIRMATION === 'true',
+  // NB: Enable the providers below in the Supabase Console
+  // in your production project
+  providers: {
+    emailPassword: true,
+    phoneNumber: false,
+    emailLink: false,
+    oAuth: ['google'] as Provider[]
+  },
+},
+```
+
+We will need to edit this file to change the authentication strategy.
+
+### Enabling Email and Password Authentication
+
+This is the default authentication strategy. It allows users to sign up and sign in using their email and password.
+
+To enable this strategy, set `providers.emailPassword` to `true`.
+
+```tsx
+providers: {
+  emailPassword: false,
+  phoneNumber: true,
+  emailLink: false,
+  oAuth: ['google'] as Provider[],
+},
+```
+
+### Enabling Phone Number Authentication
+
+This strategy allows users to sign up and sign in using their phone number.
+
+To enable this strategy, set `providers.phoneNumber` to `true`.
+
+```tsx
+providers: {
+  emailPassword: false,
+  phoneNumber: true,
+  emailLink: false,
+  oAuth: ['google'] as Provider[],
+},
+```
+
+### Enabling Email Link Authentication
+
+This strategy allows users to sign up and sign in using their email address. A link will be sent to their email address to verify their identity.
+
+To enable this strategy, set `providers.emailLink` to `true`.
+
+```tsx
+providers: {
+  emailPassword: false,
+  phoneNumber: trfalseue,
+  emailLink: true,
+  oAuth: ['google'] as Provider[]
+},
+```
+
+### Enabling OAuth Authentication
+
+This strategy allows users to sign up and sign in using their social media accounts. You can enable multiple OAuth providers.
+
+To enable this strategy, set `providers.oAuth` to an array of OAuth providers.
+
+```tsx
+providers: {
+  emailPassword: false,
+  phoneNumber: false,
+  emailLink: false,
+  oAuth: ['google', 'facebook'] as Provider[]
+},
+```
+
+The interface `Provider` is very important as it tells Makerkit which OAuth provider to use. You can find the list of [supported OAuth providers here](https://supabase.io/docs/guides/auth#third-party-logins).
+
+## Can I use multiple authentication strategies?
+
+Yes, you can use multiple authentication strategies. For example, you can enable email and password authentication and phone number authentication at the same time.
+
+```tsx
+providers: {
+  emailPassword: true,
+  phoneNumber: true,
+  emailLink: false,
+  oAuth: ['google', 'facebook'] as Provider[]
+},
+```
+
+With that said, the UI is not designed to support multiple authentication strategies. **You will need to customize the UI to support multiple authentication strategies**.

@@ -1,0 +1,27 @@
+---
+status: "published"
+
+title: "How to seed data in your Supabase application"
+label: "Seeding Local Data"
+order: 0
+description: "Learn how to seed data in your Supabase Database"
+---
+
+
+The Makerkit repository adds some seed data by default for running the E2E tests.
+
+To update the seed data, you will update the SQL file `supabase/seed.sql`. This file contains the SQL code that seeds the database everytime you start the Supabase Server using `npm run supabase:start`.
+
+### Adding data to the seed file
+
+If you'd like to extend this data with your own, update the data in your local environment, either by using your application or using the Supabase Studio interface.
+
+Then, you can run the `diff` command:
+
+```
+supabase diff
+```
+
+This command will output the SQL code with the difference between the seed data and the current local DB data. You can copy and paste the outputted data into your `seed.sql` file.
+
+The next database restarts will use the new data inserted.

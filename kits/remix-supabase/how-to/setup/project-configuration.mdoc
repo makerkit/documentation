@@ -1,0 +1,177 @@
+---
+status: "published"
+
+title: "How to edit your Makerkit project configuration"
+label: Project Configuration
+order: 0
+description: "Learn how and where to edit your project configuration in your Makerkit SaaS application."
+---
+
+
+Makerkit stores your project configuration in a Typescript file named `configuration.ts`, in which we store **non-secret** data needed in the client-side bundles of your project.
+
+## What is stored in the configuration file?
+
+In this configuration file, we store data that is safe to be exposed in the client-side bundles of your project.
+
+The configuration file contains the following data:
+
+```tsx
+import getEnv from '~/core/get-env';
+import type { Provider } from '@supabase/gotrue-js/src/lib/types';
+
+const env = getEnv() ?? {};
+const production = env.NODE_ENV === 'production';
+
+enum Themes {
+  Light = 'light',
+  Dark = 'dark',
+}
+
+const configuration = {
+  site: {
+    name: 'Awesomely - Your SaaS Title',
+    description: 'Your SaaS Description',
+    themeColor: '#ffffff',
+    themeColorDark: '#0a0a0a',
+    siteUrl: env.SITE_URL,
+    siteName: 'Awesomely',
+    twitterHandle: '',
+    githubHandle: '',
+    language: 'en',
+    convertKitFormId: '',
+    locale: env.DEFAULT_LOCALE,
+  },
+  auth: {
+    // ensure this is the same as your Supabase project
+    requireEmailConfirmation: true,
+    // NB: Enable the providers below in the Supabase Console
+    // in your production project
+    providers: {
+      emailPassword: true,
+      phoneNumber: false,
+      emailLink: false,
+      oAuth: ['google'] as Provider[],
+    },
+  },
+  production,
+  environment: env.ENVIRONMENT,
+  features: {
+    enableThemeSwitcher: true,
+  },
+  theme: Themes.Light,
+  paths: {
+    signIn: '/auth/sign-in',
+    signUp: '/auth/sign-up',
+    signInMfa: '/auth/verify',
+    signInFromLink: '/auth/link',
+    callback: '/auth/callback',
+    onboarding: `/onboarding`,
+    appHome: '/dashboard',
+    settings: {
+      profile: '/settings/profile',
+      authentication: '/settings/profile/authentication',
+      email: '/settings/profile/email',
+      password: '/settings/profile/password',
+    },
+    api: {
+      checkout: `/resources/ls/checkout`,
+      customerPortal: `/resources/ls/customer-portal`,
+      organizations: {
+        create: `/resources/organizations/create`,
+        transferOwnership: `/resources/organizations/transfer-ownership`,
+        members: `/resources/organizations/members`,
+      },
+    },
+  },
+  sentry: {
+    dsn: env.SENTRY_DSN,
+  },
+  subscriptions: {
+    products: [
+      {
+        name: 'Basic',
+        productId: 57713,
+        description: 'Description of your Basic plan',
+        badge: `Up to 20 users`,
+        features: [
+          'Basic Reporting',
+          'Up to 20 users',
+          '1GB for each user',
+          'Chat Support',
+        ],
+        plans: [
+          {
+            name: 'Monthly',
+            price: '$9',
+            variantId: 55476,
+          },
+          {
+            name: 'Yearly',
+            price: '$90',
+            variantId: 55512,
+          },
+        ],
+      },
+      {
+        name: 'Pro',
+        badge: `Most Popular`,
+        recommended: true,
+        productId: 57719,
+        description: 'Description of your Pro plan',
+        features: [
+          'Advanced Reporting',
+          'Up to 50 users',
+          '5GB for each user',
+          'Chat and Phone Support',
+        ],
+        plans: [
+          {
+            name: 'Monthly',
+            price: '$29',
+            variantId: 55483,
+            trialPeriodDays: 0,
+          },
+          {
+            name: 'Yearly',
+            price: '$200',
+            variantId: 55482,
+            trialPeriodDays: 0,
+          },
+        ],
+      },
+      {
+        name: 'Premium',
+        description: 'Description of your Premium plan',
+        badge: ``,
+        features: [
+          'Advanced Reporting',
+          'Unlimited users',
+          '50GB for each user',
+          'Account Manager',
+        ],
+        plans: [
+          {
+            name: '',
+            price: 'Contact us',
+            variantId: 0,
+            label: `Contact us`,
+            href: `/contact`,
+          },
+        ],
+      },
+    ],
+  },
+};
+
+export default configuration;
+```
+
+## How should I store my secrets?
+
+You should store your secrets in your **non public** environment variables, and ideally set up from your CI or Hosting Provider (such as Vercel).
+
+Never add secrets to the configuration file, as it is exposed in the client-side bundles of your project.
+
+Please refer to the Remix official documentation on how to best store your
+secrets.

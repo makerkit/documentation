@@ -4,27 +4,28 @@ import path from 'path';
 const DIST_FOLDER = 'dist';
 const WORDS_PER_FILE = 5000;
 const OUTPUT_EXTENSION = '.md';
+const FILE_SUFFIX = '.mdoc';
 
 /**
- * Find all .mdx files in a directory
+ * Find all .mdoc files in a directory
  * @param dir
  * @returns {Promise<*[]>}
  */
-async function findMdxFiles(dir) {
+async function findMarkdocFiles(dir) {
     const files = await fs.readdir(dir, {withFileTypes: true});
-    let mdxFiles = [];
+    let markdocFiles = [];
 
     for (const file of files) {
         const fullPath = path.join(dir, file.name);
 
         if (file.isDirectory()) {
-            mdxFiles = mdxFiles.concat(await findMdxFiles(fullPath));
-        } else if (path.extname(file.name) === '.mdx') {
-            mdxFiles.push(fullPath);
+            markdocFiles = markdocFiles.concat(await findMarkdocFiles(fullPath));
+        } else if (path.extname(file.name) === FILE_SUFFIX) {
+            markdocFiles.push(fullPath);
         }
     }
 
-    return mdxFiles;
+    return markdocFiles;
 }
 
 /**
@@ -60,7 +61,7 @@ async function concatenateFiles(files, wordsPerFile) {
 
         concatenatedContent += fileContent;
         wordCounter += fileContent.split(/\s+/).length;
-        combinedNames.push(path.basename(file, '.mdx'));
+        combinedNames.push(path.basename(file, FILE_SUFFIX));
 
         if (wordCounter >= wordsPerFile || files.indexOf(file) === files.length - 1) {
             const combinedFileName = combinedNames
@@ -80,7 +81,7 @@ async function concatenateFiles(files, wordsPerFile) {
     }
 
     if (concatenatedContent) {
-        await fs.writeFile(`${DIST_FOLDER}/concatenated_${fileCounter}.mdx`, concatenatedContent);
+        await fs.writeFile(`${DIST_FOLDER}/concatenated_${fileCounter}${FILE_SUFFIX}`, concatenatedContent);
     }
 }
 
@@ -120,8 +121,8 @@ async function main() {
     try {
         await createDistFolder();
 
-        const mdxFiles = await findMdxFiles(sourcePath);
-        await concatenateFiles(mdxFiles, wordsPerFile);
+        const files = await findMarkdocFiles(sourcePath);
+        await concatenateFiles(files, wordsPerFile);
         console.log('Files have been concatenated and saved in the "dist" folder.');
     } catch (error) {
         console.error('An error occurred:', error);

@@ -1,0 +1,68 @@
+---
+status: "published"
+title: "How to setup emails in your Makerkit SaaS application | Next.js Firebase SaaS Kit"
+label: Setting up Emails
+order: 6
+description: "How to setup emails in your Makerkit SaaS application"
+---
+
+
+Sending emails is a critical part of your SaaS application. Makerkit uses emails to send invites to your users only, but it's likely you'll want to send other emails to your users.
+
+To set up emails in your Makerkit application, you should add the following environment variables to your project, using a secure environment:
+
+```bash
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+Makerkit will use these values to send emails on your behalf using the node library `nodemailer`.
+
+NB: this does not refer to emails sent by Firebase.
+
+### Where do I get these values?
+
+These values are normally provided by your service provider.
+
+### Which services are supported?
+
+Any service that supports SMTP should work. We recommend using [Resend](https://resend.com/).
+
+### How do I test emails locally?
+
+Makerkit uses [InBucket](https://inbucket.org) - a platform to testing emails.
+
+InBucket saves time during development since we can test
+our emails without setting up a real SMTP service - and works locally and
+offline.
+
+To run the InBucket platform, **we need Docker running on our machine**.
+
+To start the InBucket service, run the following command:
+
+```
+npm run inbucket:start
+```
+
+InBucket will now be running at [localhost:9000](http://localhost:9000). When we send an email using the
+`sendEmail` function in the kit, we can visualize it using the InBucket UI.
+
+InBucket is used by default during development. Instead, for production
+usage, you will need to set up a real SMTP service.
+
+#### Ethereal
+
+In previous versions Makerkit used Ethereal. If you are running an older version, please refer to the below.
+
+Makerkit used Ethereal to allow you testing your emails without using a real
+email account. To use Ethereal, you should add the following environment variables to your project, using a secure environment:
+
+```bash
+ETHEREAL_EMAIL=
+ETHEREAL_PASSWORD=
+```
+
+If not set, Makerkit will automatically create an account for you on-the-fly and print the credentials in the console. You can then use these credentials to log in to Ethereal and see your emails.

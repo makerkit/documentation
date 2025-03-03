@@ -1,0 +1,76 @@
+---
+status: "published"
+
+title: "Updating the fonts of your Makerkit site"
+label: Updating the Fonts
+order: 3
+description: "Learn how to update the fonts of your Makerkit landing pages"
+---
+
+
+By default, Makerkit defines the site's fonts using the package `next/font/google`.
+
+The fonts are defined at `src/components/Fonts.tsx` and you can update them to your liking.
+
+### What fonts are used by default?
+
+By default, **Makerkit uses the system Apple font on Apple devices**, the `Inter` font as fallback.
+
+### Removing Apple font as default
+
+If you want to remove the `Apple` font as default, simply update the `FontsFamily` component at `src/components/Fonts.tsx` to remove the `Apple` font.
+
+ ```tsx {% title="src/components/Fonts.tsx" %} {26-27}
+'use client';
+
+import { Inter as SansFont } from 'next/font/google';
+import { useServerInsertedHTML } from 'next/navigation';
+
+const sans = SansFont({
+  subsets: ['latin'],
+  variable: '--font-family-sans',
+  fallback: ['system-ui', 'Helvetica Neue', 'Helvetica', 'Arial'],
+  preload: true,
+  weight: ['300', '400', '500', '600', '700', '800'],
+});
+
+// replace with your heading font
+// by default, it will use the sans font
+const heading = sans;
+
+function Fonts() {
+  useServerInsertedHTML(() => {
+    return (
+      <style
+        key={'fonts'}
+        dangerouslySetInnerHTML={{
+          __html: `
+          :root {
+            --font-family-sans: ${sans.style.fontFamily}, 'Segoe UI', 'Roboto', 'Ubuntu', 'sans-serif';
+            --font-family-heading: ${heading.style.fontFamily};
+          }
+        `,
+        }}
+      />
+    );
+  });
+
+  return null;
+}
+
+export default Fonts;
+```
+
+If you compare the above with the version of the file you have in your project, you'll notice that we removed the `--apple-system` fonts.
+
+### Using a different font
+
+If you want to use a different font, you can import it from the `next/font/google` package.
+
+For example, below, we import the font `Manrope` from Google Fonts. It replaces `Inter` as the default font.
+
+```tsx
+import { Manrope as SansFont } from 'next/font/google';
+```
+
+You can use two different fonts for the `--font-family-sans` and `--font-family-heading` variables. One is used an the main body font, the other as the heading font.

@@ -1,0 +1,116 @@
+---
+status: "published"
+title: 'Using the Analytics API in your Makerkit project'
+label: 'Analytics API'
+order: 13
+description: 'Learn how to use the Analytics API in your Makerkit project to track user behavior and app usage.'
+collapsible: true
+collapsed: true
+---
+
+Makerkit provides a powerful and flexible Analytics API that integrates seamlessly with the App Events system. This API allows you to track user behavior and app usage easily and consistently across your SaaS application.
+
+## Core Concepts of the Analytics API
+
+The Analytics API is built around three main concepts:
+
+1. **Identify**: Associate user data with a unique user ID.
+2. **Track Events**: Record specific events or actions taken by users.
+3. **Track Page Views**: Record when users view specific pages in your application.
+
+### Using the Analytics API
+
+The Analytics API is available through the `analytics` object imported from `@kit/analytics`.
+
+#### Identifying Users
+
+Use the `identify` method to associate a user with their actions:
+
+```typescript
+import { analytics } from '@kit/analytics';
+
+void analytics.identify(userId, {
+  email: user.email,
+  plan: user.subscriptionPlan,
+  // ... other user properties
+});
+```
+
+#### Tracking Events
+
+Use the `trackEvent` method to record specific actions or events:
+
+```typescript
+void analytics.trackEvent('Button Clicked', {
+  buttonName: 'Submit',
+  page: 'Sign Up',
+});
+```
+
+#### Tracking Page Views
+
+**Makerkit automatically tracks page views for you.** However, you can also manually track page views if needed.
+
+Use the `trackPageView` method to record when users view specific pages:
+
+```typescript
+void analytics.trackPageView('Sign Up');
+```
+
+NB: The `trackPageView` method is automatically called when the route changes in a Remix application.
+
+### Integration with App Events
+
+While you can use these methods directly, we recommend leveraging the App Events system for a more centralized approach. Makerkit automatically maps common app events to analytics tracking:
+
+```typescript
+import { useAppEvents } from '@kit/shared/events';
+
+function SomeComponent() {
+  const { emit } = useAppEvents();
+
+  const handleSignUp = (userId: string) => {
+    emit({ type: 'user.signedUp', payload: { userId } });
+    // This automatically calls analytics.identify and analytics.trackEvent
+  };
+
+  // ...
+}
+```
+
+### Extending the Analytics API
+
+You can extend the analytics functionality by creating custom event mappings:
+
+```typescript
+import { analytics } from '@kit/analytics';
+import { useAppEvents } from '@kit/shared/events';
+
+interface MyAppEvents {
+  'feature.used': { featureName: string };
+}
+
+export function useMyAnalytics() {
+  const { emit } = useAppEvents<MyAppEvents>();
+
+  return {
+    trackFeatureUse: (featureName: string) => {
+      emit({ type: 'feature.used', payload: { featureName } });
+      // If you need additional tracking logic:
+      void analytics.trackEvent('Feature Used', { featureName });
+    },
+  };
+}
+```
+
+## Best Practices
+
+When implementing analytics in your Makerkit project, consider the following best practices:
+
+1. **Use App Events**: Whenever possible, use the App Events system instead of calling analytics methods directly. This keeps your analytics logic centralized and easier to maintain.
+2. **Consistent Naming**: Use consistent naming conventions for your events and properties across your application.
+3. **Relevant Data**: Only track data that's relevant and useful for your business goals. Avoid tracking sensitive or personal information.
+4. **Testing**: Always test your analytics implementation to ensure events are being tracked correctly.
+5. **Documentation**: Keep a record of all the events and properties you're tracking. This will be invaluable as your application grows.
+
+By leveraging Makerkit's Analytics API in conjunction with the App Events system, you can create a robust, maintainable analytics setup that grows with your SaaS application. This approach provides the flexibility to track the data you need while keeping your codebase clean and organized.

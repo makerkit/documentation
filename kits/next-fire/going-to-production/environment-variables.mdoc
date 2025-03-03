@@ -1,0 +1,94 @@
+---
+status: "published"
+
+title: "Setting the correct environment variables of a Next.js and Firebase
+application"
+label: Environment Variables
+order: 1
+---
+
+Before going live to production, setting the correct environment
+variables for your production environment is crucial. 
+
+As we've already seen before, you can organize your environment variables into three files:
+
+- `.env`: here, you can add variables that are shared across environments
+- `.env.local`: here go the variables that should be limited to your own machine, and it's recommended not to check this file in your VCS
+- `.env.development`: here, you can add the variables that should only be used during development
+- `.env.production`: here, you add the variables that should be used in your production environment
+
+Typically, you would never place private data in your `.env.production` file because that would cause your data to be leaked.
+
+You should set any value that is not secret or confidential (such as your Firebase project's API Key or the feature flag's value) in the `.env.production` file.
+
+Alternatively, suppose you are using variables such as the project's private key or any value that is supposed to be secret: in that case, you should ensure to inject these values from a secure environment, for example, your CI or your Vercel console.
+
+## Shared Variables
+
+As mentioned above, we can add variables shared across environments in the `.env` configuration file. For example, MakerKit's `.env` template looks like the below:
+
+```
+# firebase
+DEFAULT_LOCALE=en
+```
+
+## Local Variables
+
+To use data only limited to your machine, use a `.env.local` configuration file. Do not check this file in your VCS: therefore, you can use it to set private variables:
+
+```
+SERVICE_ACCOUNT_PRIVATE_KEY=
+SECRET_KEY_THAT_SHOULD_NOT_BE_EXPOSED=
+```
+
+## Development Variables
+
+In our `.env.development` configuration, we will set variables such as the Firebase Emulator's configuration that will only run when running `next dev`, e.g., when we're developing the application:
+
+```
+NEXT_PUBLIC_EMULATOR=true
+FIRESTORE_EMULATOR_HOST=localhost:8080
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+FIREBASE_STORAGE_EMULATOR_HOST=localhost:9199
+FIREBASE_PUBSUB_EMULATOR_HOST=localhost:8085
+NEXT_PUBLIC_FIREBASE_EMULATOR_HOST=localhost
+NEXT_PUBLIC_FIRESTORE_EMULATOR_PORT=8080
+NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_PORT=9099
+NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_PORT=9199
+FEATURE_FLAG=true
+```
+
+
+## Production Variables
+
+We will set variables for the production application in our `.env.production` configuration. 
+
+Rename the file `.env.production.template` to `.env.production` and add the required variables after creating your Firebase and Vercel projects:
+
+This needs to be filled in before you push your application to your CI:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<your-website-domain>
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_APPCHECK_KEY=
+
+SERVICE_ACCOUNT_CLIENT_EMAIL=
+GCLOUD_PROJECT=
+
+## SECRET KEYS ARE BEST ADDED TO YOUR CI
+SERVICE_ACCOUNT_PRIVATE_KEY=
+
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+```
+
+Careful! Do not add sensitive data here. Instead, add it from your CI or Vercel Console.
+
+Please replace `<your-website-domain>` in the variable `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` with your own website domain. This is fundamental for the kit to work with Safari.

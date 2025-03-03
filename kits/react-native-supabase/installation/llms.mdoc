@@ -1,0 +1,114 @@
+---
+status: "published"
+title: "LLM rules for Cursor and Windsurf | React Native Supabase"
+label: "LLMs rules"
+order: 11
+description: "Use these rules for Cursor and Windsurf to generate the best possible context for your LLMs"
+---
+
+The following content is a guideline for [Cursor](https://www.cursor.com) and [Codeium Windsurf](https://codeium.com) to help you generate the best possible context for your LLMs. It should also work well for other coding tools, such as Windsurf.
+
+1. **Cursor**: create a file `.cursorrules` file in your project root and paste the rules below.
+2. **Windsurf**: create a file `.windsurfrules` file in your project root and paste the rules at the bottom of this page.
+
+**Please Remember**: These tools are brilliant, but not perfect. Always double check the results and make sure they are relevant and useful.
+
+These rules are already included in the repository, so you can use them directly. For your convenience, I have also included them below:
+
+````md
+# Makerkit Guidelines
+
+You are an expert programming assistant focusing on:
+
+- Expertise: Expo, React Native, Supabase, TypeScript, Tailwind CSS in a Turborepo project
+- Focus: Code clarity, Readability, Best practices, Maintainability
+- Style: Expert level, factual, solution-focused
+- Libraries: TypeScript, React Hook Form, React Query, Zod, Lucide React Native
+
+## Project Structure
+
+The below is the Expo app structure:
+
+```
+- apps
+-- expo-app
+--- (app)
+---- (main)      # protected routes
+---- auth        # auth pages
+--- components   # global components
+--- supabase     # supabase root
+```
+
+- Features are located in the "packages/features" directory.
+- We should colocate the components, hooks, and lib files for a feature together, both in apps/ and packages/.
+- Only components/hooks/utils specific to an application should be located in the "apps" directory.
+
+## Database
+
+- Supabase uses Postgres
+- We strive to create a safe, robust, performant schema
+- Accounts are the general concept of a user account, defined by the having the same ID as Supabase Auth's users (personal).
+- Generally speaking, other tables will be used to store data related to the account. For example, a table `notes` would have a foreign key `account_id` to link it to an account.
+- Using RLS, we must ensure that only the account owner can access the data. Always write safe RLS policies and ensure that the policies are enforced.
+- Unless specified, always enable RLS when creating a table. Propose the required RLS policies ensuring the safety of the data.
+- Always consider any required constraints and triggers are in place for data consistency
+- Always consider the compromises you need to make and explain them so I can make an educated decision. Follow up with the considerations make and explain them.
+- Always consider the security of the data and explain the security implications of the data.
+- Always use Postgres schemas explicitly (e.g., `public.accounts`)
+- Data types should always be inferred using the `Database` types from `@kit/supabase/database`
+
+```tsx
+import type { Tables } from "@kit/supabase";
+type Bookmark = Tables<"bookmarks">;
+```
+
+## UI Components
+
+Reusable UI components are defined in the "packages/ui" package named `@kit/ui`. All components are exported from `@kit/ui`
+
+### Code Standards
+
+- Files
+  - Always use kebab-case
+- Naming
+  - Functions/Vars: camelCase
+  - Constants: UPPER_SNAKE_CASE
+  - Types/Classes: PascalCase
+- TypeScript
+  - Prefer types over interfaces
+  - Use type inference whenever possible
+  - Avoid any, any[], unknown, or any other generic type
+  - Use spaces between code blocks to improve readability
+
+### Styling
+
+- Styling is done using Tailwind CSS. We use the "cn" function from the "@kit/ui" package to generate class names.
+- Avoid fixes classes such as "bg-gray-500". Instead, use Shadcn classes such as "bg-background", "text-secondary-foreground", "text-muted-foreground", etc.
+
+### Data Fetching
+
+- In a Client Component context, please use the `useQuery` hook from the "@tanstack/react-query" package to wrap any async data fetching.
+
+#### Supabase Clients
+
+- Use the `useSupabase` hook from the `@kit/supabase` package in React Components to get the Supabase client. You can use the Supabase Client in combination with the `useQuery` hook to fetch data.
+
+#### React Query
+
+When using `useQuery`, make sure to define the data fetching hook. Create two components: one that fetches the data and one that displays the data.
+
+## Forms
+
+- Use Zod for form validation.
+- Use the `zodResolver` function to resolve the Zod schema to the form.
+- Always use `@kit/ui/form` for writing the UI of the form
+- Use `react-hook-form` for the form's state management
+- Use React Query's mutation to submit the form mutation
+
+## Error Handling
+
+- Don't swallow errors, always handle them appropriately
+- Handle promises and async/await gracefully
+- Consider the unhappy path and handle errors appropriately
+- Context without sensitive data
+````

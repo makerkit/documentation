@@ -1,0 +1,162 @@
+---
+status: "published"
+title: "Routing | Remix Supabase SaaS Kit"
+label: "Routing"
+order: 9
+description: "Learn the basics of routing in the Remix Supabase SaaS Boilerplate"
+---
+
+It's time to work on our application's value proorder: adding and tracking tasks! This is likely the most exciting part for you because **it's where you get to change things and add your SaaS features to the template**.
+
+### Routing Structure
+
+Before getting started, let's take a look at the default page structure of the boilerplate is the following.
+
+{% alert type="info" %}
+The routing structure below has been updated to using the new Remix v2 convention
+{% /alert %}
+
+```txt {16-17}
+├── routes
+  └── $.tsx
+  └── _app.dashboard.tsx
+  └── _app.settings._index.tsx
+  └── _app.settings.organization._index.tsx
+  └── _app.settings.organization.members._index.tsx
+  └── _app.settings.organization.members.invite._index.tsx
+  └── _app.settings.organization.tsx
+  └── _app.settings.profile._index.tsx
+  └── _app.settings.profile.authentication.tsx
+  └── _app.settings.profile.email.tsx
+  └── _app.settings.profile.password.tsx
+  └── _app.settings.profile.tsx
+  └── _app.settings.subscription._index.tsx
+  └── _app.settings.tsx
+  └── _app.tasks.$task.tsx
+  └── _app.tasks._index.tsx
+  └── _app.tsx
+  └── _invite.tsx
+  └── _site._index.tsx
+  └── _site.about.tsx
+  └── _site.faq.tsx
+  └── _site.pricing.tsx
+  └── _site.tsx
+  └── admin._index.tsx
+  └── admin.organizations.$id.members.tsx
+  └── admin.organizations._index.tsx
+  └── admin.tsx
+  └── admin.users.$id.ban.ts
+  └── admin.users.$id.impersonate.tsx
+  └── admin.users.$id.reactivate.ts
+  └── admin.users.$id.tsx
+  └── admin.users._index.tsx
+  └── auth.callback.tsx
+  └── auth.link.tsx
+  └── auth.password-reset.tsx
+  └── auth.sign-in.tsx
+  └── auth.sign-up.tsx
+  └── auth.tsx
+  └── auth.verify.tsx
+  └── healthcheck.ts
+  └── invite.$code.tsx
+  └── onboarding._index.tsx
+  └── resources.organizations.create.ts
+  └── resources.organizations.members.$member.tsx
+  └── resources.organizations.transfer-ownership.ts
+  └── resources.stripe.checkout.tsx
+  └── resources.stripe.portal.ts
+  └── resources.stripe.webhook.ts
+```
+
+The routes are split in the following way:
+
+1. The website's pages are placed under the prefix `_site`
+2. The auth pages are placed under the prefix `_auth`
+3. The internal pages (behind auth) pages are placed under the prefix `_app`
+
+Some pages in the "middle" are placed outside `_app`, such as the Invites page and the Onboarding flow. These require custom handling.
+
+### Setting the application's Home Page
+
+By default, the application's home page is `/dashboard`; every time the user
+logs in, they're redirected to the page `src/routes/_app.dashboard._index.tsx`.
+
+You can update the above by setting the application's home page path at `configuration.paths.appHome`.
+
+### Routing
+
+Ok, so we want to add two pages to our application:
+
+1. **Tasks List**: A page to list all our tasks
+2. **Task Detail**: A page specific to the selected task
+
+1. **List Page**: we create a page `page.tsx`, which is accessible at the path `/tasks`
+3. **Task Page**: we create a page `$task.tsx`, which is accessible at the path
+`/tasks/<taskID>` where `taskID` is a dynamic variable that refers to the actual ID of the task
+
+```txt
+├── routes
+  └── _app.tasks._index.tsx
+  └── _app.tasks.$task.tsx
+```
+
+### Adding Functionalities to your application
+
+To add new functionalities to your application (in our case, tasks management), usually, you'd need the following things:
+1. First, we want to define our data model
+2. Once we're happy with the data model, we can create our Supabase hooks to
+write new tasks and then fetch the ones we created
+3. Then, we import and use our hooks within the components
+4. Finally, we add the components to the pages
+
+### Adding page links to the Navigation Menu
+
+#### Updating the Top header Navigation
+
+To update the navigation menu, we need to update the `NAVIGATION_CONFIG`
+object in `src/navigation-config.tsx`.
+
+```ts
+import { Squares2X2Icon, Cog8ToothIcon } from "@heroicons/react/24/outline";
+
+const NAVIGATION_CONFIG = {
+  items: [
+    {
+      label: 'common:dashboardTabLabel',
+      path: configuration.paths.appHome,
+      Icon: ({ className }: { className: string }) => {
+        return <Squares2X2Icon className={className} />;
+      },
+    },
+    {
+      label: 'common:settingsTabLabel',
+      path: '/settings',
+      Icon: ({ className }: { className: string }) => {
+        return <Cog8ToothIcon className={className} />;
+      },
+    },
+  ],
+};
+```
+
+To add a new link to the header menu, we can add the following item in the `NAVIGATION_CONFIG` object:
+
+```tsx
+import { Squares2X2Icon } from "@heroicons/react/24/outline";
+
+{
+  label: 'common:tasksTabLabel',
+  path: '/tasks',
+  Icon: ({ className }: { className: string }) => {
+    return <Squares2X2Icon className={className} />;
+  },
+},
+```
+
+The result will be similar to the images below:
+
+{% img src="/assets/images/posts/sidebar-layout-link.webp" width="1280" height="984" /%}
+
+{% alert type="warning" %}
+You may need to restart your development server to see the changes, and/or refresh the browser's cache for the changes to be visible.
+{% /alert %}

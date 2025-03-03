@@ -1,0 +1,215 @@
+---
+status: "published"
+label: "Database Schema"
+order: 2
+title: "How to create new migrations and update the database schema in your Next.js Supabase application"
+description: "Learn how to create new migrations and update the database schema in your Next.js Supabase application"
+---
+
+After creating your migration, it's time to add the required code.
+
+In our example, we create the schema for a simple tasks application.
+
+### Permissions
+
+Makerkit defines a set of default permissions in an enum named `public.app_permissions`.
+
+To add more permissions for your app, please update the enum:
+
+```sql
+-- insert new permissions
+alter type public.app_permissions add value 'tasks.write';
+alter type public.app_permissions add value 'tasks.delete';
+commit;
+```
+
+In the case above, we added the permissions `tasks.write` and `tasks.delete`. We can use these in our RLS rules to make sure
+the permissions are able to restrict access.
+
+### Tasks Table
+
+Let's now add the new `tasks` table
+
+```sql
+-- create tasks table
+create table if not exists public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  title varchar(500) not null,
+  description varchar(50000),
+  done boolean not null default false,
+  account_id uuid not null references public.accounts(id),
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
+);
+
+grant select, insert, update, delete on table public.tasks to
+    authenticated, service_role;
+```
+
+Let's explain:
+1. `uuid` is a primary key generated automatically
+2. `title` is a text field constrained to 500 chars. `not null` makes sure it cannot be null.
+3. `description` is a text field constrained to 50000
+4. `done` is a boolean field
+5. `account_id` is the account that owns the task
+
+We then add the required permissions to the roles `authenticated` and `service_role`.
+
+Anonymous users have no access to this table.
+
+### Accounts
+
+Accounts are the primary entities of our schema. An account can be a user or a team.
+
+We can connect an entity to the account that owns it using a foreign key
+
+```sql
+account_id uuid not null references public.accounts(id)
+```
+
+### Enabling RLS
+
+When you create a new table, always enable RLS.
+
+```sql
+-- enable row level security
+alter table tasks enable row level security;
+```
+
+### RLS Policies
+
+RLS Policies are fundamental to protect our tables.
+
+We insert an RLS policy for each action: `select`, `insert`, `update` and `delete`.
+
+#### Selecting Tasks
+
+When writing an RLS policy for selecting data from the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+
+Generally speaking, entities belong to `public.accounts` - and we can use the `account_id` to check if the user is the owner.
+
+```sql
+create policy select_tasks on public.tasks
+    for select
+    to authenticated
+    using (
+      account_id = auth.uid() or
+      public.has_role_on_account(account_id)
+    );
+```
+
+Did you know that an account can be a user or a team? We can use the `public.has_role_on_account` function to check if the user has a role on the account.
+
+Therefore, this RLS policy works in both ways:
+
+1. if the user is the owner of the task - we check that the `account_id` is equal to the `auth.uid()`
+2. if the user has a role on the account - we check that the user has a role on the account
+
+#### Inserting Tasks
+
+When writing an RLS policy for inserting data into the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+
+```sql
+create policy insert_tasks on public.tasks
+    for insert
+    with check (
+        account_id = auth.uid() or
+        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
+    );
+```
+
+In th above, we check if the user is the owner of the task or has the `tasks.write` permission.
+
+1. If the `account_id` is equal to the `auth.uid()` - the account is personal - so permissions are not required
+2. If the user has the `tasks.write` permission - the user can insert the task
+
+### Updating Tasks
+
+When writing an RLS policy for updating data in the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+
+```sql
+create policy update_tasks on public.tasks
+    for update
+    using (
+        account_id = auth.uid() or
+        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
+    )
+    with check (
+        account_id = auth.uid() or
+        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
+    );
+```
+
+Did you know that we need to add the `using` and `with check` clauses?
+
+- `using` is used to filter the rows that the user can update
+- `with check` is used to check if the user can update the row
+
+In the above, we check if the user is the owner of the task or has the `tasks.write` permission.
+
+### Deleting Tasks
+
+When writing an RLS policy for deleting data from the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+
+```sql
+create policy delete_tasks on public.tasks
+    for delete
+    using (
+        account_id = auth.uid() or
+        public.has_permission(auth.uid(), account_id, 'tasks.delete'::app_permissions)
+    );
+```
+
+In the above, we check if the user is the owner of the task or has the `tasks.delete` permission.
+
+Our schema is now complete! Yay! 🎉
+
+## Enable MFA compliance
+
+We can use the function `public.is_mfa_compliant` to enforce MFA compliance for our application.
+
+```sql
+create policy restrict_mfa_tasks
+    on public.tasks
+    as restrictive
+    to authenticated
+    using (public.is_mfa_compliant());
+```
+
+In the above, we restrict access to the `tasks` table to users who are MFA compliant. Uses who enabled MFA must be signed in with MFA in order to access the table.
+
+Instead, users who did not enable MFA can keep accessing the table without MFA.
+
+## Enable access to Super Admins only
+
+We can use the function `public.is_super_admin` to restrict access to Super Admins only.
+
+We assume that we're protecting a table named `logs` and allow `select` access to Super Admins only.
+
+```sql
+create policy restrict_logs_super_admins
+    on public.logs
+    as restrictive
+    for select
+    to authenticated
+    using (public.is_super_admin());
+```
+
+- By using the `public.is_super_admin` function, we ensure that only Super Admins can access the `logs` table.
+- By using the `restrictive` policy, we ensure that this access restriction is enforced, irrespective of other policies.
+
+### Resetting Migrations
+
+When adding a new schema, we need to reset the migrations.
+
+```bash
+pnpm run supabase:web:reset
+```
+
+Then, we generate the new types using the following command:
+
+```bash
+pnpm run supabase:web:typegen
+```
+
+You can now use the new types in your application when using the Supabase client.

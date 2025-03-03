@@ -1,0 +1,89 @@
+---
+status: "published"
+
+title: "Forms"
+label: "Forms"
+order: 11
+description: "Learn how to build forms in the Remix Firebase kit"
+---
+
+
+Now that we have created a custom hook to write data to Firestore, we need to build a form to create a new `task`.
+
+The example below is straightforward:
+1. We have a form with two input fields
+2. When the form is submitted, we read the data using `FormData`
+3. Finally, we add the document using the callback returned by the hook `useCreateTask`
+
+ ```tsx {% title="components/tasks/CreateTaskForm.tsx" %}
+import { useNavigate } from '@remix-run/react';
+import { FormEventHandler, useCallback } from 'react';
+
+import TextField from '~/core/ui/TextField';
+import Button from '~/core/ui/Button';
+import useCreateTask from '~/lib/tasks/hooks/use-create-task';
+
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const CreateTaskForm = () => {
+  const createTask = useCreateTask();
+  const navigate = useNavigate();
+  const organization = useCurrentOrganization();
+  const organizationId = organization?.id as string;
+
+  const onCreateTask: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const target = event.currentTarget;
+      const data = new FormData(target);
+      const name = data.get('name') as string;
+      const dueDate = data.get('dueDate') as string;
+
+      const task = {
+        organizationId,
+        name,
+        dueDate,
+        done: false,
+      };
+
+      // create task
+      await createTask(task);
+
+      // redirect to /tasks
+      await navigate(`/tasks`);
+    },
+    [navigate, createTask, organizationId]
+  );
+
+  return (
+    <form onSubmit={onCreateTask}>
+      <div>
+        <TextField.Label>
+          Name
+          <TextField.Input
+            required
+            name={'name'}
+            placeholder={'ex. Launch on IndieHackers'}
+          />
+
+          <TextField.Hint>Hint: whatever you do, ship!</TextField.Hint>
+        </TextField.Label>
+
+        <TextField.Label>
+          Due date
+          <TextField.Input required name={'dueDate'} type={'date'} />
+        </TextField.Label>
+
+        <div>
+          <Button>
+            Create Task
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default CreateTaskForm;
+```

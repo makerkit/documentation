@@ -1,0 +1,57 @@
+---
+status: "published"
+
+title: "How to setup oAuth in the Remix Supabase Starter"
+label: Setup oAuth
+order: 1
+description: "Learn how to setup oAuth in the Remix Supabase Starter"
+---
+
+
+For oAuth - you can enable multiple providers. For example, you can enable Google and Facebook authentication at the same time by adding the providers to the `auth.providers.oAuth` array in the configuration file at `src/configuration.ts`.
+
+You must configure the oAuth providers in three places:
+1. **Supabase** - you need to setup an oAuth application in Supabase.
+2. **Provider** - you need to setup an oAuth application in the provider (for example, Google Auth)
+3. **Makerkit Configuration** - you need to add the provider to the `auth.providers.oAuth` array in the configuration file at `src/configuration.ts`.
+
+Below is an example of how to enable Google and Facebook authentication:
+
+ ```tsx {% title="src/configuration.ts" %} {5}
+providers: {
+  emailPassword: false,
+  phoneNumber: false,
+  emailLink: false,
+  oAuth: ['google', 'facebook'] as Provider[]
+},
+```
+
+The interface `Provider` is very important as it tells Makerkit which OAuth provider to use. You can find the list of [supported OAuth providers here](https://supabase.io/docs/guides/auth#third-party-logins).
+
+By default, Makerkit provides logos for the most famous oAuth providers, but not all of them. To add a logo for an oAuth provider, please update the `src/core/ui/AuthProviderLogo.tsx` file.
+
+You will provide a string or a React node for the logo by specifying the provider name as the key of the object.
+
+ ```tsx {% title="src/core/ui/AuthProviderLogo.tsx" %}
+function getOAuthProviderLogos(): Record<string, string | React.ReactNode> {
+  return {
+    password: <AtSymbolIcon className={'h-[22px] w-[22px]'} />,
+    phone: <DevicePhoneMobileIcon className={'h-[22px] w-[22px]'} />,
+    google: '/assets/images/google.webp',
+    facebook: '/assets/images/facebook.webp',
+    twitter: '/assets/images/twitter.webp',
+    github: '/assets/images/github.webp',
+    microsoft: '/assets/images/microsoft.webp',
+    apple: '/assets/images/apple.webp',
+  };
+}
+```
+
+### How to Setup an oAuth Provider
+
+Most of the setup is done in two places:
+
+1. **Supabase** - you need to setup an oAuth application in Supabase.
+2. **Provider** - you need to setup an oAuth application in the provider (for example, Google Auth)
+
+To know more about how to setup an oAuth provider, please read the [Supabase documentation](https://supabase.io/docs/guides/auth#third-party-logins).

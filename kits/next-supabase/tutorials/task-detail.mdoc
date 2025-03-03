@@ -1,0 +1,196 @@
+---
+status: "published"
+title: "Building the Task Detail page | Next.js Supabase"
+label: "Building the Task Detail page"
+order: 12
+description: "In this tutorial, we will build the Task Detail page of the Tasks App."
+---
+
+The Task Detail page is the page that shows the details of a specific task. It is a child page of the Tasks page.
+
+As you may know, we can define a dynamic path in Next.js by using square brackets. For example, we can define a dynamic path for the Tasks page by creating a file called `app/dashboard/[organization]/tasks/[task]/page.tsx`. This will create a dynamic path for the Tasks page that will be available at `/dashboard/:organization/tasks/:task`.
+
+## Building the Task Detail Container
+
+Before we build the page, we define a client component named `TaskItemContainer` that will be used by the page. This component will be responsible for rendering the form that will be used to update the task.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/components/TaskItemContainer.tsx" %}
+'use client';
+
+import { FormEventHandler, useCallback, useTransition } from 'react';
+import { ChevronLeftIcon } from '@heroicons/react/24/outline';
+
+import Textarea from '~/core/ui/Textarea';
+import Label from '~/core/ui/Label';
+import Button from '~/core/ui/Button';
+import Heading from '~/core/ui/Heading';
+import { TextFieldInput, TextFieldLabel } from '~/core/ui/TextField';
+
+import type Task from '~/lib/tasks/types/task';
+import { updateTaskAction } from '~/lib/tasks/actions';
+
+const TaskItemContainer: React.FC<{
+  task: Task;
+}> = ({ task }) => {
+  const [isMutating, startTransition] = useTransition();
+
+  const onUpdate: FormEventHandler<HTMLFormElement> = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      const data = new FormData(e.currentTarget);
+      const name = data.get('name') as string;
+      const description = data.get('description') as string;
+
+      startTransition(async () => {
+        await updateTaskAction({
+          task: {
+            name,
+            description,
+            id: task.id,
+          },
+          csrfToken,
+        });
+      });
+    },
+    [csrfToken, task.id],
+  );
+
+  return (
+    <form onSubmit={onUpdate}>
+      <div className={'flex flex-col space-y-4 max-w-xl'}>
+        <Heading type={2}>{task.name}</Heading>
+
+        <TextFieldLabel>
+          Name
+          <TextFieldInput required defaultValue={task.name} name={'name'} />
+        </TextFieldLabel>
+
+        <Label>
+          Description
+          <Textarea
+            className={'h-32'}
+            name={'description'}
+            defaultValue={task.description || ''}
+          />
+        </Label>
+
+        <div className={'flex space-x-2 justify-between'}>
+          <Button href={'../tasks'} color={'transparent'}>
+            <span className={'flex space-x-2 items-center'}>
+              <ChevronLeftIcon className={'w-4'} />
+              <span>Back to Tasks</span>
+            </span>
+          </Button>
+
+          <Button loading={isMutating}>Update Task</Button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default TaskItemContainer;
+```
+
+## Building the Task Detail page
+
+Now that we have the `TaskItemContainer` component, we can build the Task Detail page. The page will be responsible for fetching the task data and passing it to the `TaskItemContainer` component.
+
+First, we define the function `loadTaskData` - responsible for fetching the task data - and then we use it in the `TaskPage` component.
+
+If the task does not exist, we redirect the user back to the dashboard page. This is done by using the `redirect` function from the `next/navigation` module.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/[task]/page.tsx" %}
+async function loadTaskData(taskId: string) {
+  const client = getSupabaseServerComponentClient();
+  const { data: task } = await getTask(client, Number(taskId));
+
+  if (!task) {
+    redirect('/dashboard');
+  }
+
+  return {
+    task,
+  };
+}
+```
+
+Below is the full code for the Task Detail page.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/[task]/page.tsx" %}
+import React, { use } from 'react';
+import { redirect } from 'next/navigation';
+
+import ArrowLeftIcon from '@heroicons/react/24/outline/ArrowLeftIcon';
+
+import Button from '~/core/ui/Button';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+import { getTask } from '~/lib/tasks/queries';
+import AppHeader from '~/app/dashboard/[organization]/components/AppHeader';
+import AppContainer from '~/app/dashboard/[organization]/components/AppContainer';
+import TaskItemContainer from '~/app/dashboard/[organization]/tasks/components/TaskItemContainer';
+import { withI18n } from '~/i18n/with-i18n';
+
+interface Context {
+  params: {
+    task: string;
+  };
+}
+
+export const metadata = {
+  title: `Task`,
+};
+
+const TaskPage = ({ params }: Context) => {
+  const data = use(loadTaskData(params.task));
+  const task = data.task;
+
+  return (
+    <>
+      <AppHeader>
+        <TaskPageHeading />
+      </AppHeader>
+
+      <AppContainer>
+        <TaskItemContainer task={task} />
+      </AppContainer>
+    </>
+  );
+};
+
+function TaskPageHeading() {
+  return (
+    <div className={'flex items-center space-x-6'}>
+      <span>Task</span>
+
+      <Button size={'small'} color={'transparent'} href={'../tasks'}>
+        <ArrowLeftIcon className={'mr-2 h-4'} />
+        Back to Tasks
+      </Button>
+    </div>
+  );
+}
+
+async function loadTaskData(taskId: string) {
+  const client = getSupabaseServerComponentClient();
+  const { data: task } = await getTask(client, Number(taskId));
+
+  if (!task) {
+    redirect('/dashboard');
+  }
+
+  return {
+    task,
+  };
+}
+
+export default withI18n(TaskPage);
+```
+
+---
+
+
+Perfect, our Tasks App is now complete! 🎉
+
+In the next steps, we take a look at some things you should now while keeping working on your app.

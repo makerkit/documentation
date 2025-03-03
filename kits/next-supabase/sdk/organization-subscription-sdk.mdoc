@@ -1,0 +1,111 @@
+---
+status: "published"
+
+title: "Organization Subscription SDK - Fetch the Organization Subscription"
+label: "Organization Subscription SDK"
+order: 3
+description: "Learn how to use the Organization Subscription SDK to fetch the current organization Subscription details"
+---
+
+
+The Subscription SDK helps with getting details about the current organization Subscription. The Subscription is available in the `organization` namespace of the SDK
+
+## Get the current organization Subscription
+
+To retrieve the current organization Subscription, use the `organization.getSubscription()` method to first get the current organization, and then get the Subscription from the organization.
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const subscription = await sdk.organization.getSubscription();
+
+  // ...
+}
+```
+
+## Check if the current organization has an active subscription
+
+To check if the current organization has an active subscription, use the `subscription.isActive()` method.
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const subscription = await sdk.organization.getSubscription();
+  const isActive = await sdk.organization.isActive(); // false|true
+
+  // ...
+}
+```
+
+This method will return `true` in two cases:
+- the status of the subscription is `active`
+- the status of the subscription is `trialing`
+
+## Check if it's a Trial Subscription
+
+To check if the current organization is a trial, use the `subscription.isTrial()` method.
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const subscription = await sdk.organization.getSubscription();
+  const isTrial = await sdk.organization.isTrial(); // false|true
+
+  // ...
+}
+```
+
+This method will return `true` when the status of the subscription is `trialing`.
+
+## Check the status of the Subscription
+
+To check the status of the current organization Subscription, use the `subscription.status` computed property.
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const subscription = await sdk.organization.getSubscription();
+  const status = await sdk.organization.status; // Stripe.Subscription.Status
+
+  // ...
+}
+```
+
+## Check the status of the Subscription is a certain status
+
+To check the status of the current organization Subscription, use the `subscription.isStatus` method. The method accepts a single argument, which is the status to check against. This is the `Stripe.Subscription.Status` enum.
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+
+  const subscription = await sdk.organization.getSubscription();
+  const isActive = await sdk.organization.isStatus('active');
+
+  // ...
+}
+```

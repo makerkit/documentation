@@ -1,0 +1,156 @@
+---
+status: "published"
+label: "Card Button"
+title: "Card Button Component in the Next.js Supabase SaaS kit"
+description: "Learn how to use the Card Button component in the Next.js Supabase SaaS kit"
+order: 7
+---
+
+The CardButton components provide a set of customizable, interactive card-like buttons for use in React applications. These components are built with flexibility in mind, allowing for easy composition and styling.
+
+{% component path="card-button" /%}
+
+## Components
+
+### CardButton
+
+The main wrapper component for creating a card-like button.
+
+#### Props
+
+- `asChild?: boolean`: If true, the component will render its children directly.
+- `className?: string`: Additional CSS classes to apply to the button.
+- `children: React.ReactNode`: The content of the button.
+- `...props`: Any additional button props.
+
+#### Usage
+
+```jsx
+<CardButton onClick={handleClick}>
+  {/* Card content */}
+</CardButton>
+```
+
+### CardButtonTitle
+
+Component for rendering the title of the card button.
+
+#### Props
+
+- `className?: string`: Additional CSS classes for the title.
+- `asChild?: boolean`: If true, renders children directly.
+- `children: React.ReactNode`: The title content.
+
+#### Usage
+
+```jsx
+<CardButtonTitle>My Card Title</CardButtonTitle>
+```
+
+### CardButtonHeader
+
+Component for the header section of the card button.
+
+#### Props
+
+- `className?: string`: Additional CSS classes for the header.
+- `asChild?: boolean`: If true, renders children directly.
+- `displayArrow?: boolean`: Whether to display the chevron icon (default: true).
+- `children: React.ReactNode`: The header content.
+
+#### Usage
+
+```jsx
+<CardButtonHeader displayArrow={false}>
+  <CardButtonTitle>Header Content</CardButtonTitle>
+</CardButtonHeader>
+```
+
+### CardButtonContent
+
+Component for the main content area of the card button.
+
+#### Props
+
+- `className?: string`: Additional CSS classes for the content area.
+- `asChild?: boolean`: If true, renders children directly.
+- `children: React.ReactNode`: The main content.
+
+#### Usage
+
+```jsx
+<CardButtonContent>
+  <p>Main card content goes here</p>
+</CardButtonContent>
+```
+
+### CardButtonFooter
+
+Component for the footer section of the card button.
+
+#### Props
+
+- `className?: string`: Additional CSS classes for the footer.
+- `asChild?: boolean`: If true, renders children directly.
+- `children: React.ReactNode`: The footer content.
+
+#### Usage
+
+```jsx
+<CardButtonFooter>
+  <span>Footer information</span>
+</CardButtonFooter>
+```
+
+## Styling
+
+These components use Tailwind CSS for styling. Key features include:
+
+- Hover and active states for interactive feedback
+- Responsive sizing and layout
+- Dark mode support
+- Customizable through additional class names
+
+## Example
+
+Here's a complete example of how to use these components together:
+
+```jsx
+import {
+  CardButton,
+  CardButtonTitle,
+  CardButtonHeader,
+  CardButtonContent,
+  CardButtonFooter
+} from '@kit/ui/card-button';
+
+function MyCardButton() {
+  return (
+    <CardButton onClick={() => console.log('Card clicked')}>
+      <CardButtonHeader>
+        <CardButtonTitle>Featured Item</CardButtonTitle>
+      </CardButtonHeader>
+      <CardButtonContent>
+        <p>This is a detailed description of the featured item.</p>
+      </CardButtonContent>
+      <CardButtonFooter>
+        <span>Click to learn more</span>
+      </CardButtonFooter>
+    </CardButton>
+  );
+}
+```
+
+## Accessibility
+
+- The components use semantic HTML elements when not using the `asChild` prop.
+- Interactive elements are keyboard accessible.
+
+## Best Practices
+
+1. Use clear, concise titles in `CardButtonTitle`.
+2. Provide meaningful content in `CardButtonContent` for user understanding.
+3. Use `CardButtonFooter` for calls-to-action or additional information.
+4. Leverage the `asChild` prop when you need to change the underlying element (e.g., for routing with Next.js `Link` component).
+
+These CardButton components provide a flexible and customizable way to create interactive card-like buttons in your React application, suitable for various use cases such as feature showcases, navigation elements, or clickable information cards.

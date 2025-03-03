@@ -1,0 +1,40 @@
+---
+status: "published"
+title: "Guarding Pages | Next.js Supabase SaaS Kit"
+label: "Guarding Pages"
+order: 4
+description: "Learn how to guard pages in your Next.js Supabase application"
+---
+
+As a server-side rendered application, Next.js Supabase will always render the page on the server before sending it to the client.
+
+We can use the function `loadAppData` to get data required to load the main layout of the app located at `app/(app)`.
+
+NB: you can call `loadAppData` multiple times because it uses caching.
+
+## Guarding Application Pages with User Subscriptions
+
+In this example, we want to make sure the user is subscribed to a plan before allowing the user to access the page.
+
+To do so, we check the `subscription` property and redirect the user to the dashboard if the subscription is `active` or `trialing`.
+
+```tsx
+import { redirect } from "next/navigation";
+import loadAppData from '~/lib/server/loaders/load-app-data';
+
+async function OnlySubscribersPage() {
+  const data = await loadAppData();
+  const status = data.subscription?.data?.status;
+
+  // if the subscription is not active, redirect the user to the dashboard
+  if (!isSubscriptionActive(status)) {
+    redirect('/');
+  }
+
+  // render the page
+}
+
+function isSubscriptionActive(status: string | undefined) {
+  return ['trialing', 'active'].includes(status);
+}
+```

@@ -1,0 +1,109 @@
+---
+status: "published"
+
+label: "Stepper"
+title: "Stepper Component in the Remix Supabase SaaS kit"
+description: "Learn how to use the Stepper component in the Remix Supabase SaaS kit"
+order: 1
+---
+
+
+The Stepper component is a versatile UI element designed to display a series of steps in a process or form. It provides visual feedback on the current step and supports different visual styles.
+
+## Usage
+
+```jsx
+import { Stepper } from '@kit/ui/stepper';
+
+function MyComponent() {
+  return (
+    <Stepper
+      steps={['Step 1', 'Step 2', 'Step 3']}
+      currentStep={1}
+      variant="default"
+    />
+  );
+}
+```
+
+## Props
+
+The Stepper component accepts the following props:
+
+- `steps: string[]` (required): An array of strings representing the labels for each step.
+- `currentStep: number` (required): The index of the currently active step (0-based).
+- `variant?: 'numbers' | 'default'` (optional): The visual style of the stepper. Defaults to 'default'.
+
+## Variants
+
+The Stepper component supports two visual variants:
+
+1. `default`: Displays steps as a horizontal line with labels underneath.
+2. `numbers`: Displays steps as numbered circles with labels between them.
+
+## Features
+
+- Responsive design that adapts to different screen sizes
+- Dark mode support
+- Customizable appearance through CSS classes and variants
+- Accessibility support with proper ARIA attributes
+
+## Component Breakdown
+
+### Main Stepper Component
+
+The main `Stepper` function renders the overall structure of the component. It:
+
+- Handles prop validation and default values
+- Renders nothing if there are fewer than two steps
+- Uses a callback to render individual steps
+- Applies different CSS classes based on the chosen variant
+
+### Steps Rendering
+
+Steps are rendered using a combination of divs and spans, with different styling applied based on:
+
+- Whether the step is currently selected
+- The chosen variant (default or numbers)
+
+### StepDivider Component
+
+For the 'numbers' variant, a `StepDivider` component is used to render the labels between numbered steps. It includes:
+
+- Styling for selected and non-selected states
+- A divider line between steps (except for the last step)
+
+## Styling
+
+The component uses a combination of:
+
+- Tailwind CSS classes for basic styling
+- `cva` (Class Variance Authority) for managing variant-based styling
+- `classNames` function for conditional class application
+
+## Accessibility
+
+- The component uses `aria-selected` to indicate the current step
+- Labels are associated with their respective steps for screen readers
+
+## Customization
+
+You can further customize the appearance of the Stepper by:
+
+1. Modifying the `classNameBuilder` function to add or change CSS classes
+2. Adjusting the Tailwind CSS classes in the component JSX
+3. Creating new variants in the `cva` configuration
+
+## Example
+
+```jsx
+<Stepper
+  steps={['Account', 'Personal Info', 'Review']}
+  currentStep={1}
+  variant="numbers"
+/>
+```
+
+This will render a numbered stepper with three steps, where "Personal Info" is the current (selected) step.
+
+The Stepper component provides a flexible and visually appealing way to guide users through multi-step processes in your application. Its support for different variants and easy customization makes it adaptable to various design requirements.

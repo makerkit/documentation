@@ -1,0 +1,147 @@
+---
+status: "published"
+title: "Mutating data using Server Actions in the Next.js Supabase Lite Starter Kit"
+label: "Mutating data using Server Actions"
+order: 3
+description: "Learn how mutate data using the new Next.js Server Actions in the Makerkit Supabase Next.js starter kit (Lite)"
+---
+
+Starting from the version 0.2.0, the Makerkit Supabase Next.js starter kit comes with support for Server Actions. Next.js Server Actions allow us to call functions on the server side, which is useful for mutating data.
+
+This is the default way of mutating data in Makerkit - so **I recommend you to use this approach instead of the client-side approach**.
+
+Makerkit offers support for some built-in features that allow you to protect your endpoints form unauthorized access and CSRF attacks.
+
+## Creating a Server Action
+
+You have two ways of creating a Server Action:
+
+1. Defining a server function inline within a server component
+2. Defining server functions into a separate file and exporting them to be used inside client components
+
+### Defining a file for server functions
+
+Assuming you have a `lib/tasks` folder, you can create a file called `lib/tasks/actions.ts` and define server actions inside it.
+
+#### How to define a server action
+
+Actions can be defined in two ways:
+
+1. If you want to pass it to a `form` element, you need to use `FormData` as the parameter type.
+2. Alternatively, you can customize the parameters as you wish - and call it imperatively from a client component just like a normal function
+
+#### Utility functions
+
+We can use two utilities:
+
+1. `withSession` - this utility will check if the request contains a valid session
+2. `withAdminSession` - this utility will check if the request contains a valid session from a Super Admin that can access the admin panel
+
+#### Defining a Form Action
+
+When defining server actions that will be used by a `form` element, you need to use the `FormData` type as the parameter type.
+
+```ts
+'use server';
+
+import { z } from 'zod';
+
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+
+const zodSchema = z.object({
+  task: z.object({
+    name: z.string().min(1),
+  }),
+});
+
+export const insertNewTask =
+  withSession(
+    async (data: FormData) => {
+      const client = getSupabaseServerActionClient();
+      const body = zodSchema.parse(Object.fromEntries(data.entries()));
+
+      await insertNewTask(client, body.task);
+
+      return {
+        success: true,
+      };
+    }
+  );
+```
+
+To call server actions from Forms, you can use the `action` attribute. This attribute will be used to call the server action.
+
+```tsx
+function TaskForm() {
+  return (
+    <form action={insertNewTask}>
+    ...
+    </form>
+  );
+}
+
+export default TaskForm;
+```
+
+### Defining a Custom Server Action
+
+Below we define a custom server action that takes two parameters: `task` and `csrfToken`. This action will insert a new task into the database.
+
+```ts
+'use server';
+
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+
+export const insertNewTask = withSession(
+    async (params: {
+      task: Task;
+    }) => {
+      const client = getSupabaseServerActionClient();
+
+      await insertNewTask(client, params);
+
+      return {
+        success: true,
+      };
+    }
+);
+```
+
+To call this function from a client component, you can do the following:
+
+```tsx
+import {FormEventHandler, useCallback, useTransition } from "react";
+
+function TaskForm() {
+  const [isPending, startTransition] = useTransition();
+
+  const onSubmit: FormEventHandler = useCallback(e => {
+    e.preventDefault();
+
+    const data = new FormData(e.target as HTMLFormElement);
+    const taskName = data.get("name") as string;
+
+    startTransition(async () => {
+      await insertNewTask({
+        task: {
+          name: taskName,
+        }
+      });
+    });
+  });
+
+  return (
+    <form onSubmit={onSubmit}>
+    ...
+    </form>
+  );
+}
+
+export default TaskForm;
+```
+
+## Learn more about Server Actions
+
+To learn more about server actions, we have a simple tutorial that you can follow: [Introduction to Next.js Server Actions](/blog/tutorials/nextjs-server-actions)

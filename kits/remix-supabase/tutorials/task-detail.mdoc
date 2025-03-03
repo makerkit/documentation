@@ -1,0 +1,316 @@
+---
+status: "published"
+title: "Building the Task Detail page | Remix Supabase"
+label: "Building the Task Detail page"
+order: 13
+description: "Learn how to build the Task Detail page in the Tasks App of the Remix Supabase project."
+---
+
+The Task Detail page is the page that shows the details of a specific task. It is a child page of the Tasks page.
+
+As you may know, we can define a dynamic path in Remix using the convention `$param` denoted by the `$1` prefix. For example, we can define a dynamic path for the Tasks page by creating a file called `_app.tasks.$task.tsx`. This will create a dynamic path for the Tasks page that will be available at `/tasks/:task`.
+
+## Building the Loader
+
+First - we need to define the loader function for the Task Detail page. The loader function is responsible for fetching the data that will be used by the page.
+
+In this case - we fetch the task data by using the `getTask` query. This query is defined in the `~/lib/tasks/queries` module.
+
+As you can see below, we're able to access the `task` param by using the `args.params.task` property. This is possible because we defined the dynamic path as `_app.tasks.$task.tsx`.
+
+```tsx
+export const meta: MetaFunction = ({ data }) => {
+  return [
+    {
+      title: data.task.name,
+    },
+  ];
+};
+
+export async function loader(args: LoaderArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const taskId = args.params.task;
+
+  const { data: task, error } = await getTask(client, Number(taskId));
+
+  if (!task || error) {
+    return throwNotFoundException();
+  }
+
+  return json({
+    task,
+  });
+}
+```
+
+Don't worry about copying the code above, we will show the full code for the Task Detail page later in this step.
+
+## Building the Action
+
+From this page - we also allow users to update the task data. To do that, we define an action function that will be responsible for updating the task data.
+
+```tsx
+export async function action(args: ActionArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const body = await args.request.json();
+
+  switch (args.request.method) {
+    case 'PUT':
+      await updateTask(client, body);
+
+      return json({ success: true });
+  }
+
+  return throwNotFoundException();
+}
+```
+
+## Building the Task Detail Container
+
+Before we build the page, we define a client component named `TaskItemContainer` that will be used by the page.
+
+This component will be responsible for rendering the form that will be used to update the task - and also for handling the form submission using the `useFetcher` hook.
+
+The `useFetcher` hook is a hook that is provided by Remix. When called, it will submit the `action` function defined above.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/components/TaskItemContainer.tsx" %}
+function TaskItemContainer({
+  task,
+}: React.PropsWithChildren<{
+  task: Task;
+}>) {
+  const fetcher = useFetcher();
+  const isSubmitting = fetcher.state === 'submitting';
+
+  const onUpdate: FormEventHandler<HTMLFormElement> = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      const data = new FormData(e.currentTarget);
+      const name = data.get('name') as string;
+      const description = data.get('description') as string;
+
+      fetcher.submit(
+        {
+          name,
+          description,
+        },
+        {
+          method: 'PUT',
+          encType: 'application/json',
+        },
+      );
+    },
+    [fetcher],
+  );
+
+  return (
+    <form onSubmit={onUpdate}>
+      <div className={'flex flex-col space-y-4 max-w-xl'}>
+        <Heading type={2}>{task.name}</Heading>
+
+        <TextField.Label>
+          Name
+          <TextField.Input required name={'name'} defaultValue={task.name} />
+        </TextField.Label>
+
+        <Label>
+          Description
+          <Textarea
+            className={'h-32'}
+            name={'description'}
+            defaultValue={task.description}
+          />
+        </Label>
+
+        <div className={'flex space-x-2 justify-between'}>
+          <Button href={'../tasks'} color={'transparent'}>
+            <span className={'flex space-x-2 items-center'}>
+              <ChevronLeftIcon className={'w-4'} />
+              <span>Back to Tasks</span>
+            </span>
+          </Button>
+
+          <Button loading={isSubmitting}>Update Task</Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+```
+
+## Building the Task Detail page
+
+Now that we have the `TaskItemContainer` component, we can build the Task Detail page.
+
+Below is the full code for the Task Detail page.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/[task]/page.tsx" %}
+import type { MetaFunction } from '@remix-run/react';
+import { useFetcher, useLoaderData } from '@remix-run/react';
+import type { ActionArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import type { LoaderArgs } from '@remix-run/server-runtime';
+import type { FormEventHandler } from 'react';
+import React, { useCallback } from 'react';
+
+import { ChevronLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+
+import Heading from '~/core/ui/Heading';
+import Button from '~/core/ui/Button';
+import { throwNotFoundException } from '~/core/http-exceptions';
+import getSupabaseServerClient from '~/core/supabase/server-client';
+
+import AppHeader from '~/components/AppHeader';
+import AppContainer from '~/components/AppContainer';
+
+import { getTask } from '~/lib/tasks/queries';
+import type Task from '~/lib/tasks/types/task';
+import Label from '~/core/ui/Label';
+import Textarea from '~/core/ui/Textarea';
+import TextField from '~/core/ui/TextField';
+import { updateTask } from '~/lib/tasks/mutations';
+
+export const meta: MetaFunction = ({ data }) => {
+  return [
+    {
+      title: data.task.name,
+    },
+  ];
+};
+
+export async function loader(args: LoaderArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const taskId = args.params.task;
+
+  const { data: task, error } = await getTask(client, Number(taskId));
+
+  if (!task || error) {
+    return throwNotFoundException();
+  }
+
+  return json({
+    task,
+  });
+}
+
+const TaskPage = () => {
+  const data = useLoaderData<typeof loader>();
+  const task = data.task as Task;
+
+  return (
+    <>
+      <AppHeader>
+        <TaskPageHeading />
+      </AppHeader>
+
+      <AppContainer>
+        <TaskItemContainer task={task} />
+      </AppContainer>
+    </>
+  );
+};
+
+function TaskPageHeading() {
+  return (
+    <div className={'flex items-center space-x-6'}>
+      <Heading type={4}>
+        <span>Task</span>
+      </Heading>
+
+      <Button size={'small'} color={'transparent'} href={'/tasks'}>
+        <ArrowLeftIcon className={'mr-2 h-4'} />
+        Back to Tasks
+      </Button>
+    </div>
+  );
+}
+
+export default TaskPage;
+
+function TaskItemContainer({
+  task,
+}: React.PropsWithChildren<{
+  task: Task;
+}>) {
+  const fetcher = useFetcher();
+  const isSubmitting = fetcher.state === 'submitting';
+
+  const onUpdate: FormEventHandler<HTMLFormElement> = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      const data = new FormData(e.currentTarget);
+      const name = data.get('name') as string;
+      const description = data.get('description') as string;
+
+      fetcher.submit(
+        {
+          name,
+          description,
+        },
+        {
+          method: 'PUT',
+          encType: 'application/json',
+        },
+      );
+    },
+    [fetcher],
+  );
+
+  return (
+    <form onSubmit={onUpdate}>
+      <div className={'flex flex-col space-y-4 max-w-xl'}>
+        <Heading type={2}>{task.name}</Heading>
+
+        <TextField.Label>
+          Name
+          <TextField.Input required name={'name'} defaultValue={task.name} />
+        </TextField.Label>
+
+        <Label>
+          Description
+          <Textarea
+            className={'h-32'}
+            name={'description'}
+            defaultValue={task.description}
+          />
+        </Label>
+
+        <div className={'flex space-x-2 justify-between'}>
+          <Button href={'../tasks'} color={'transparent'}>
+            <span className={'flex space-x-2 items-center'}>
+              <ChevronLeftIcon className={'w-4'} />
+              <span>Back to Tasks</span>
+            </span>
+          </Button>
+
+          <Button loading={isSubmitting}>Update Task</Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+export async function action(args: ActionArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const body = await args.request.json();
+
+  switch (args.request.method) {
+    case 'PUT':
+      await updateTask(client, body);
+
+      return json({ success: true });
+  }
+
+  return throwNotFoundException();
+}
+
+```
+
+---
+
+
+Perfect, our Tasks App is now complete! 🎉
+
+In the next steps, we take a look at some things you should now while keeping working on your app.

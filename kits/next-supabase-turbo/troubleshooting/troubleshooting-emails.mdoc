@@ -1,0 +1,17 @@
+---
+status: "published"
+title: 'Troubleshooting emails issues in the Next.js Supabase kit'
+label: 'Emails'
+order: 5
+description: 'Troubleshoot issues related to emails in the Next.js Supabase SaaS kit'
+---
+
+To troubleshoot emails issues in the Next.js Supabase kit, please make sure to:
+
+1. **Correct Credentials**: please make sure you have setup the correct credentials in your environment variables. Refer to the [emails guide](../emails/email-configuration) for more information.
+2. **Your domain is verified**: make sure your domain is verified in your Email provider
+3. **The Database Webhooks are configured**: make sure you have configured the Database Webhooks in your Supabase project. Refer to the [Supabase deployment guide](../going-to-production/supabase) for more information. Make sure to read Webhooks are pointing to the correct URL and use the correct shared secret.
+4. **The Webhooks use a public URL**: make sure the webhooks use a public URL and not behind authentication (such as a Vercel Preview URL).
+5. **Read the Logs**: please verify your server logs in your hosting provider to see if there are any errors related to emails.
+
+If you have done all the above and still having issues, please open a Support Ticket in Discord.

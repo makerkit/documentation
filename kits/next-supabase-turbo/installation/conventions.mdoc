@@ -1,0 +1,47 @@
+---
+status: "published"
+description: "Makerkit uses conventions to ensure consistency and readability in the codebase."
+title: "Conventions in the Next.js Supabase Turbo Starter Kit"
+label: "Conventions"
+order: 3
+---
+
+Below are some of the conventions used in the Next.js Supabase Turbo Starter Kit.
+
+You're not required to follow these conventions: they're simply a standard set of practices used in the core kit. If you like them - I encourage you to keep these during your usage of the kit - so to have consistent code style that you and your teammates understand.
+
+### Turborepo Packages
+
+In this project, we use Turborepo packages to define reusable code that can be shared across multiple applications.
+
+- **Apps** are used to define the main application, including routing, layout, and global styles.
+- Apps pass down configuration to the packages, and the packages provide the corresponding logic and components.
+
+### Creating Packages
+
+**Should you create a package for your app code?**
+
+- **Recommendation:** Do not create a package for your app code unless you plan to reuse it across multiple applications or are experienced in writing library code.
+- If your application is not intended for reuse, keep all code in the app folder. This approach saves time and reduces complexity, both of which are beneficial for fast shipping.
+- **Experienced developers:** If you have the experience, feel free to create packages as needed.
+
+### Imports and Paths
+
+When importing modules from packages or apps, use the following conventions:
+
+- **From a package:** Use `@kit/package-name` (e.g., `@kit/ui`, `@kit/shared`, etc.).
+- **From an app:** Use `~/` (e.g., `~/lib/components`, `~/config`, etc.).
+
+### Non-Route Folders
+
+Non-route folders within the `app` directory are prefixed with an underscore (e.g., `_components`, `_lib`, etc.).
+
+- This prefix indicates that these folders are not routes but are used for shared components, utilities, etc.
+
+### Server Code
+
+Files located in `server` folders are intended for server-side code only. They should not be used in client-side code.
+
+- This convention helps clarify where the code is meant to run, which is particularly important in Next.js where the distinction can be blurry.
+- For example, server-related code for a part of the app can be found in the `_lib/server` folder.
+- Include the `server-only` package at the top of the file to ensure it is not accidentally imported in client-side code.

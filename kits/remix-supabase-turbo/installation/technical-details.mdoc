@@ -1,0 +1,71 @@
+---
+status: "published"
+title: "Technical Details of the Remix Supabase SaaS Boilerplate"
+label: "Technical Details"
+order: 2
+description: "A detailed look at the technical details of the Remix Supabase SaaS Kit."
+---
+
+The kit is built as a [Turborepo](https://turbo.build) monorepo, and is broadly using the following technologies:
+
+1. Remix App Router (using Turbopack for faster builds)
+2. Supabase for the database, authentication and storage
+3. Shadcn UI for the UI components
+4. React Query, Zod, Lucide React and other libraries
+5. Configurable mailers (SMTP with Nodemailer, Resend and Cloudflare Workers)
+
+Makerkit's modular architecture allows you to easily add or remove features, and customize the application to your needs.
+
+Additionally, the kit is designed to be easily deployable to Vercel, Cloudflare, or any other hosting provider. It also supports edge rendering so you can deploy the application to Cloudflare Workers and go FAST.
+
+### Monorepo Structure
+
+Below are the reusable packages that can be shared across multiple applications (or packages):
+
+- **@kit/ui**: Shared UI components and styles (using Shadcn UI and some custom components)
+- **@kit/shared**: Shared code and utilities
+- **@kit/supabase**: Supabase package that defines the schema and logic for managing Supabase
+- **@kit/i18n**: Internationalization package that defines utilities for managing translations
+- **@kit/billing**: Billing package that defines the schema and logic for managing subscriptions
+- **@kit/billing-gateway**: Billing gateway package that defines the schema and logic for managing payment gateways
+- **@kit/email-templates**: Here we define the email templates using the react.email package.
+- **@kit/mailers**: Mailer package that abstracts the email service provider (e.g., Resend, Cloudflare, SendGrid, Mailgun, etc.)
+- **@kit/monitoring**: A unified monitoring package that defines the schema and logic for monitoring the application with third party services (e.g., Sentry, Baselime, etc.)
+- **@kit/database-webhooks**: Database webhooks package that defines the actions following database changes (e.g., sending an email, updating a record, etc.)
+- **@kit/cms**: CMS package that defines the schema and logic for managing content
+
+And features that can be added to the application:
+
+- **@kit/auth**: Authentication package (using Supabase)
+- **@kit/accounts**: Package that defines components and logic for managing personal accounts
+- **@kit/team-accounts**: Package that defines components and logic for managing team
+- **@kit/admin**: Admin package that defines the schema and logic for managing users, subscriptions, and more.
+- **@kit/notifications**: Notifications package that defines the schema and logic for managing notifications
+
+And billing packages that can be added to the application:
+
+- **@kit/stripe**: Stripe package that defines the schema and logic for managing Stripe. This is used by the @kit/billing-gateway package and abstracts the Stripe API.
+- **@kit/lemon-squeezy**: Lemon Squeezy package that defines the schema and logic for managing Lemon Squeezy. This is used by the @kit/billing-gateway package and abstracts the Lemon Squeezy API.
+- **@kit/paddle**: Paddle package that defines the schema and logic for managing Paddle. This is used by the @kit/billing-gateway package and abstracts the Paddle API. (Coming soon)
+
+The CMSs that can be added to the application:
+
+- **@kit/keystatic**: [Keystatic](https://keystatic.com/) package that defines the schema and logic for managing Keystatic. This is used by the @kit/cms package and abstracts the Keystatic API.
+- **@kit/wordpress**:  WordPress package that defines the schema and logic for managing WordPress. This is used by the @kit/cms package and abstracts the WordPress API.
+
+Also planned (post-release):
+
+- **@kit/plugins**: Move the existing plugins to a separate package here
+- **@kit/analytics**: A unified analytics package to track user behavior
+
+### Application Configuration
+
+The configuration is defined in the `apps/web/config` folder. Here you can find the following configuration files:
+
+- **app.config.ts**: Application configuration (e.g., name, description, etc.)
+- **auth.config.ts**: Authentication configuration
+- **billing.config.ts**: Billing configuration
+- **feature-flags.config.ts**: Feature flags configuration
+- **paths.config.ts**: Paths configuration (e.g., routes, API paths, etc.)
+- **personal-account-sidebar.config.ts**: Personal account sidebar configuration (e.g., links, icons, etc.)
+- **team-account-sidebar.config.ts**: Team account sidebar configuration (e.g., links, icons, etc.)

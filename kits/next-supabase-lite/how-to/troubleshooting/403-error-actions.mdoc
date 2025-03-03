@@ -1,0 +1,20 @@
+---
+status: "published"
+title: "How to fix a 403 Error on Actions and API Routes | Next.js Supabase Lite Kit"
+label: "403 error with API/Actions"
+order: 5
+description: "One of the reasons why you're hitting a 403 error in your Server Actions is omitting a CSRF token. Let's see how to fix it"
+---
+
+If you're encountering a 403 error on Server Actions and API Routes, it is possible that your requests lack a CSRF Token.
+
+By default, the Makerkit middleware at `src/middleware.ts` will automatically try to validate a CSRF token for HTTP methods such as `POST`, `PUT` and `DELETE`: failing to send a valid CSRF token will result in these requests being forbidden.
+
+To fix this error, check out these pages:
+
+1. **Server Actions**: [Add a CSRF token to your Server Actions](server-actions-csrf)
+2. **API Routes**: [Add a CSRF token to your API Routes](api-routes)
+
+### The CSRF Token is sent, but it's not defined
+
+If the CSRF Token is being sent but it's null/undefined, it's likely a bug. In that case, please open a support ticket in our Discord channel.

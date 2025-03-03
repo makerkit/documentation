@@ -1,0 +1,82 @@
+---
+status: "published"
+label: "Code Health and Testing"
+title: "Code Health and Testing in Makerkit. Set up Github Actions, pre-commit hooks | Remix Supabase SaaS Kit"
+order: 10
+description: "Learn how to set up Github Actions, pre-commit hooks, and more in Makerkit to ensure code health and quality."
+---
+
+Makerkit provides a set of tools to ensure code health and quality in your project. This includes setting up Github Actions, pre-commit hooks, and more.
+
+## Github Actions
+
+By default, Makerkit sets up Github Actions to run tests on every push to the repository. You can find the Github Actions configuration in the `.github/workflows` directory.
+
+The workflow has two jobs:
+
+1. `typescript` - runs the Typescript compiler to check for type errors.
+2. `test` - runs the Playwright tests in the `tests` directory.
+
+### Enable E2E Tests
+
+Since it needs some setup - these are not enabled by default. To enable E2E tests, you need to set the following environment variables in the Github Actions workflow:
+
+```bash
+ENABLE_E2E_JOB=true
+```
+
+### Configuring the E2E environment for Github Actions
+To set up Github Actions for your project, please add the following secrets to your repository Github Actions settings:
+
+1. `SUPABASE_SERVICE_ROLE_KEY` - the service role key for Supabase.
+2. `SUPABASE_DB_WEBHOOK_SECRET` - the webhook secret for Supabase.
+3. `STRIPE_SECRET_KEY` - the secret key for Stripe.
+4. `STRIPE_WEBHOOK_SECRET` - the webhook secret for Stripe.
+
+These are the same as the ones you have running the project locally. Don't use real secrets here - use the development app secrets that you use locally. **This is a testing environment**, and you don't want to expose your production secrets.
+
+Additionally, please set the following environment variables in the Github Actions workflow:
+
+1. `VITE_STRIPE_PUBLISHABLE_KEY` - this is the publishable key for Stripe.
+2. `SUPABASE_DB_WEBHOOK_SECRET`: Use the value `WEBHOOKSECRET` for the webhook secret. Again, this is a testing environment, so we add testing values.
+
+### Enable Stripe Tests
+
+Since it needs some setup - these are not enabled by default. To enable Stripe tests, you need to set the following environment variables in the Github Actions workflow:
+
+```bash
+ENABLE_BILLING_TESTS=true
+```
+
+Of course - make sure you have the Stripe secrets set up in the Github Actions secrets.
+
+## Pre-Commit Hook
+
+It's recommended to set up a pre-commit hook to ensure that your code is linted correctly and passes the typechecker before committing.
+
+### Setting up the Pre-Commit Hook
+
+To do so, create a `pre-commit` file in the `./.git/hooks` directory with the following content:
+
+```bash
+#!/bin/sh
+
+pnpm run typecheck
+pnpm run lint
+```
+
+Turborepo will execute the commands for all the affected packages - while skipping the ones that are not affected.
+
+### Make the Pre-Commit Hook Executable
+
+Now, make the file executable:
+
+```bash
+chmod +x ./.git/hooks/pre-commit
+```
+
+To test the pre-commit hook, try to commit a file with linting errors or type errors. The commit should fail, and you should see the error messages in the console.
+
+### What about the e2e tests?
+
+You could also add tests - but it'll slow down your commits. It's better to run tests in Github Actions.

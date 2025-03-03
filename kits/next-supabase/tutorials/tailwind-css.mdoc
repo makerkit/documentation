@@ -1,0 +1,84 @@
+---
+status: "published"
+
+title: "Tailwind CSS and Styling"
+label: Tailwind CSS and Styling
+order: 6
+description: "Learn how to configure Tailwind CSS and tweak the Makerkit's theme."
+---
+
+
+This SaaS template uses Tailwind CSS for styling the application.
+
+You will likely want to tweak the brand color of your application: to do so, open the file `tailwind.config.js` and replace the `primary` color (which it's `indigo` by default):
+
+ ```js {% title="tailwind.config.js" %}
+extend: {
+  colors: {
+    primary: {
+      ...colors.indigo,
+      contrast: '#fff',
+    },
+    dark: colors.gray
+  },
+},
+```
+
+1. The `primary` color is the main color of your application. It is used for the background of the navigation bar, the background of the sidebar, the background of the buttons, etc.
+2. The `dark` color is the background color of the dark theme. You can use other types of dark colors in the Tailwind CSS Color palette (such as `slate`, `zinc`), or define your own colors.
+
+### Updating the Primary color of your app
+
+To update the `primary` color, you can either:
+
+1. choose another color from the Tailwind CSS Color palette (for example, try `colors.blue`)
+2. define your own colors, from `50` to `900`
+
+The `contrast` color will be helpful to define the text color of some components, so tweaking it may be required.
+
+Once updated, the Makerkit's theme will automatically adapt to your new color palette! For example, below, we set the primary color to `colors.blue`:
+
+{% img src="/assets/images/posts/blue-dark-theme.webp" width="2842" height="1966" /%}
+
+
+### Dark Mode
+
+Makerkit also ships with a dark theme.
+
+The light theme is the default, but users can manually switch thanks to the component `DarkModeToggle`.
+
+If you wish to only use one theme, you can tweak the configuration using the following flag in the configuration file `~/configuration.ts`:
+
+ ```ts {% title="~/configuration.ts" %}
+{
+  ...
+  features: {
+    enableThemeSwitcher: false,
+  },
+  theme: Themes.Dark,
+  ...
+}
+```
+
+The default Tailwind media switcher is not supported since Makerkit uses its own system that allows users to choose the System theme (light or dark) or the theme defined by the application.
+
+## Installing Animations (optional)
+
+If you want to use animations in your application, you can install the `tailwindcss-animate` library:
+
+```bash
+npm i tailwindcss-animate
+```
+
+Then, open the file `tailwind.config.js` and add the library as a plugin:
+
+ ```js {% title="tailwind.config.js" %}
+plugins: [
+  require('tailwindcss-animate')
+]
+```
+
+## Caveats
+
+1. Setting the dark theme by default is currently not supported without some minor tweaks. It is being developed.
+2. The default Tailwind media switcher is not supported since Makerkit uses its own system that allows users to choose the System theme (light or dark) or the theme defined by the application.

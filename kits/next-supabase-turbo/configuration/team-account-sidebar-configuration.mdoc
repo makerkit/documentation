@@ -1,0 +1,116 @@
+---
+status: "published"
+label: "Team Account Navigation Configuration"
+title: "Setting your team account navigation configuration | Next.js Supabase SaaS Kit"
+description: "Learn how to setup the team account navigation of your Next.js Supabase application"
+order: 6
+---
+
+The team account navigation is set at `apps/web/config/team-account-navigation.config.tsx`. We use this configuration to define the menu of the team account. By default, it has four routes: dashboard, settings, members, and billing (if enabled).
+
+We define it in one place so we can build different views at once (for example, the mobile menu).
+
+**Please update this file to add more routes to the sidebar.**
+
+ ```tsx {% title="apps/web/config/team-account-navigation.config.tsx" %}
+import {
+  CreditCard,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  Users,
+} from 'lucide-react';
+
+import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
+
+import featureFlagsConfig from '~/config/feature-flags.config';
+import pathsConfig from '~/config/paths.config';
+
+const iconClasses = 'w-4';
+
+const getRoutes = (account: string) => [
+  {
+    label: 'common:routes.application',
+    children: [
+      {
+        label: 'common:routes.dashboard',
+        path: pathsConfig.app.accountHome.replace('[account]', account),
+        Icon: <LayoutDashboard className={iconClasses} />,
+        end: true,
+      },
+      {
+        label: 'common:routes.chat',
+        path: pathsConfig.app.accountHome.replace('[account]', account) + '/chat',
+        Icon: <MessageSquare className={iconClasses} />,
+        end: false,
+      },
+    ],
+  },
+  {
+    label: 'common:settingsTabLabel',
+    collapsible: false,
+    children: [
+      {
+        label: 'common:routes.settings',
+        path: createPath(pathsConfig.app.accountSettings, account),
+        Icon: <Settings className={iconClasses} />,
+      },
+      {
+        label: 'common:routes.members',
+        path: createPath(pathsConfig.app.accountMembers, account),
+        Icon: <Users className={iconClasses} />,
+      },
+      featureFlagsConfig.enableTeamAccountBilling
+        ? {
+            label: 'common:routes.billing',
+            path: createPath(pathsConfig.app.accountBilling, account),
+            Icon: <CreditCard className={iconClasses} />,
+          }
+        : undefined,
+    ].filter(Boolean),
+  },
+];
+
+export function getTeamAccountSidebarConfig(account: string) {
+  return NavigationConfigSchema.parse({
+    routes: getRoutes(account),
+    style: process.env.NEXT_PUBLIC_TEAM_NAVIGATION_STYLE,
+    sidebarCollapsed: process.env.NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED,
+  });
+}
+
+function createPath(path: string, account: string) {
+  return path.replace('[account]', account);
+}
+```
+
+### Layout Style
+
+You can choose the style of the navigation by setting the `NEXT_PUBLIC_TEAM_NAVIGATION_STYLE` environment variable. The default style is `sidebar`.
+
+```bash
+NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=sidebar
+```
+
+Alternatively, you can set the style to `header`:
+
+```bash
+NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=header
+```
+
+### Old Configuration
+
+If you're running an older version (e.g prior to 25 October 2024), you're running the older version which allowed flat routes that looked like the below:
+
+```tsx
+const routes = [
+  {
+    label: 'common:dashboardTabLabel',
+    path: pathsConfig.app.accountHome.replace('[account]', account),
+    Icon: <LayoutDashboard className={iconClasses} />,
+    end: true,
+  }
+];
+```
+
+NB: please update to the latest version to use the latest features and optimizations.

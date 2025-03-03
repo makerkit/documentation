@@ -1,0 +1,1067 @@
+---
+status: "published"
+
+title: "Building the Tasks page"
+label: "Building the Tasks page"
+order: 11
+description: "Let's build the page that lists all the tasks for a given organization."
+---
+
+
+Okay, now that we have built the schema, queries and mutations for the tasks, let's build the page that lists all the tasks for a given organization.
+
+In this page we will build a table using the `DataTable` component in the template (built using Tanstack Table) and display the tasks data. From a dropdown, we will be able to view a task, mark it as done/undone, or delete it.
+
+Let's get started!
+
+---
+
+
+## Fetching the Tasks data
+
+First, let's build the foundation of our page.
+
+As you know - pages are Server Components. This means we can fetch data directly from our database, and pass it down to the client components.
+
+To fetch data, we define a function `loadTasksData` - don't worry about writing this down yet, as we have a full example below. What matters is understanding the concept and how to fetch data from the Supabase database.
+
+```tsx
+export async function loadTasksData(params: {
+  organizationUid: string;
+  pageIndex: number;
+  perPage: number;
+  query?: string;
+}) {
+  const client = getSupabaseServerComponentClient();
+  const { organizationUid, perPage, pageIndex, query } = params;
+
+  const {
+    data: tasks,
+    error,
+    count,
+  } = await getTasks(client, {
+    organizationUid,
+    pageIndex,
+    perPage,
+    query,
+  });
+
+  if (error) {
+    console.error(error);
+
+    return {
+      tasks: [],
+      count: 0,
+    };
+  }
+
+  return {
+    tasks,
+    count: count ?? 0,
+  };
+}
+```
+
+As you can see - we defined a Supabase client, and passed it to the `getTasks` function, which is a query we defined in the previous chapter.
+
+Now, we will define the page `TasksPage`, retrieve the data from the server component, and pass it down to the client components.
+
+For the time being - we don't display the tasks data, but we will do that in the next section - since the Table component requires a bit of work.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/page.tsx" %}
+import { use } from 'react';
+
+import {
+  PlusCircleIcon,
+  RectangleStackIcon,
+} from '@heroicons/react/24/outline';
+
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+import { getTasks } from '~/lib/tasks/queries';
+import Trans from '~/core/ui/Trans';
+import { withI18n } from '~/i18n/with-i18n';
+
+import AppHeader from '~/app/dashboard/[organization]/components/AppHeader';
+import AppContainer from '~/app/dashboard/[organization]/components/AppContainer';
+
+export const metadata = {
+  title: 'Tasks',
+};
+
+interface TasksPageParams {
+  params: {
+    organization: string;
+  };
+
+  searchParams: {
+    page?: string;
+    query?: string;
+  };
+}
+
+function TasksPage({ params, searchParams }: TasksPageParams) {
+  const pageIndex = Number(searchParams.page ?? '1') - 1;
+  const perPage = 8;
+
+  const { tasks, count } = use(
+    loadTasksData({
+      organizationUid: params.organization,
+      pageIndex,
+      perPage,
+      query: searchParams.query || '',
+    }),
+  );
+
+  const pageCount = Math.ceil(count / perPage);
+
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <RectangleStackIcon className="w-6" />
+
+          <span>
+            <Trans i18nKey={'common:tasksTabLabel'} />
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+
+      </AppContainer>
+    </>
+  );
+}
+
+export async function loadTasksData(params: {
+  organizationUid: string;
+  pageIndex: number;
+  perPage: number;
+  query?: string;
+}) {
+  const client = getSupabaseServerComponentClient();
+  const { organizationUid, perPage, pageIndex, query } = params;
+
+  const {
+    data: tasks,
+    error,
+    count,
+  } = await getTasks(client, {
+    organizationUid,
+    pageIndex,
+    perPage,
+    query,
+  });
+
+  if (error) {
+    console.error(error);
+
+    return {
+      tasks: [],
+      count: 0,
+    };
+  }
+
+  return {
+    tasks,
+    count: count ?? 0,
+  };
+}
+
+export default withI18n(TasksPage);
+````
+
+To complete this page, we need 3 supporting components that are defined in external files:
+1. `TasksTable`: a table that displays the tasks data
+2. `SearchTaskInput`: an input that allows the user to search for tasks
+3. `CreateTaskModal`: a modal that allows the user to create a new task
+
+We will define these components in the next sections.
+
+## Building the Tasks table
+
+Now that we have the data, let's build the table that displays it.
+
+To define the table, we use the `DataTable` component, which is a wrapper around the Tanstack Table component. This component is a bit complex, so we will break it down into smaller pieces.
+
+The component `TasksTable` accepts the following props:
+1. `pageIndex` - the current page index
+2. `pageCount` - the total number of pages
+3. `tasks` - the tasks data
+
+We will refresh the page when the user changes the page index, and we will pass the data to the `DataTable` component. As you can see we still don't have defined the `TABLE_COLUMNS` constant, but we will do that in the next section.
+
+Since it's a client component, we define the `TasksTable` component in a separate file at `src/app/dashboard/[organization]/tasks/components/TasksTable.tsx`.
+
+ ```tsx {% title="src/app/dashboard/[organization]/tasks/components/TasksTable.tsx" %}
+function TasksTable(
+  props: React.PropsWithChildren<{
+    pageIndex: number;
+    pageCount: number;
+    tasks: Task[];
+  }>,
+) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (
+    <DataTable
+      onPaginationChange={({ pageIndex }) => {
+        router.push(`${pathname}?page=${pageIndex + 1}`);
+      }}
+      pageIndex={props.pageIndex}
+      pageCount={props.pageCount}
+      data={props.tasks}
+      columns={TABLE_COLUMNS}
+    />
+  );
+}
+```
+
+### Defining the table columns
+
+Now, let's define the table columns. We will define the following columns:
+
+1. `Name` - the name of the task, which is a link to the task page
+2. `Description` - the description of the task, which is truncated to 50 characters
+3. `Due Date` - the due date of the task, which is formatted using the `date-fns` library
+4. `Actions` - a dropdown menu with the following actions:
+ 1. `View Task` - a link to the task page
+ 2. `Mark as Done` - a button that marks the task as done
+ 3. `Delete Task` - a button that deletes the task
+
+Let's define the `TABLE_COLUMNS` constant. As you can see, we use the `ColumnDef` type from the Tanstack Table library. We define the `header` and `cell` properties, which are the header and cell components of the table.
+
+```tsx
+const TABLE_COLUMNS: ColumnDef<Task>[] = [
+  {
+    header: 'Name',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      return (
+        <Link className={'hover:underline'} href={'tasks/' + task.id}>
+          {task.name}
+        </Link>
+      );
+    },
+  },
+  {
+    header: 'Description',
+    id: 'description',
+    cell: ({ row }) => {
+      const task = row.original;
+      const length = task.description?.length ?? 0;
+
+      return (
+        <span className={'truncate max-w-[50px]'}>
+          {length > 0 ? task.description : '-'}
+        </span>
+      );
+    },
+  },
+  {
+    header: 'Due Date',
+    id: 'dueDate',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      const dueDate = formatDistance(new Date(task.dueDate), new Date(), {
+        addSuffix: true,
+      });
+
+      return (
+        <If
+          condition={task.done}
+          fallback={<span className={'capitalize'}>{dueDate}</span>}
+        >
+          <div className={'inline-flex'}>
+            <Badge size={'small'} color={'success'}>
+              Done
+            </Badge>
+          </div>
+        </If>
+      );
+    },
+  },
+  {
+    header: '',
+    id: 'actions',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      return (
+        <div className={'flex justify-end'}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <IconButton>
+                <EllipsisVerticalIcon className="w-5" />
+              </IconButton>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              collisionPadding={{
+                right: 20,
+              }}
+            >
+              <DropdownMenuItem>
+                <Link href={'tasks/' + row.original.id}>View Task</Link>
+              </DropdownMenuItem>
+
+              <UpdateStatusMenuItem task={task} />
+              <DeleteTaskMenuItem task={task} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
+  },
+];
+```
+
+### Defining the dropdown menu items
+
+Now, let's define the dropdown menu items. Some of them are more complex, so we defined them into smaller components.
+
+```tsx
+
+function DeleteTaskMenuItem({ task }: { task: Task }) {
+  const [, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
+
+  return (
+    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+      <ConfirmDeleteTaskModal
+        task={task.name}
+        onConfirm={() => {
+          startTransition(async () => {
+            await deleteTaskAction({ taskId: task.id, csrfToken });
+          });
+        }}
+      >
+        <span className={'text-red-500'}>Delete Task</span>
+      </ConfirmDeleteTaskModal>
+    </DropdownMenuItem>
+  );
+}
+
+function UpdateStatusMenuItem({
+  task,
+}: React.PropsWithChildren<{
+  task: Task;
+}>) {
+  const [isPending, startTransition] = useTransition();
+  const action = task.done ? 'Mark as Todo' : 'Mark as Done';
+
+  return (
+    <DropdownMenuItem
+      disabled={isPending}
+      onSelect={(e) => e.preventDefault()}
+      onClick={() => {
+        startTransition(async () => {
+          await updateTaskAction({
+            task: {
+              id: task.id,
+              done: !task.done,
+            },
+          });
+        });
+      }}
+    >
+      {action}
+    </DropdownMenuItem>
+  );
+}
+```
+
+### Defining the Confirm Delete Task modal
+
+Finally, we need to define the Modal component to confirm the deletion of a task. This component is defined in `src/core/ui/Modal.tsx`.
+
+```tsx
+function ConfirmDeleteTaskModal({
+  children,
+  onConfirm,
+  task,
+}: React.PropsWithChildren<{
+  task: string;
+  onConfirm: () => void;
+}>) {
+  return (
+    <Modal heading={`Deleting Task`} Trigger={children}>
+      <div className={'flex flex-col space-y-4'}>
+        <div className={'text-sm flex flex-col space-y-2'}>
+          <p>
+            You are about to delete the task <b>{task}</b>
+          </p>
+
+          <p>Do you want to continue?</p>
+        </div>
+
+        <div className={'flex justify-end space-x-2'}>
+          <Button variant={'flat'} color={'danger'} onClick={onConfirm}>
+            Yep, delete task
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+```
+
+### Full code for the Tasks table
+
+Perfect - below is the full code for the Tasks table. We will now import it into the page, and display the data.
+
+```tsx
+'use client';
+
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { formatDistance } from 'date-fns';
+
+import { ColumnDef } from '@tanstack/react-table';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+
+import Task from '~/lib/tasks/types/task';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/core/ui/Dropdown';
+
+import DataTable from '~/core/ui/DataTable';
+import IconButton from '~/core/ui/IconButton';
+import Badge from '~/core/ui/Badge';
+import If from '~/core/ui/If';
+
+import { deleteTaskAction, updateTaskAction } from '~/lib/tasks/actions';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+const TABLE_COLUMNS: ColumnDef<Task>[] = [
+  {
+    header: 'Name',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      return (
+        <Link className={'hover:underline'} href={'tasks/' + task.id}>
+          {task.name}
+        </Link>
+      );
+    },
+  },
+  {
+    header: 'Description',
+    id: 'description',
+    cell: ({ row }) => {
+      const task = row.original;
+      const length = task.description?.length ?? 0;
+
+      return (
+        <span className={'truncate max-w-[50px]'}>
+          {length > 0 ? task.description : '-'}
+        </span>
+      );
+    },
+  },
+  {
+    header: 'Due Date',
+    id: 'dueDate',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      const dueDate = formatDistance(new Date(task.dueDate), new Date(), {
+        addSuffix: true,
+      });
+
+      return (
+        <If
+          condition={task.done}
+          fallback={<span className={'capitalize'}>{dueDate}</span>}
+        >
+          <div className={'inline-flex'}>
+            <Badge size={'small'} color={'success'}>
+              Done
+            </Badge>
+          </div>
+        </If>
+      );
+    },
+  },
+  {
+    header: '',
+    id: 'actions',
+    cell: ({ row }) => {
+      const task = row.original;
+
+      return (
+        <div className={'flex justify-end'}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <IconButton>
+                <EllipsisVerticalIcon className="w-5" />
+              </IconButton>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              collisionPadding={{
+                right: 20,
+              }}
+            >
+              <DropdownMenuItem>
+                <Link href={'tasks/' + row.original.id}>View Task</Link>
+              </DropdownMenuItem>
+
+              <UpdateStatusMenuItem task={task} />
+              <DeleteTaskMenuItem task={task} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
+  },
+];
+
+function TasksTable(
+  props: React.PropsWithChildren<{
+    pageIndex: number;
+    pageCount: number;
+    tasks: Task[];
+  }>,
+) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (
+    <DataTable
+      onPaginationChange={({ pageIndex }) => {
+        router.push(`${pathname}?page=${pageIndex + 1}`);
+      }}
+      pageIndex={props.pageIndex}
+      pageCount={props.pageCount}
+      data={props.tasks}
+      columns={TABLE_COLUMNS}
+    />
+  );
+}
+
+function DeleteTaskMenuItem({ task }: { task: Task }) {
+  const [, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
+
+  return (
+    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+      <ConfirmDeleteTaskModal
+        task={task.name}
+        onConfirm={() => {
+          startTransition(async () => {
+            await deleteTaskAction({ taskId: task.id, csrfToken });
+          });
+        }}
+      >
+        <span className={'text-red-500'}>Delete Task</span>
+      </ConfirmDeleteTaskModal>
+    </DropdownMenuItem>
+  );
+}
+
+function UpdateStatusMenuItem({
+  task,
+}: React.PropsWithChildren<{
+  task: Task;
+}>) {
+  const [isPending, startTransition] = useTransition();
+  const csrfToken = useCsrfToken();
+  const action = task.done ? 'Mark as Todo' : 'Mark as Done';
+
+  return (
+    <DropdownMenuItem
+      disabled={isPending}
+      onSelect={(e) => e.preventDefault()}
+      onClick={() => {
+        startTransition(async () => {
+          await updateTaskAction({
+            task: {
+              id: task.id,
+              done: !task.done,
+            },
+          });
+        });
+      }}
+    >
+      {action}
+    </DropdownMenuItem>
+  );
+}
+
+function ConfirmDeleteTaskModal({
+  children,
+  onConfirm,
+  task,
+}: React.PropsWithChildren<{
+  task: string;
+  onConfirm: () => void;
+}>) {
+  return (
+    <Modal heading={`Deleting Task`} Trigger={children}>
+      <div className={'flex flex-col space-y-4'}>
+        <div className={'text-sm flex flex-col space-y-2'}>
+          <p>
+            You are about to delete the task <b>{task}</b>
+          </p>
+
+          <p>Do you want to continue?</p>
+        </div>
+
+        <div className={'flex justify-end space-x-2'}>
+          <Button variant={'flat'} color={'danger'} onClick={onConfirm}>
+            Yep, delete task
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+export default TasksTable;
+```
+
+## Building the Search input
+
+Now, let's build the search input. This input will allow the user to search for tasks by name.
+
+We will use a text input to refresh the current route using a query parameter `query`:
+
+```tsx src/app/dashboard/[organization]/tasks/components/SearchTaskInput.tsx
+'use client';
+
+import { usePathname, useRouter } from 'next/navigation';
+import { FormEventHandler, useCallback } from 'react';
+import { TextFieldInput } from '~/core/ui/TextField';
+
+function SearchTaskInput({
+  query,
+}: React.PropsWithChildren<{
+  query: Maybe<string>;
+}>) {
+  const router = useRouter();
+  const pathName = usePathname();
+
+  const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
+    (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(event.currentTarget);
+      const query = formData.get('query') as string;
+      const url = new URL(pathName, window.location.origin);
+
+      url.searchParams.set('query', query);
+
+      const path = url.pathname + url.search;
+
+      router.push(path);
+    },
+    [pathName, router],
+  );
+
+  return (
+    <form className={'w-full max-w-sm'} onSubmit={onSubmit}>
+      <TextFieldInput
+        defaultValue={query}
+        name={'query'}
+        className={'w-full'}
+        placeholder={'Search for task...'}
+      />
+    </form>
+  );
+}
+
+export default SearchTaskInput;
+```
+
+## Building the Create Task Form
+
+To create a task - we will use a simple form that will be displayed in a modal - which we will define later.
+
+ ```tsx {% title="src/app/dashboard/[organization]/tasks/components/TaskForm.tsx" %}
+'use client';
+
+import type { FormEventHandler } from 'react';
+import { useCallback, useTransition } from 'react';
+import { toast } from 'sonner';
+
+import TextField from '~/core/ui/TextField';
+import Button from '~/core/ui/Button';
+import If from '~/core/ui/If';
+import Label from '~/core/ui/Label';
+import Textarea from '~/core/ui/Textarea';
+
+import useCurrentOrganization from '~/lib/organizations/hooks/use-current-organization';
+import { createTaskAction } from '~/lib/tasks/actions';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+const TaskForm: React.FC = () => {
+  const [isMutating, startTransition] = useTransition();
+  const organization = useCurrentOrganization();
+  const organizationId = organization?.id as number;
+  const csrfToken = useCsrfToken();
+
+  const onCreateTask: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const target = event.currentTarget;
+      const data = new FormData(target);
+      const name = data.get('name') as string;
+      const description = data.get('description') as string;
+      const dueDate = (data.get('dueDate') as string) || getDefaultDueDate();
+
+      if (name.trim().length < 3) {
+        toast.error('Task name must be at least 3 characters long');
+
+        return;
+      }
+
+      const task = {
+        organizationId,
+        name,
+        dueDate,
+        description,
+        done: false,
+      };
+
+      startTransition(async () => {
+        await createTaskAction({ task, csrfToken });
+      });
+    },
+    [csrfToken, organizationId],
+  );
+
+  return (
+    <form className={'flex flex-col'} onSubmit={onCreateTask}>
+      <div className={'flex flex-col space-y-4 w-full'}>
+        <TextField.Label>
+          Name
+          <TextField.Input
+            required
+            name={'name'}
+            placeholder={'ex. Launch on IndieHackers'}
+          />
+        </TextField.Label>
+
+        <Label>
+          Description
+          <Textarea
+            name={'description'}
+            className={'h-32'}
+            placeholder={'Describe the task...'}
+          />
+        </Label>
+
+        <TextField.Label>
+          Due date
+          <TextField.Input name={'dueDate'} type={'date'} />
+          <TextField.Hint>
+            Leave empty to set the due date to tomorrow
+          </TextField.Hint>
+        </TextField.Label>
+
+        <div className={'flex justify-end'}>
+          <Button variant={'flat'} loading={isMutating}>
+            <If condition={isMutating} fallback={<>Create Task</>}>
+              Creating Task...
+            </If>
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+function getDefaultDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(23, 59, 59);
+
+  return date.toDateString();
+}
+
+export default TaskForm;
+```
+
+## Building the Create Task modal
+
+We will leverage the `Modal` component to display the form in a modal. This component is defined in `src/core/ui/Modal.tsx`.
+
+ ```tsx {% title="src/app/dashboard/[organization]/tasks/components/CreateTaskModal.tsx" %}
+import Modal from '~/core/ui/Modal';
+import TaskForm from './TaskForm';
+
+function CreateTaskModal(props: React.PropsWithChildren) {
+  return (
+    <Modal heading={`Create Task`} Trigger={props.children}>
+      <TaskForm />
+    </Modal>
+  );
+}
+
+export default CreateTaskModal;
+```
+
+## Adding the Tasks table to the page
+
+Now that we have the table, let's add it to the page. We will define a further component named `TasksTableContainer` which will wrap the table, and add a search input and a button to create a new task.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/page.tsx" %}
+function TasksTableContainer({
+  tasks,
+  pageCount,
+  pageIndex,
+  query,
+}: React.PropsWithChildren<{
+  tasks: Task[];
+  pageCount: number;
+  pageIndex: number;
+  query?: string;
+}>) {
+  return (
+    <div className={'flex flex-col space-y-4'}>
+      <div className={'flex space-x-4 justify-between items-center'}>
+        <div className={'flex'}>
+          <CreateTaskModal>
+            <Button color={'transparent'}>
+              <span className={'flex space-x-2 items-center'}>
+                <PlusCircleIcon className={'w-4'} />
+
+                <span>New Task</span>
+              </span>
+            </Button>
+          </CreateTaskModal>
+        </div>
+
+        <SearchTaskInput query={query} />
+      </div>
+
+      <TasksTable pageIndex={pageIndex} pageCount={pageCount} tasks={tasks} />
+    </div>
+  );
+}
+
+function TasksEmptyState() {
+  return (
+    <div className={'flex flex-col space-y-8 p-4'}>
+      <div className={'flex flex-col'}>
+        <Heading type={2}>
+          <span className={'font-semibold'}>
+            Hey, it looks like you don&apos;t have any tasks yet... 🤔
+          </span>
+        </Heading>
+
+        <Heading type={4}>
+          Create your first task by clicking on the button below
+        </Heading>
+      </div>
+    </div>
+  );
+}
+```
+
+Finally, we can add these components to the page by adding them as children of the `<AppContainer>` component.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/page.tsx" %}
+<AppContainer>
+  <If condition={!count}>
+    <TasksEmptyState />
+  </If>
+
+  <TasksTableContainer
+    pageIndex={pageIndex}
+    pageCount={pageCount}
+    tasks={tasks}
+    query={searchParams.query}
+  />
+</AppContainer>
+```
+
+Check the full source code below.
+
+### Full Source Code for the Tasks page
+
+Perfect - below is the full source code for the Tasks page. We will now add it to the dashboard.
+
+ ```tsx {% title="app/dashboard/[organization]/tasks/page.tsx" %}
+import { use } from 'react';
+
+import {
+  PlusCircleIcon,
+  RectangleStackIcon,
+} from '@heroicons/react/24/outline';
+
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+import { getTasks } from '~/lib/tasks/queries';
+import Trans from '~/core/ui/Trans';
+import { withI18n } from '~/i18n/with-i18n';
+
+import AppHeader from '~/app/dashboard/[organization]/components/AppHeader';
+import AppContainer from '~/app/dashboard/[organization]/components/AppContainer';
+
+import Heading from '~/core/ui/Heading';
+import Button from '~/core/ui/Button';
+import If from '~/core/ui/If';
+
+import type Task from '~/lib/tasks/types/task';
+import TasksTable from '~/app/dashboard/[organization]/tasks/components/TasksTable';
+import SearchTaskInput from '~/app/dashboard/[organization]/tasks/components/SearchTaskInput';
+import CreateTaskModal from '~/app/dashboard/[organization]/tasks/components/CreateTaskModal';
+
+export const metadata = {
+  title: 'Tasks',
+};
+
+interface TasksPageParams {
+  params: {
+    organization: string;
+  };
+
+  searchParams: {
+    page?: string;
+    query?: string;
+  };
+}
+
+function TasksPage({ params, searchParams }: TasksPageParams) {
+  const pageIndex = Number(searchParams.page ?? '1') - 1;
+  const perPage = 8;
+
+  const { tasks, count } = use(
+    loadTasksData({
+      organizationUid: params.organization,
+      pageIndex,
+      perPage,
+      query: searchParams.query || '',
+    }),
+  );
+
+  const pageCount = Math.ceil(count / perPage);
+
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <RectangleStackIcon className="w-6" />
+
+          <span>
+            <Trans i18nKey={'common:tasksTabLabel'} />
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+        <If condition={!count}>
+          <TasksEmptyState />
+        </If>
+
+        <TasksTableContainer
+          pageIndex={pageIndex}
+          pageCount={pageCount}
+          tasks={tasks}
+          query={searchParams.query}
+        />
+      </AppContainer>
+    </>
+  );
+}
+
+export async function loadTasksData(params: {
+  organizationUid: string;
+  pageIndex: number;
+  perPage: number;
+  query?: string;
+}) {
+  const client = getSupabaseServerComponentClient();
+  const { organizationUid, perPage, pageIndex, query } = params;
+
+  const {
+    data: tasks,
+    error,
+    count,
+  } = await getTasks(client, {
+    organizationUid,
+    pageIndex,
+    perPage,
+    query,
+  });
+
+  if (error) {
+    console.error(error);
+
+    return {
+      tasks: [],
+      count: 0,
+    };
+  }
+
+  return {
+    tasks,
+    count: count ?? 0,
+  };
+}
+
+export default withI18n(TasksPage);
+
+function TasksTableContainer({
+  tasks,
+  pageCount,
+  pageIndex,
+  query,
+}: React.PropsWithChildren<{
+  tasks: Task[];
+  pageCount: number;
+  pageIndex: number;
+  query?: string;
+}>) {
+  return (
+    <div className={'flex flex-col space-y-4'}>
+      <div className={'flex space-x-4 justify-between items-center'}>
+        <div className={'flex'}>
+          <CreateTaskModal>
+            <Button color={'transparent'}>
+              <span className={'flex space-x-2 items-center'}>
+                <PlusCircleIcon className={'w-4'} />
+
+                <span>New Task</span>
+              </span>
+            </Button>
+          </CreateTaskModal>
+        </div>
+
+        <SearchTaskInput query={query} />
+      </div>
+
+      <TasksTable pageIndex={pageIndex} pageCount={pageCount} tasks={tasks} />
+    </div>
+  );
+}
+
+function TasksEmptyState() {
+  return (
+    <div className={'flex flex-col space-y-8 p-4'}>
+      <div className={'flex flex-col'}>
+        <Heading type={2}>
+          <span className={'font-semibold'}>
+            Hey, it looks like you don&apos;t have any tasks yet... 🤔
+          </span>
+        </Heading>
+
+        <Heading type={4}>
+          Create your first task by clicking on the button below
+        </Heading>
+      </div>
+    </div>
+  );
+}
+```

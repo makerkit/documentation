@@ -1,0 +1,96 @@
+---
+status: "published"
+
+title: How to run a Remix and Firebase MakerKit application
+label: Running the application
+order: 3
+description: 'Learn how to run a MakerKit application'
+---
+
+
+After installing the modules and the emulators, we can finally run the
+application in development mode.
+
+We need to execute two commands (and an optional one for Stripe):
+
+1. **Remix Server**: the first command is for running the Remix server
+2. **Firebase Emulators**: the second command is for running the Firebase
+emulators
+3. **Stripe CLI**: finally, the Stripe CLI is needed to dispatch webhooks to
+our local server (optional, only needed when interacting with Stripe)
+
+## About this Documentation
+
+This documentation complements the Firebase one and is not meant to be a replacement. We recommend reading the Firebase documentation to get a better understanding of the Firebase concepts and how to use it.
+
+### Running the Firebase Emulators
+
+First, let's run the emulators. The command below runs the emulators for
+the following products: Authentication, Firestore, and Storage.
+
+```bash
+npm run firebase:emulators:start
+```
+
+Additionally, it imports the default emulator's data from the folder `.
+/firebase-seed`, which we set up upfront to run the Cypress tests.
+
+After running the command above, you will be able to access the [Firebase
+Emulators UI](https://firebase.google.com/docs/emulator-suite) at
+[http://localhost:4000](http://localhost:4000).
+
+### Running the Remix Server
+
+And now, the Remix server:
+
+```bash
+npm run dev
+```
+
+If everything goes well, your server should be running at
+[http://localhost:3000](http://localhost:3000).
+
+### Running the Stripe CLI
+
+Run the Stripe CLI with the following command:
+
+```bash
+npm run stripe:listen
+```
+
+#### Add the Stripe Webhooks Key to your environment file
+
+If this is the first time you run this command, you will need to copy the Webhooks key printed on the console and add it to your development environment variables file:
+
+ ```bash {% title=".env.development" %}
+STRIPE_WEBHOOKS_SECRET=<PASTE_KEY_HERE>
+```
+
+## Saving the Firebase Emulator's data
+
+After shutting the emulators down, the Firebase emulator clears all the records
+and the users added during the session while the emulators are running.
+
+Fortunately, we can save and restore as many dumps as we want. For example, this can be useful for saving and loading particular scenarios for testing.
+
+To save the current snapshot, run the following command while the emulators are up and running:
+
+```bash
+npm run firebase:emulators:export
+```
+
+By default, MakerKit imports and exports to `./firebase-seed`, but you can change this to any other path.
+
+### Always Save on exit
+
+We don't particularly recommend this, but if you want to keep persisting data as you exit the emulators,
+you can decorate the `firebase:emulators:start` with the following options:
+
+```bash
+firebase emulators:start --export-on-exit=./your-directory
+```
+
+Saving your emulators' state can be handy, but keep in mind that for testing reasons,
+it's always best to create a snapshot of your data and use the same one so that your tests won't break if the data changes.
+
+Of course, change `./your-directory` to your preferred path.

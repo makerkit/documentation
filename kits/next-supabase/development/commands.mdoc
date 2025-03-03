@@ -1,0 +1,136 @@
+---
+status: "published"
+title: "All the commands to use for your Makerkit app | Next.js Supabase"
+description: "Use these commands to run the development server, build the application, and more in your Next.js Supabase application"
+label: Commands
+order: 0
+---
+
+
+Here are all the commands defined in the MakerKit's template:
+
+### Run the development server
+
+Run the command:
+
+```
+npm run dev
+```
+
+### Build a production bundle
+
+Run the command:
+
+```
+npm build
+```
+
+### Start a production server
+
+Run the command after building the application with the `build` command:
+
+```
+npm start
+```
+
+This is optional as it is automatically called after the `build` command.
+
+### Format all the files
+
+Run the command:
+
+```
+npm run format
+```
+
+### Type checking
+
+Run the command:
+
+```
+npm run typecheck
+```
+
+### Linting
+
+Run the command:
+
+```
+npm run lint
+```
+
+### Start the Supabase Local Environment
+
+Run the command:
+
+```
+npm run supabase:start
+```
+
+This is needed during development. It requires Docker to be up and running.
+
+### Stopping the Supabase Local Environment
+
+Run the command:
+
+```
+npm run supabase:stop
+```
+
+### Reset the Supabase Local Environment Database
+
+Run the command:
+
+```
+npm run supabase:db:reset
+```
+
+### Running the Supabase Database Tests
+
+Run the command:
+
+```
+npm run test:db
+```
+
+### Running and resetting the Supabase Database Tests
+
+Run the command:
+
+```
+npm run test:reset:db
+```
+
+### Run Cypress for E2E Tests (with UI)
+
+Run the command:
+
+```
+npm run cypress
+```
+
+### Run Cypress for E2E Tests (Headless)
+
+Run the command:
+
+```
+npm run cypress:headless
+```
+
+### Run E2E Tests and Exit
+
+Run the command:
+
+```
+npm test:e2e
+```
+
+### Run the Local Stripe Webhooks Server
+
+This is needed if you are testing Stripe. This command requires Docker, but you can alternatively install Stripe on your OS and change the command to use `stripe` directly.
+
+Run the command:
+
+```
+npm run stripe:listen
+```

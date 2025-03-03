@@ -1,0 +1,38 @@
+---
+status: "published"
+
+title: "Application Pages"
+label: "Application Pages"
+order: 12
+description: "Learn how to create and manage application pages in your Makerkit app"
+---
+
+
+Now that we have some components to display, we need to add them to the actual Remix pages.
+
+If you have not created the files in the `Routing` section above, it's time to do it.
+
+#### Using the components AppHeader and AppContainer
+
+These components are used to wrap the content of the pages. They are responsible for displaying the header and the container of the page.
+```tsx
+function DashboardPage() {
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <Squares2X2Icon className="w-6" />
+
+          <span>
+            <Trans i18nKey={'common:dashboardTabLabel'} />
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+        Your content goes here
+      </AppContainer>
+    </>
+  );
+}
+```

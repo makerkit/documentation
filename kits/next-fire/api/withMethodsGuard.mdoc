@@ -1,0 +1,34 @@
+---
+status: "published"
+
+title: withMethodsGuard
+label: withMethodsGuard
+order: 9
+description: 'The "withMethodsGuard" is a utility function that helps you to create a guard for your API methods based on the HTTP method'
+---
+
+The `withMethodsGuard` function is used to guard API endpoints by HTTP methods. For example, in the example below, we only allow `GET` and `POST` requests to the `/api/hello-world` endpoint.
+
+```ts {13}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withMethodsGuard(['GET', 'POST']),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```

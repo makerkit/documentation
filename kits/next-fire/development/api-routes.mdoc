@@ -1,0 +1,209 @@
+---
+status: "published"
+
+title: "Writing a Next.js API route with Makerkit"
+label: Writing API Routes
+order: 7
+description: "Makerkit offers utilities to reduce the boilerplate needed to
+write Next.js API routes. Learn the techniques to write well-coded API
+handlers."
+---
+
+Makerkit provides various utilities to reduce the boilerplate needed to write API functions with Next.js.
+
+The simpler API route you could write is the following:
+
+```tsx
+export default function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  return res.send(`Hello World`)
+}
+```
+
+Of course, there isn't much in there! But any SaaS will need various checks
+before executing an handler, for example:
+
+1. checking if the request is authenticated
+2. validating the request isn't from a bot
+3. validating the payload matches your expected schema
+4. validating the endpoint matches the expected method
+5. ...and so on!
+
+Thankfully, Makerkit allows you to do all the above thanks to `middlewares`,
+simple function that accept the Next,js `req` and `res` API parameters.
+
+Normally, as you will see in the codebase, we writeAPI handlers
+using the conventions below:
+
+ ```tsx {% title="/pages/api/members.ts" %}
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withAppCheck } from '~/core/middleware/with-app-check';
+import { withAdmin } from '~/core/middleware/with-admin';
+
+const SUPPORTED_METHODS: HttpMethod[] = ['GET', 'POST'];
+
+export default function members(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    // throw if method is not in SUPPORTED_METHODS array
+    withMethodsGuard(SUPPORTED_METHODS),
+    // initialize Firebase Admin
+    withAdmin,
+    // check request is genuine with Firebase AppCheck
+    withAppCheck,
+    // check user is authenticated
+    withAuthedUser,
+    // execute API logic
+    membersHandler
+  );
+
+  // manage exceptions
+  return withExceptionFilter(req, res)(handler);
+}
+
+async function membersHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const members = await fetchOrganizationMembers();
+
+  res.json(members);
+}
+```
+
+Let's take a look at these functions individually.
+
+### Piping functions
+
+Piping functions can be useful to augment a function, validate data, or do any other check before getting to the function handler, where we write the bulk of the logic.
+
+The utility we use is `withPipe`, a dead-simple function that iterates over functions until one of them stops (or calls functions such as `req.end()`, `req.send()`, `req.json()`).
+
+```tsx
+export default withPipe(
+  (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(409).end();
+    }
+  },
+  (req, res) => {
+    // this will never execute!
+  }
+)
+```
+
+### Guarding against unsupported HTTP methods
+
+This utility helps reject requests whose method is not defined in the array.
+
+For example, let's assume we only want to reply to `GET` and `POST` requests:
+
+ ```tsx {% title="/api/hello.ts" %}
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+
+export default withPipe(
+  withMethodsGuard(['GET', 'POST'])
+);
+```
+
+Alternatively, call it at the top of an API route:
+
+```tsx
+export default async function apiHandler() {
+  await withMethodsGuard(['PUT']);
+}
+```
+
+If the API is called with any other HTTP method, this function will throw a 405 error and add an `Allow` HTTP header with the list of allowed methods.
+
+### Initializing the Firebase Admin
+
+To be able to use the Firebase Admin functions in your Next.js API, you need to initialize it before calling its services, such as Firestore, Auth, etc.
+
+```tsx
+import { withAdmin } from '~/core/middleware/with-admin';
+
+export default withPipe(
+  withAdmin,
+);
+```
+
+Alternatively, call it at the top of an API route:
+
+```tsx
+export default async function apiHandler() {
+  await withAdmin();
+}
+```
+
+### Rejecting requests from non-authenticated users
+
+This is one of the most important functions you will be using, i.e. ensuring the API request is coming from an authenticated user:
+
+```tsx
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+
+export default withPipe(
+  withAuthedUser,
+);
+```
+
+Alternatively, call it at the top of an API route:
+
+```tsx
+export default async function apiHandler() {
+  await withAuthedUser();
+}
+```
+
+### Rejecting requests from bots
+
+If you enabled AppCheck in your application, you can disallow requests from bad actors and spammy clients:
+
+```tsx
+import { withAppCheck } from '~/core/middleware/with-app-check';
+
+export default withPipe(
+  withAdmin,
+  withAppCheck,
+);
+```
+
+Alternatively, call it at the top of an API route:
+
+```tsx
+export default async function apiHandler() {
+  await withAdmin();
+  await withAppCheck();
+}
+```
+
+### Handling Exceptions
+
+The utility `withExceptionFilter` is useful for managing exceptions from an API handler.
+
+This utility will report the exception to `Sentry.io` (if configured), log the exception so that you can debug it, and return a JSON with some metadata to **avoid leaking information to the clients**: therefore, I highly encourage you to use this utility where possible.
+
+Check out the example below:
+
+```tsx
+export default function apiHandler() {
+  const handler = withPipe(
+    withMethodsGuard(SUPPORTED_METHODS),
+    withAuthedUser,
+    (req, res) => {
+      return await getData();
+    }
+  );
+
+  // manage exceptions
+  return withExceptionFilter(req, res)(handler);
+}
+```

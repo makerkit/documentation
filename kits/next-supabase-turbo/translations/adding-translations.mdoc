@@ -1,0 +1,50 @@
+---
+status: "published"
+title: "Adding new translations | Next.js Supabase SaaS Kit"
+label: "Adding new translations"
+description: "Learn how to add new translations to your Next.js Supabase SaaS project."
+order: 1
+---
+
+Makerkit projects store translations at the application level, specifically in the `apps/web/public/locales` directory. By default, English translations are provided and can be found at `apps/web/public/locales/en`.
+
+If you're looking to expand your application's language support, follow these two steps:
+
+## 1. Create Language Files
+
+First, create a new folder in `apps/web/public/locales/[lng]`, where `[lng]` represents the appropriate language code. This could be `de` for German, `it` for Italian, `es` for Spanish, `ja` for Japanese, and so on.
+
+## 2. Update Language Settings
+
+Next, add the new language to the settings file located at `apps/web/lib/i18n/i18n.settings.ts`:
+
+```tsx
+/**
+ * The list of supported languages.
+ * By default, only the default language is supported.
+ * Add more languages here if needed.
+ */
+export const languages: string[] = [defaultLanguage, 'es'];
+```
+
+In the example above, the language `es` (Spanish) is added to the `languages` array. Feel free to add as many languages as your application requires.
+
+## 3. Add new namespaces
+
+If you want to add a new namespace (for example, `chatbots.json`) where you will store translations for chatbots, you can do so by creating a new file in the `apps/web/public/locales/[lng]` directory. For example, `apps/web/public/locales/en/chatbots.json`.
+
+Then, you register the new namespace in the `i18n.settings.ts` file:
+
+```tsx {8} title="apps/web/lib/i18n/i18n.settings.ts"
+export const defaultI18nNamespaces = [
+  'common',
+  'auth',
+  'account',
+  'teams',
+  'billing',
+  'marketing',
+  'chatbots',
+];
+```
+
+In the example above, the `chatbots` namespace is added to the `defaultI18nNamespaces` array. And that's it! You can now start adding translations to your new namespace.

@@ -1,0 +1,491 @@
+---
+status: "published"
+title: Environment Variables in the Next.js Supabase Starter Kit
+label: Environment Variables
+order: 0
+description: Learn how to configure environment variables in the Next.js Supabase Starter Kit.
+---
+
+Environment variables are defined in the `.env` file in the root of the `apps/web` package.
+
+1. **Shared Environment Variables**: Shared environment variables are defined in the `.env` file. These are the env variables shared between environments (e.g., development, staging, production).
+2. **Environment Variables**: Environment variables for a specific environment are defined in the `.env.development` and `.env.production` files. These are the env variables specific to the development and production environments.
+3. **Secret Keys**: Secret keys and sensitive information are not stored in the `.env` file. Instead, they are stored in the environment variables of the CI/CD system.
+4. **Secret keys to be used locally**: If you need to use secret keys locally, you can store them in the `.env.local` file. This file is not committed to Git, therefore it is safe to store sensitive information in it.
+
+## Core Configuration Variables
+
+Essential variables that define your application's basic settings:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://example.com
+NEXT_PUBLIC_PRODUCT_NAME=Your Product
+NEXT_PUBLIC_SITE_TITLE="Your Site Title"
+NEXT_PUBLIC_SITE_DESCRIPTION="Your site description"
+NEXT_PUBLIC_DEFAULT_LOCALE=en
+```
+
+### NEXT_PUBLIC_SITE_URL
+The URL of your site, used for generating absolute URLs. Must include the protocol (e.g., `https://`) and be a valid URL.
+```bash
+NEXT_PUBLIC_SITE_URL=https://example.com
+```
+
+### NEXT_PUBLIC_PRODUCT_NAME
+Your product's name, used consistently across the application interface.
+```bash
+NEXT_PUBLIC_PRODUCT_NAME=Makerkit
+```
+
+### NEXT_PUBLIC_SITE_TITLE
+The site's title tag content, crucial for SEO and browser display.
+```bash
+NEXT_PUBLIC_SITE_TITLE="Makerkit - The easiest way to start your next project"
+```
+
+### NEXT_PUBLIC_SITE_DESCRIPTION
+Your site's meta description, important for SEO optimization.
+```bash
+NEXT_PUBLIC_SITE_DESCRIPTION="Makerkit is the easiest way to start your next project"
+```
+
+### NEXT_PUBLIC_DEFAULT_THEME_MODE
+Controls the default theme appearance. Options: `light`, `dark`, or `system`.
+```bash
+NEXT_PUBLIC_DEFAULT_THEME_MODE=light
+```
+
+### NEXT_PUBLIC_DEFAULT_LOCALE
+Sets the default language for your application.
+```bash
+NEXT_PUBLIC_DEFAULT_LOCALE=en
+```
+
+## Authentication Configuration
+
+Settings that control user authentication methods:
+
+```bash
+NEXT_PUBLIC_AUTH_PASSWORD=true
+NEXT_PUBLIC_AUTH_MAGIC_LINK=false
+NEXT_PUBLIC_CAPTCHA_SITE_KEY=
+CAPTCHA_SECRET_TOKEN=
+```
+
+### NEXT_PUBLIC_AUTH_PASSWORD
+Enables or disables password-based authentication.
+```bash
+NEXT_PUBLIC_AUTH_PASSWORD=true
+```
+
+### NEXT_PUBLIC_AUTH_MAGIC_LINK
+Enables or disables magic link authentication.
+```bash
+NEXT_PUBLIC_AUTH_MAGIC_LINK=false
+```
+
+### NEXT_PUBLIC_CAPTCHA_SITE_KEY
+Your Cloudflare Captcha site key for form protection.
+```bash
+NEXT_PUBLIC_CAPTCHA_SITE_KEY=your-captcha-site-key
+```
+
+### CAPTCHA_SECRET_TOKEN
+Your Cloudflare Captcha secret token for backend verification.
+```bash
+CAPTCHA_SECRET_TOKEN=your-captcha-secret-token
+```
+
+## Navigation and Layout Settings
+
+Settings that control the navigation and layout of your application:
+```bash
+NEXT_PUBLIC_USER_NAVIGATION_STYLE=sidebar
+NEXT_PUBLIC_HOME_SIDEBAR_COLLAPSED=false
+NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=sidebar
+NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED=false
+NEXT_PUBLIC_SIDEBAR_COLLAPSIBLE_STYLE=icon
+```
+
+### NEXT_PUBLIC_USER_NAVIGATION_STYLE
+Controls user navigation layout. Options: `sidebar`, `header`, or `custom`.
+```bash
+NEXT_PUBLIC_USER_NAVIGATION_STYLE=sidebar
+```
+
+### NEXT_PUBLIC_HOME_SIDEBAR_COLLAPSED
+Sets the default state of the home sidebar.
+```bash
+NEXT_PUBLIC_HOME_SIDEBAR_COLLAPSED=false
+```
+
+### NEXT_PUBLIC_TEAM_NAVIGATION_STYLE
+Controls team navigation layout. Options: `sidebar`, `header`, or `custom`.
+```bash
+NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=sidebar
+```
+
+### NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED
+Sets the default state of the team sidebar.
+```bash
+NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED=false
+```
+
+### NEXT_PUBLIC_SIDEBAR_COLLAPSIBLE_STYLE
+Defines sidebar collapse behavior. Options: `offscreen`, `icon`, or `none`.
+```bash
+NEXT_PUBLIC_SIDEBAR_COLLAPSIBLE_STYLE=icon
+```
+
+## UI/UX
+
+Settings that control the UI/UX of your application:
+
+```
+NEXT_PUBLIC_DEFAULT_THEME_MODE=light
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=true
+NEXT_PUBLIC_ENABLE_SIDEBAR_TRIGGER=true
+```
+
+### NEXT_PUBLIC_DEFAULT_THEME_MODE
+Controls the default theme appearance. Options: `light`, `dark`, or `system`.
+```bash
+NEXT_PUBLIC_DEFAULT_THEME_MODE=light
+```
+
+### NEXT_PUBLIC_ENABLE_THEME_TOGGLE
+Controls visibility of the theme toggle feature.
+```bash
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=true
+```
+
+### NEXT_PUBLIC_ENABLE_SIDEBAR_TRIGGER
+Controls visibility of the sidebar trigger feature.
+```bash
+NEXT_PUBLIC_ENABLE_SIDEBAR_TRIGGER=true
+```
+
+## Feature Flags
+
+```bash
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=true
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION=true
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING=true
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS=true
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION=true
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION=true
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=true
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=true
+```
+
+### NEXT_PUBLIC_ENABLE_THEME_TOGGLE
+Controls visibility of the theme toggle feature.
+```bash
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=true
+```
+
+### NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION
+Allows users to delete their personal accounts.
+```bash
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION=true
+```
+
+### NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING
+Enables billing features for personal accounts.
+```bash
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS
+Master switch for team account functionality.
+```bash
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION
+Controls ability to create new team accounts.
+```bash
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION
+Allows team account deletion.
+```bash
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION=true
+```
+
+### NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING
+Enables billing features for team accounts.
+```bash
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=true
+```
+
+## Notifications
+
+Control notification behavior:
+
+```bash
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=true
+```
+
+### NEXT_PUBLIC_ENABLE_NOTIFICATIONS
+Controls the notification system.
+```bash
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
+```
+
+### NEXT_PUBLIC_REALTIME_NOTIFICATIONS
+Enables real-time notifications using Supabase Realtime.
+```bash
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=true
+```
+
+## Supabase Configuration
+
+Required variables for Supabase integration:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_DB_WEBHOOK_SECRET=your-webhook-secret
+```
+
+### NEXT_PUBLIC_SUPABASE_URL
+Your Supabase project URL.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
+```
+
+### NEXT_PUBLIC_SUPABASE_ANON_KEY
+Your Supabase anonymous API key.
+```bash
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### SUPABASE_SERVICE_ROLE_KEY
+Your Supabase service role key (keep this secret!).
+```bash
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+### SUPABASE_DB_WEBHOOK_SECRET
+Secret key for Supabase webhook verification.
+```bash
+SUPABASE_DB_WEBHOOK_SECRET=your-webhook-secret
+```
+
+## Billing Configuration
+
+### NEXT_PUBLIC_BILLING_PROVIDER
+Your chosen billing provider. Options: `stripe` or `lemon-squeezy`.
+```bash
+NEXT_PUBLIC_BILLING_PROVIDER=stripe
+```
+
+### Stripe Configuration
+
+Required when using Stripe:
+```bash
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-publishable-key
+STRIPE_SECRET_KEY=your-secret-key
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+```
+
+#### NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+Your Stripe publishable key.
+```bash
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your-publishable-key
+```
+
+#### STRIPE_SECRET_KEY
+
+Your Stripe secret key.
+```bash
+STRIPE_SECRET_KEY=your-secret-key
+```
+
+#### STRIPE_WEBHOOK_SECRET
+
+Your Stripe webhook secret.
+```bash
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+```
+
+### Lemon Squeezy Configuration
+Required when using Lemon Squeezy:
+```bash
+LEMON_SQUEEZY_SECRET_KEY=your-secret-key
+LEMON_SQUEEZY_STORE_ID=your-store-id
+LEMON_SQUEEZY_SIGNING_SECRET=your-signing-secret
+```
+
+#### LEMON_SQUEEZY_SECRET_KEY
+
+Your Lemon Squeezy secret key.
+```bash
+LEMON_SQUEEZY_SECRET_KEY=your-secret-key
+```
+
+#### LEMON_SQUEEZY_STORE_ID
+
+Your Lemon Squeezy store ID.
+```bash
+LEMON_SQUEEZY_STORE_ID=your-store-id
+```
+
+#### LEMON_SQUEEZY_SIGNING_SECRET
+
+Your Lemon Squeezy signing secret.
+```bash
+LEMON_SQUEEZY_SIGNING_SECRET=your-signing-secret
+```
+
+## Email Configuration
+
+Setup email functionality:
+
+```bash
+MAILER_PROVIDER=nodemailer
+EMAIL_SENDER=info@yourapp.com
+CONTACT_EMAIL=contact@yourapp.com # contact form email
+
+# For Resend
+RESEND_API_KEY=your-resend-api-key
+
+# For Nodemailer
+EMAIL_HOST=smtp.provider.com
+EMAIL_PORT=587
+EMAIL_USER=your-email-user
+EMAIL_PASSWORD=your-email-password
+EMAIL_TLS=true
+```
+
+### MAILER_PROVIDER
+Your email service provider. Options: `nodemailer` or `resend`.
+```bash
+MAILER_PROVIDER=nodemailer
+```
+
+### EMAIL_SENDER
+Default sender email address.
+```bash
+EMAIL_SENDER=info@yourapp.com
+```
+
+### CONTACT_EMAIL
+Email address for contact form submissions.
+```bash
+CONTACT_EMAIL=contact@yourapp.com
+```
+
+### Resend Configuration
+Required when using Resend:
+```bash
+RESEND_API_KEY=your-resend-api-key
+```
+
+### Nodemailer Configuration
+Required when using Nodemailer:
+```bash
+EMAIL_HOST=smtp.provider.com
+EMAIL_PORT=587
+EMAIL_USER=your-email-user
+EMAIL_PASSWORD=your-email-password
+EMAIL_TLS=true
+```
+
+## CMS Configuration
+
+Setup CMS functionality:
+
+```bash
+CMS_CLIENT=keystatic
+```
+
+### CMS_CLIENT
+
+Your chosen CMS system. Options: `wordpress` or `keystatic`.
+```bash
+CMS_CLIENT=keystatic
+```
+
+### Keystatic Configuration
+
+```bash
+NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=local # local, cloud, github
+KEYSTATIC_PATH_PREFIX=apps/web
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content # apps/web/content
+
+# if Github mode
+NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=github
+NEXT_PUBLIC_KEYSTATIC_STORAGE_REPO=makerkit/next-supabase-saas-kit-turbo-demo
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content
+KEYSTATIC_GITHUB_TOKEN=github_**********************************************
+KEYSTATIC_PATH_PREFIX=apps/web
+```
+
+#### NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND
+
+Your Keystatic storage kind. Options: `local`, `cloud`, `github`.
+```bash
+NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=local
+```
+
+#### NEXT_PUBLIC_KEYSTATIC_STORAGE_REPO
+
+Your Keystatic storage repo.
+```bash
+NEXT_PUBLIC_KEYSTATIC_STORAGE_REPO=makerkit/next-supabase-saas-kit-turbo-demo
+```
+
+#### KEYSTATIC_GITHUB_TOKEN
+
+Your Keystatic GitHub token.
+```bash
+KEYSTATIC_GITHUB_TOKEN=github_**********************************************
+```
+
+#### KEYSTATIC_PATH_PREFIX
+
+Your Keystatic path prefix.
+```bash
+KEYSTATIC_PATH_PREFIX=apps/web
+```
+
+#### NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH
+
+Your Keystatic content path.
+```bash
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content
+```
+
+#### KEYSTATIC_PATH_PREFIX
+
+Your Keystatic path prefix.
+```bash
+KEYSTATIC_PATH_PREFIX=apps/web
+```
+
+### Wordpress Configuration
+
+### WORDPRESS_API_URL
+Required when using WordPress:
+```bash
+WORDPRESS_API_URL=https://your-wordpress-site.com/wp-json
+```
+
+## Best Practices 🔑
+
+1. **Environment File Structure**
+   - `.env`: Shared, non-sensitive variables
+   - `.env.development`: Development-specific settings
+   - `.env.production`: Production-specific settings
+   - `.env.local`: Local sensitive variables (git-ignored)
+2. **Security Considerations**
+   - Never commit secret keys
+   - Use CI/CD environment variables for sensitive data
+   - Rotate keys regularly

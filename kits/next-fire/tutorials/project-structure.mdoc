@@ -1,0 +1,41 @@
+---
+status: "published"
+
+title: "Project Structure"
+label: Project Structure
+order: 2
+description: "A quick overview of the project structure and how to navigate it."
+---
+
+When inspecting the project structure, you will find something similar to the below:
+
+```
+tasks-app
+├── README.md
+├── @types
+├── src
+│   ├── components
+│   ├── core
+│   ├── lib
+│   └── pages
+        └── _document.tsx
+        └── _app.tsx
+│       └── page.tsx
+├── package-lock.json
+├── package.json
+├── public
+│   └── favicon.ico
+├── next.config.mjs
+└── tsconfig.json
+```
+
+NB: we omitted a lot of the files for simplicity.
+
+Let's take a deeper look at the structure we see above:
+
+- `src/core`: this folder contains reusable building blocks of the template that **are not related to any domain**. This includes components, React hooks, functions, and so on.
+- `src/components`: this folder contains the application's components, including those that belong to your application's domain. For example, we can add the `tasks` components to `src/components/tasks`.
+- `src/lib`: this folder contains the business logic of your application's domain. For example, we can add the `tasks` hooks to write and fetch data from Firestore in `src/lib/tasks`.
+- `src/pages`: this is Next.js's special folder where we add our application routes.
+
+Don't worry if this isn't clear yet! We'll explain where we place our files in the sections ahead.

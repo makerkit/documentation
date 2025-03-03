@@ -1,0 +1,56 @@
+---
+status: "published"
+
+title: Protect your Next.js application from abuse using Firebase AppCheck
+label: Prevent abuse with AppCheck
+order: 10
+description: 'Learn how to set up Firebase AppCheck in your MakerKit application to protect your application from abuse'
+---
+
+
+App Check is a Firebase service that helps you to protect your web app from
+bots, spammy users, and general abuse detected by Google's Recaptcha.
+
+The Makerkit SaaS starter is already configured to secure your application with Firebase AppCheck, but you will need to set it up in the Firebase Console first.
+
+### Registering your website for Recaptcha v3
+
+[To register your website for Recaptcha v3, you need to complete the linked form](https://www.google.com/recaptcha/admin/create). After entering the details, you'll be provided with a `Site Key`, which we use to initialize the Firebase AppCheck service.
+
+{% img src="/assets/images/posts/create-recaptchha-key.webp" width="1494" height="878" /%}
+
+NB: when registering the website, create a **Recaptcha v3** key, not v2.
+
+After submitting the form, you will receive two keys: 
+
+1. a public key (on the client side)
+2. a private key (to be used on the server side)
+
+Save the public key and add it to your Next.js `.env` file:
+
+```
+NEXT_PUBLIC_APPCHECK_KEY=<YOUR_KEY>
+```
+
+### Enabling Firebase App Check from the console
+
+First, we need to enable Firebase App Check from the Firebase Console to register our application using the keys we have generated in the previous step.
+
+{% img src="/assets/images/posts/register-app-check.webp" width="2850" height="902" /%}
+
+Above, you should have added the secret key that we have generated. If it all went well, you have successfully enabled app-check for your application 🎉!
+
+#### Enforcing Firestore to use App Check
+
+To enforce Firestore to always validate requests using AppCheck, you must enable it from the Console. From where you are, click on the `API` tab, then click on `Firebase Firestore`. You will then be presented with the popup as in the image below:
+
+{% img src="/assets/images/posts/enforce-appcheck-firestore.webp" width="1752" height="1340" /%}
+
+Continue and enforce Firestore to use AppCheck.
+
+### Testing AppCheck
+
+AppCheck will not work in emulator mode, so you have two options to ensure it's working as intended:
+
+- run a production build locally
+- or simply deploy your applications

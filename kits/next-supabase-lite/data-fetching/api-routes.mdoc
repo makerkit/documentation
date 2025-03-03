@@ -1,0 +1,121 @@
+---
+status: "published"
+
+title: "API Routes"
+label: "API Routes"
+order: 4
+description: "Learn how to create and manage API routes in your Next.js application."
+---
+
+
+To use API Routes in your Next.js Project, you can create a `route.ts` file within the `app` directory, which will be treated automatically as an API Route.
+
+To export an handler, we need to export the HTTP verb we want to handle, such as `GET`, `POST`, `PUT`, etc.
+
+ ```ts {% title="app/api/hello/route.ts" %}
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(
+  req: NextRequest
+) {
+  return NextResponse.json({ hello: "world" });
+}
+```
+
+{% alert type="warning" %}
+Don't confuse API Routes in the App Directory with API Routes in the Pages Directory.
+
+  They are different and the signature doesn't match. Copy/pasting examples from the pages directory will not work.
+{% /alert %}
+
+## Calling API Routes
+
+To call API Routes, you have two ways:
+1. Use our utility function that wraps `fetch` and automatically inserts the CSRF token for you
+2. Manually call the `fetch` function and insert the CSRF token yourself
+
+The Middleware will reject every mutation request that does not add a CSRF token to the request. You can disable this, but it is not recommended.
+
+### Using the Utility Function
+
+By using the `useApiRequest` utility function, you can easily call API Routes from your application. In the example below, we use both the `useApiRequest` and `useSWR` hooks to fetch data from an API Route.
+
+```tsx
+import useSWRMutation from 'swr/mutation';
+
+import configuration from '~/configuration';
+import useApiRequest from '~/core/hooks/use-api';
+import useRefresh from '~/core/hooks/use-refresh';
+
+interface Params {
+  membershipId: number;
+}
+
+const path = configuration.paths.api.organizations.transferOwnership;
+
+function useTransferOrganizationOwnership() {
+  const fetcher = useApiRequest<void, Params>();
+  const refresh = useRefresh();
+  const key = ['organizations', 'transfer-ownership'];
+
+  return useSWRMutation(
+    key,
+    (_, { arg }: { arg: Params }) => {
+      return fetcher({
+        path,
+        method: `PUT`,
+        body: {
+          membershipId: arg.membershipId,
+        },
+      });
+    },
+    {
+      onSuccess: refresh,
+    }
+  );
+}
+
+export default useTransferOrganizationOwnership;
+```
+
+To use the `useTransferOrganizationOwnership` hook, we can simply call it from our component.
+
+```tsx
+function Component() {
+  const { trigger } = useTransferOrganizationOwnership();
+
+  // use trigger to call the mutation
+}
+```
+
+Using `useSWRMutation` is not required, but it is recommended.
+
+## CSRF Check
+
+By default, the CSRF check is enabled. This means that every mutation request must include a CSRF token.
+
+If you use the utility `useApiRequest` function, this is handled automatically for you. If you use `fetch` directly, you must add the CSRF token yourself.
+
+To add the CSRF token, you can use the `useCsrfToken` hook.
+
+```tsx
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+function MyComponent() {
+  const { csrfToken } = useCsrfToken();
+
+  // use csrfToken in your fetch request
+
+  return (
+    <button onClick={() => {
+      fetch('/api/my-route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+      });
+    }}>Click</button>
+  );
+}
+```

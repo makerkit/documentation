@@ -1,0 +1,118 @@
+---
+status: "published"
+
+title: "Environment Variables"
+label: Environment Variables
+order: 2
+description: "Learn how to use environment variables in your Next.js Supabase project."
+---
+
+
+## Environment Variables
+
+Makerkit provides templates for configuring your environment variables correctly and the **minimum** environment variables to run your local environment.
+
+To push your project to production, **you must fill these variables by creating your Supabase project** and adding the required values.
+
+Below are the required environment variables for your project to run locally and in production.
+
+```
+DEFAULT_LOCALE=en
+SITE_URL=http://localhost:3000
+
+# set the below to "production" in your production environment
+ENVIRONMENT=development
+
+# SUPABASE
+SUPABASE_URL=http://localhost:54321
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# STRIPE
+STRIPE_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_PUBLISHABLE_KEY=
+
+# EMAIL
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+### Production Environment Variables
+
+{% alert type="warning" %}
+When you go to production, ensure you add the required environment variables using your CI or service provider.
+{% /alert %}
+
+Remix **does not bundle your ".env" variables when building your application in production mode**, so you need to ensure you are providing these variables using your CU or service provider.
+
+## Website Configuration
+
+The following variables are used to configure your website:
+
+### DEFAULT_LOCALE
+
+The default locale for your application. This is used by the `i18next` library to set the default locale for your application.
+
+### SITE_URL
+
+The URL of your application. This is used across the application to generate links to your application.
+
+## Supabase Configuration
+
+The following variables are used to configure your Supabase project:
+
+### SUPABASE_URL
+
+The URL of your Supabase project. This is used by the Supabase client to connect to your Supabase project. It is a public variable.
+
+### SUPABASE_ANON_KEY
+
+The anonymous key of your Supabase project. This is used by the Supabase client to connect to your Supabase project. It is a public variable.
+
+### SUPABASE_SERVICE_ROLE_KEY
+
+The service role key of your Supabase project. This is used by the Supabase client to connect to your Supabase project. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+## Stripe Configuration
+
+The following variables are used to configure your Stripe project:
+
+### STRIPE_WEBHOOK_SECRET
+
+The webhook secret of your Stripe project (also referred to as Signing Secret within the Stripe dashboard). This is used by the Stripe client to connect to your Stripe project. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### STRIPE_SECRET_KEY
+
+The secret key of your Stripe project. This is used by the Stripe client to connect to your Stripe project. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### STRIPE_PUBLISHABLE_KEY
+
+The publishable key of your Stripe project. This is used by the Stripe client to connect to your Stripe project. It is a public variable and it's used to create the embedded checkout with the Stripe SDK.
+
+## Email Configuration
+
+The following variables are used to configure your email provider:
+
+### EMAIL_HOST
+
+The SMTP host of your email provider. This is used by the email client to connect to your email provider. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### EMAIL_PORT
+
+The SMTP port of your email provider. This is used by the email client to connect to your email provider. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### EMAIL_USER
+
+The SMTP user of your email provider. This is used by the email client to connect to your email provider. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### EMAIL_PASSWORD
+
+The SMTP password of your email provider. This is used by the email client to connect to your email provider. It is a secret variable - so please add it to your CI/CD environment and never add it to Git.
+
+### EMAIL_SENDER
+
+The sender of your emails. This is used by the email client to send emails to your users. It is a public variable. Use the format `Sender Name <email@app.com>`.

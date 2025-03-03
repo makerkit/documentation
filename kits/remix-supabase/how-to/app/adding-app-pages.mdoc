@@ -1,0 +1,106 @@
+---
+status: "published"
+
+title: "Adding pages to the application of your Makerkit Remix Supabase project"
+label: Adding Pages
+order: 1
+description: "Learn how to add new pages to the application of your Makerkit Remix Supabase project."
+---
+
+
+To add a new page to the application site of your Remix project, you can create a new page in the `app/routes` directory under the layout `_app`. This means your new pages will follow the convention `_app.<page>.tsx`.
+
+For example, the tasks page of the application is located at `app/routes/_app.tasks._index.tsx`.
+
+### What does the `_app` layout do?
+
+By "application", we mean the private pages of your project behind the authentication wall, such as the dashboard, the settings page, etc.
+
+This directory contains the pages that are **only accessible to authenticated users**.
+
+### Layout and Sidebar
+
+Pages created within the layout `_app` will inherit the layout of the directory and will be displayed together with the Sidebar menu.
+
+### Example - Creating a new page
+
+For example, let's create a `Tasks` application located at `/tasks`. We will then create a new page at `_app.tasks._index.tsx`.
+
+ ```tsx {% title="app/routes/_app.tasks._index.tsx" %}
+import type {
+  LoaderFunctionArgs,
+  MetaFunction,
+} from '@remix-run/node';
+
+import { useLoaderData } from '@remix-run/react';
+import { RectangleStackIcon } from '@heroicons/react/24/outline';
+
+import { Trans } from 'react-i18next';
+
+import AppHeader from '~/components/AppHeader';
+import AppContainer from '~/components/AppContainer';
+
+export const meta: MetaFunction = () => {
+  return [
+    {
+      title: 'Tasks',
+    },
+  ];
+};
+
+export async function loader(args: LoaderFunctionArgs) {
+  await requireSession(
+    getSupabaseServerClient(args.request),
+  );
+  // return tasks
+}
+
+function TasksPage() {
+  const { tasks } = useLoaderData<typeof loader>();
+
+  return (
+    <>
+      <AppHeader>
+        <span className={'flex space-x-2'}>
+          <RectangleStackIcon className="w-6" />
+
+          <span>
+            <Trans i18nKey={'common:tasksTabLabel'} />
+          </span>
+        </span>
+      </AppHeader>
+
+      <AppContainer>
+        {/* ... */}
+      </AppContainer>
+    </>
+  );
+}
+
+export default TasksPage;
+```
+
+### Remember: always validate the session in every page
+
+The parallel loading done by Remix to optimize the loading of the application means we cannot rely on parent routes to validate the session. This means that we need to validate the session in every page.
+
+If your page needs authentication, add a loader and protect it with `requireSession`:
+
+```tsx
+export async function loader(
+  args: LoaderFunctionArgs
+) {
+  await requireSession(
+    getSupabaseServerClient(args.request),
+  );
+}
+```
+
+### Layout
+
+Layout-wise, we added the following components:
+
+1. An `AppHeader` component that will be used to render the header of the page. This component is located at `app/components/AppHeader.tsx`.
+2. An `AppContainer` component that will be used to render the content of the page. This component is located at `app/components/AppContainer.tsx`.
+
+You can omit these components if you don't need them.

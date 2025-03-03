@@ -1,0 +1,77 @@
+---
+status: "published"
+title: "FAQ - Questions about the Next.js SaaS Boilerplate"
+label: "FAQ"
+order: 12
+description: "Frequently asked questions about the Next.js SaaS Boilerplate."
+---
+
+The below is a technical FAQ about this kit. For general questions about Makerkit, please see the [Makerkit FAQ](/faq).
+
+## Technical FAQ
+
+### Do I need to know Supabase to use the Next.js SaaS Boilerplate?
+
+Yes, you should have a basic understanding of Supabase to use the Next.js SaaS Boilerplate. You'll need to know how to:
+
+- Create a Supabase project
+- Set up the database
+- Understand PostgreSQL
+- Use the Supabase client in your Next.js app
+
+While you can use the kit to learn, it does not teach you how to use Supabase. For that, please refer to the [Supabase documentation](https://supabase.com/docs).
+
+### Do I need to know Next.js to use the Next.js SaaS Boilerplate?
+
+Yes, you should have a basic understanding of Next.js to use the Next.js SaaS Boilerplate.
+
+### I don't know Supabase! Should I buy the Next.js SaaS Boilerplate?
+
+You should be prepared for a learning curve or consider learning Supabase first. The Next.js SaaS Boilerplate is built on top of Supabase, so knowing how to use Supabase is essential.
+
+### I don't know Turborepo! Should I buy the Next.js SaaS Boilerplate?
+
+Yes, you can still use the Next.js SaaS Boilerplate without prior knowledge of Turborepo. Turborepo is used to manage the monorepo structure of the boilerplate. Your main focus will be on building your SaaS product within the `apps/web` directory, not on the tools used to build the boilerplate. Even without experience using Turborepo, you won't need to interact with it directly unless you plan to customize the core code in the `packages` directory.
+
+### Will you add more packages in the future?
+
+Very likely! This kit is designed to be modular, allowing for new features and packages to be added without interfering with your existing code. There are many ideas for new packages and features that may be added in the future.
+
+### Can I use this kit for a non-SaaS project?
+
+This kit is primarily intended for SaaS projects. If you're building a non-SaaS project, the Next.js SaaS Boilerplate might be overkill. You can still use it, but you might need to remove some features specific to SaaS projects.
+
+### Can I use personal accounts only?
+
+Yes, you can set a feature flag to disable team accounts and use personal accounts only.
+
+### Can I use the React package X with this kit?
+
+Yes, you can use any React package with this kit. The kit is a simple Next.js application, so you are generally only constrained by the underlying technologies (Next.js, Stripe, Supabase, etc.) and not by the kit itself. Since you own and can edit all the code, you can adapt the kit to your needs. However, if there are limitations with the underlying technology, you might need to work around them.
+
+### Does Makerkit set up the production instance for me?
+
+No, Makerkit does not set up the production instance for you. This includes setting up Supabase, Stripe, and any other services you need. Makerkit does not have access to your Stripe or Supabase accounts, so setup on your end is required. Makerkit provides the codebase and documentation to help you set up your SaaS project.
+
+### How do I get support if I encounter issues?
+
+For support, you can:
+
+1. Visit our Discord
+2. Contact us via support email
+
+### Are there any example projects or demos?
+
+Yes - you get access to the OpenAI demo.
+
+### How do I deploy my application?
+
+Please check the [production checklist](../going-to-production/checklist) for more information.
+
+### How do I contribute to the Next.js SaaS Boilerplate?
+
+We welcome contributions! Please ping me if you'd like to contribute (licensees only).
+
+### How do I update my project when a new version of the boilerplate is released?
+
+Please [read the documentation for updating your Makerkit project](updating-codebase).

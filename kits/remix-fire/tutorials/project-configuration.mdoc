@@ -1,0 +1,117 @@
+---
+status: "published"
+title: "Project Configuration | Remix Firebase"
+label: Project Configuration
+order: 4
+description: "Learn how to set up up your project's configuration"
+---
+
+Makerkit can be configured from a single place: the `src/configuration.ts` object. This file exports a constant we use throughout the project to read our application's settings.
+
+{% alert type="info" title="Use this file to configure your project" %}
+
+  We recommend adding additional configuration to this file rather than reading it directly from the environment variables. For example, assuming you rename one of your environment variables, you will only need to update it in one place. Additionally, it helps maintain your codebase more explicit and understandable.
+{% /alert %}
+
+We retrieve some of this file's configuration using **environment variables**: these help us swap and tweak our settings based on which environment we're using, such as the Firebase configuration.
+
+For example, in your Vercel console, you could run multiple projects:
+- one for `production`
+- and one for `staging`
+
+Here is what the configuration file looks like:
+
+ ```tsx {% title="src/configuration.ts" %}
+const configuration = {
+  site: {
+    name: 'Awesomely - Your SaaS Title',
+    description: 'Your SaaS Description',
+    themeColor: '#ffffff',
+    themeColorDark: '#0a0a0a',
+    siteUrl: process.env.SITE_URL as string,
+    siteName: 'Awesomely',
+    twitterHandle: '',
+    githubHandle: '',
+    language: 'en',
+    convertKitFormId: '',
+  },
+  firebase: {
+    apiKey: process.env.FIREBASE_API_KEY,
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.FIREBASE_APP_ID,
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID,
+  },
+  auth: {
+    // Enable MFA. You must upgrade to GCP Identity Platform to use it.
+    // see: https://cloud.google.com/identity-platform/docs/product-comparison
+    enableMultiFactorAuth: false,
+    // NB: Enable the providers below in the Firebase Console
+    // in your production project
+    providers: {
+      emailPassword: true,
+      phoneNumber: false,
+      emailLink: false,
+      oAuth: [GoogleAuthProvider],
+    },
+  },
+  emulatorHost: process.env.EMULATOR_HOST,
+  emulator: process.env.EMULATOR === 'true',
+  production: process.env.NODE_ENV === 'production',
+  paths: {
+    signIn: '/auth/sign-in',
+    signUp: '/auth/sign-up',
+    emailLinkSignIn: '/auth/link',
+    onboarding: `/onboarding`,
+    appHome: '/dashboard',
+    settings: {
+      profile: '/settings/profile',
+      authentication: '/settings/profile/authentication',
+      email: '/settings/profile/email',
+      password: '/settings/profile/password',
+    },
+    api: {
+      checkout: `/resources/stripe/checkout`,
+      billingPortal: `/resources/stripe/portal`,
+    },
+    searchIndex: `/public/search-index`,
+  },
+  navigation: {
+    style: LayoutStyle.Sidebar,
+  },
+  appCheckSiteKey: process.env.APPCHECK_KEY,
+  email: {
+    host: '',
+    port: 0,
+    user: '',
+    password: '',
+    senderAddress: '',
+  },
+  emailEtherealTestAccount: {
+    email: process.env.ETHEREAL_EMAIL,
+    password: process.env.ETHEREAL_PASSWORD,
+  },
+  sentry: {
+    dsn: process.env.SENTRY_DSN,
+  },
+  stripe: {
+    plans: [
+      {
+        name: 'Basic',
+        description: 'Description of your Basic plan',
+        price: '$249/year',
+        stripePriceId: 'basic-plan',
+        features: [
+          'Feature 1',
+          'Feature 2',
+          'common:plans.features.feature1'
+        ],
+      },
+    ],
+  }
+};
+```
+
+Feel free to extend this configuration to your needs. For example, you could new properties to the `site` object to store your social media handles, or add new properties to the `paths` object to store the paths to your pages.

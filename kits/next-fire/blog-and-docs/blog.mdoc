@@ -1,0 +1,118 @@
+---
+status: "published"
+title: Add Blog posts to your Next.js application
+label: Blog
+order: 1
+description: 'Learn how to add blog posts in
+your MakerKit application'
+---
+
+We can add your website's blog posts within the `_posts` folder.
+
+## Collections
+
+Before writing a blog post, we have to define the post's collection. We use `collections` to organize our blog posts by their category.
+
+For example, your blog could have collections such as changelog,
+announcements, tutorials, etc.
+
+MakerKit generates every collection with its page, listing all the articles
+associated with it.
+
+To change a collection page, please change the file `src/pages/blog/[collection].ts`.
+
+### Adding collections
+
+Let's see how we can define a `collection` in Typescript:
+
+```tsx
+interface Collection {
+  name: string;
+
+  // image
+  logo?: string;
+  emoji?: string;
+}
+````
+
+As you can see, the only required property to create a collection is a name. You can also attach an image or a simple emoji for each collection.
+
+A collection can be simply the following file:
+
+```json
+{
+  "name":"Changelog"
+}
+```
+
+## Writing a Blog Post
+The interface of a blog post is the following:
+
+```tsx
+interface Post {
+  title: string;
+  excerpt: string;
+
+  date: string;
+  live: boolean;
+  tags?: string[];
+
+  coverImage?: string;
+
+  ogImage?: {
+    url: string;
+  };
+
+  author?: {
+    name: string;
+    picture: string;
+    url: string;
+  };
+
+  canonical?: string;
+}
+```
+
+These values can be defined in MDX files using the `frontmatter`, for example:
+
+```yaml
+---
+
+title: An Awesome Post title
+except: "Write here a short description for your blog post"
+collection: changelog.json
+date: '2022-01-05'
+live: true
+coverImage: '/assets/images/posts/announcement.webp'
+tags:
+  - changelog
+  - coolstuff
+---
+
+```
+
+#### Title
+The property `title` is the title of the blog post.
+
+NB: it does not correspond to the URL. The URL
+segment, instead, is defined by the name of the file.
+
+#### Excerpt
+Write a short description for your blog post. This description will also
+populate the relative meta tags.
+
+#### Collection
+The property `collection` is the path to the collection associated with the blog post.
+
+NB: the `.json` extension needs to be part of the name.
+
+#### Live
+You can choose to publish or not a blog post by setting this property to `false`.
+
+### Cover Image
+The property `coverImage` is the path to the post's image.
+
+### Tags
+A list of tags you can attach to the post.
+
+For each tag, MakerKit generates a page with every blog post associated, which you can update at `src/pages/blog/tags/[tag.tsx]`.

@@ -1,0 +1,91 @@
+---
+status: "published"
+
+title: "Translations"
+label: "Translations"
+order: 14
+description: "Learn how to easily translate your Next.js Supabase Makerkit SaaS into multiple languages with our guide. Optimize your app and reach a wider audience."
+---
+
+
+Most strings in the Makerkit template's application use `i18next`, a
+library to translate your application into multiple languages. Thanks to
+this library, we can store all the application's text in `json` files for each supported language.
+
+For example, if you are serving your application in English and Spanish, you'd have the following files:
+
+- **English** translation files at `/public/locales/en/{file}.json`
+- **Spanish** translation files at `/public/locales/es/{file}.json`
+
+There are valid reasons to use translation files, even if you are not planning on translating your application, such as:
+
+1. it's easier to search and replace text
+2. tidier render functions
+3. easy update path if you do decide to support a new language
+
+### Adding new languages
+
+By default, Makerkit uses English for translating the website's text. All the files are stored in the files at `/public/locales/en`.
+
+Adding a new language is very simple:
+
+1. **Translation Files**: First, we need to create a new folder, such as `/public/locales/es`, and then copy over the files from the English version and start translating files.
+2. **Next.js i18n config**: We need to also add a new language to the Next.js i18n
+configuration at `src/i18n/i18next.settings.ts`.
+
+Simply add your new language's code to the `locales` array.
+
+The configuration will look like the below:
+
+ ```js {% title="app/i18n/i18next.settings.ts" %}
+const fallbackLng = process.env.DEFAULT_LOCALE ?? 'en';
+const languages: string[] = [fallbackLng, 'es', 'fr', 'it'];
+```
+
+#### Setting the default Locale
+
+To set the default locale, simply update the environment variable `DEFAULT_LOCALE` stored in `.env`.
+
+So, open the `.env` file, and update the variable:
+
+ ```txt {% title=".env" %}
+DEFAULT_LOCALE=de
+```
+
+### Translating Server Components strings
+
+To translate the server components strings, you need to initialize i18n in your Server Component using the following function:
+
+
+```tsx
+const i18n = await initializeServerI18n(getLanguageCookie());
+```
+
+You can find examples of how we do it in every `layout` file.
+
+### Translating Client Components strings
+
+When translating client components, you need to ensure you:
+
+1) Import the `i18nProvider` component and set the language provided from the server component
+2) Use the `Trans` component from `~/core/ui/Trans`. An eslint rule will ensure you do not import it from `react-i18next`
+
+For example, here is the `SiteLayout` layout:
+
+```tsx
+function SiteLayout(props: React.PropsWithChildren) {
+  const data = use(loadUserData());
+
+  return (
+    <I18nProvider lang={data.language}>
+      <AuthChangeListener accessToken={data.accessToken}>
+        <SiteHeaderSessionProvider data={data} />
+
+        {props.children}
+
+        <Footer />
+      </AuthChangeListener>
+    </I18nProvider>
+  );
+}
+```

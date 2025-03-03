@@ -1,0 +1,140 @@
+---
+status: "published"
+label: "Account Navigation Configuration"
+title: "Setting your personal account navigation configuration | Next.js Supabase SaaS Kit"
+description: "Learn how to setup the personal account navigation of your Next.js Supabase application"
+order: 5
+---
+
+The personal account navigation is set at `apps/web/config/personal-account-navigation.config.tsx`. We use this configuration to define the navigation menu of the personal account. By default, it has three routes: home page, settings, and billing (if enabled).
+
+We define it in one place so we can build different views at once (for example, the mobile menu).
+
+## Configuration
+
+You define the personal workspace routing configuration at `apps/web/config/personal-account-navigation.config.tsx`:
+
+ ```tsx {% title="apps/web/config/personal-account-navigation.config.tsx" %}
+import { CreditCard, Home, User } from 'lucide-react';
+import { z } from 'zod';
+
+import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
+
+import featureFlagsConfig from '~/config/feature-flags.config';
+import pathsConfig from '~/config/paths.config';
+
+const iconClasses = 'w-4';
+
+const routes = [
+  {
+    label: 'common:routes.application',
+    children: [
+      {
+        label: 'common:routes.home',
+        path: pathsConfig.app.home,
+        Icon: <Home className={iconClasses} />,
+        end: true,
+      },
+    ],
+  },
+  {
+    label: 'common:routes.settings',
+    children: [
+      {
+        label: 'common:routes.profile',
+        path: pathsConfig.app.personalAccountSettings,
+        Icon: <User className={iconClasses} />,
+      },
+      featureFlagsConfig.enablePersonalAccountBilling
+        ? {
+            label: 'common:routes.billing',
+            path: pathsConfig.app.personalAccountBilling,
+            Icon: <CreditCard className={iconClasses} />,
+          }
+        : undefined,
+    ].filter(route => !!route),
+  },
+] satisfies z.infer<typeof NavigationConfigSchema>['routes'];
+
+export const personalAccountNavigationConfig = NavigationConfigSchema.parse({
+  routes,
+  style: process.env.NEXT_PUBLIC_USER_NAVIGATION_STYLE,
+  sidebarCollapsed: process.env.NEXT_PUBLIC_HOME_SIDEBAR_COLLAPSED,
+});
+```
+
+The configuration allows you to define route groups. You can add a route's children by setting the `children` attribute (for simplicity, I don't use i18n strings):
+
+ ```tsx {% title="apps/web/config/personal-account-navigation.config.tsx" %}
+const routes = [{
+  label: 'Your Store',
+  children: [
+    {
+      label: 'Dashboard',
+      path: '/dashboard',
+      Icon: <DashboardIcon className={iconClasses} />,
+      children: [
+        {
+          label: 'Orders',
+          path: '/orders',
+          Icon: <ShoppingCartIcon className={iconClasses} />,
+        },
+        {
+          label: 'Inventory',
+          path: '/inventory',
+          Icon: <InventoryIcon className={iconClasses} />,
+        },
+      ]
+    },
+  ]
+}];
+```
+
+### Layout Style
+
+You can choose the style of the navigation by setting the `NEXT_PUBLIC_USER_NAVIGATION_STYLE` environment variable. The default style is `sidebar`.
+
+```bash
+NEXT_PUBLIC_USER_NAVIGATION_STYLE=sidebar
+```
+
+Alternatively, you can set the style to `header`:
+
+```bash
+NEXT_PUBLIC_TEAM_NAVIGATION_STYLE=header
+```
+
+## Old Configuration
+
+If you're running an older version (e.g prior to 25 October 2024), you're running the older version which allowed flat routes:
+
+ ```tsx {% title="apps/web/config/personal-account-navigation.config.tsx" %}
+const routes = [
+  {
+    label: 'common:homeTabLabel',
+    path: pathsConfig.app.home,
+    Icon: <Home className={iconClasses} />,
+    end: true,
+  },
+  {
+    label: 'account:accountTabLabel',
+    path: pathsConfig.app.personalAccountSettings,
+    Icon: <User className={iconClasses} />,
+  },
+];
+
+if (featureFlagsConfig.enablePersonalAccountBilling) {
+  routes.push({
+    label: 'common:billingTabLabel',
+    path: pathsConfig.app.personalAccountBilling,
+    Icon: <CreditCard className={iconClasses} />,
+  });
+}
+
+export const personalAccountSidebarConfig = SidebarConfigSchema.parse({
+  routes,
+  style: process.env.NEXT_PUBLIC_USER_NAVIGATION_STYLE,
+});
+```
+
+NB: please update to the latest version to use the latest features and optimizations.

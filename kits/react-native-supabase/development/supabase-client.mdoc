@@ -1,0 +1,28 @@
+---
+status: "published"
+title: "How to use the Supabase Client in the React Native Supabase kit"
+label: "Supabase Client"
+description: "To use the Supabase Client in the React Native Supabase kit, use the useSupabase hook in React Components"
+order: 0
+---
+
+Before diving into the various ways we can communicate with the server, we need to introduce how we communicate with Supabase, which is hosting the database and therefore the source of our data.
+
+## Using the Supabase client
+
+To import the Supabase client in a browser environment,  you can use the `useSupabase` hook:
+
+```tsx
+import { useSupabase } from '@kit/supabase';
+
+export default function Home() {
+  const supabase = useSupabase()
+
+  return (
+    <div>
+      <h1>Supabase Browser Client</h1>
+      <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
+    </div>
+  )
+}
+```

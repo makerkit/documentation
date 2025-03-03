@@ -1,0 +1,140 @@
+---
+status: "published"
+
+title: "Reading Records from Postgres | Remix Supabase Kit"
+label: "Reading Records from Postgres"
+order: 0
+description: "Learn how to read records from Supabase using your Remix Supabase
+application"
+---
+
+
+In Makerkit, we define all the queries in their own file (depending on their feature) named `queries.ts`.
+
+Assuming we have a table named `tasks` with the following schema:
+
+```sql
+create table tasks (
+  id serial primary key,
+  name text,
+  organization_id integer references organizations not null,
+  due_date timestamp,
+  description text,
+  done boolean default false
+);
+```
+
+We can define a query to read a single task from the table:
+
+```tsx
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '~/database.types';
+
+export function getTask(client: SupabaseClient<Database>, id: number) {
+  return client
+    .from('tasks')
+    .select(
+      `
+      id,
+      name,
+      organizationId: organization_id,
+      dueDate: due_date,
+      description,
+      done
+    `,
+    )
+    .eq('id', id)
+    .single();
+}
+```
+
+The `single` modifier will return a single record from the database. If no record is found, it will throw an error. If you want to return `null` instead, you can use the `maybeSingle` modifier.
+
+## Usage
+
+You can now use the function above anywhere in the following layers:
+
+1. Loader functions
+2. Action Functions
+3. React Client Components
+
+In fact, we can import the Supabase client both on the browser and on the client.
+
+### Backend
+
+Assuming we want to read a task from a Server component, such as the Task page, we can do the following:
+
+```tsx
+import { LoaderFunctionArgs, json, redirect } from '@remix-run/node';
+
+const TaskPage = () => {
+  const { task } = useLoaderData<typeof laoder>();
+
+  return (
+    <>
+      <h1>{task.name}</h1>
+      <p>{task.description}</p>
+    </>
+  );
+};
+
+export async function loader(args: LoaderFunctionArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const taskId = args.params.taskId;
+  const { data: task } = await getTask(client, Number(taskId));
+
+  if (!task) {
+    return redirect('/dashboard');
+  }
+
+  return json({
+    task,
+  });
+}
+
+export default TaskPage;
+```
+
+### Frontend
+
+You can also choose to read the task from the frontend. This is useful if you want to use the data in a React component.
+
+To do so, we use the **Supabase Web SDK client** using the hook `useSupabase` and combine it with React Query to fetch the data.
+
+This is useful because you can fetch data directly from the client, which is extremely useful in scenarios such as loading data on-demand resulting from user interactions (click a table row, opening a modal, etc.)
+
+```tsx
+import useQuery from "@tanstack/react-query";
+
+function useFetchTask({ id }: { id: number }) {
+  const supabase = useSupabase();
+  const key = ['tasks', id];
+
+  return useQuery([key], async () => {
+    return getTask(supabase, id);
+  });
+}
+```
+
+We can then use the hook in a React component:
+
+```tsx
+function TaskComponent({ id }: { id: number }) {
+  const { data: task, loading, error } = useFetchTask({ id });
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error.message}</p>;
+  }
+
+  return (
+    <>
+      <h1>{task.name}</h1>
+      <p>{task.description}</p>
+    </>
+  );
+}
+```

@@ -1,0 +1,19 @@
+---
+status: "published"
+title: "How to reset your local Database | Next.js Supabase Lite SaaS Kit"
+label: "Resetting the local DB"
+order: 1
+description: "Learn how to reset the seed data in your Next.js Supabase Lite Database"
+---
+
+Resetting the DB can be useful when updating the schema of your database using the SQL schema files instead of the Supabase Studio UI.
+
+To reflect the new changes, and/or resetting the database to the local seed, run the following command:
+
+```
+npm run supabase:db:reset
+```
+
+The database is now in the same state as when you started your Supabase server.
+
+**Important**: users created during the session will be reset, which means your application may be in a conflicting state. Log out or delete the cookies to restart from scratch.

@@ -1,0 +1,372 @@
+---
+status: "published"
+
+title: "AI Chatbot Plugin for the Next.js Firebase Saas Starter Kit"
+label: "AI Chatbot"
+order: 2
+description: "This plugin adds an AI chatbot to your Next.js Firebase SaaS application."
+---
+
+
+This plugin adds an AI Chatbot trained on your website content to your Next.js
+application built using the OpenAI API. It's a simple component that will be
+displayed on the bottom right of your website.
+
+This documentation is for the Next.js Firebase version. Please make sure you're looking at the right documentation.
+
+## Using the Plugin
+
+### Installation
+
+To install the plugin, you can use git subtrees from your original repository:
+
+```bash
+git subtree add --prefix plugins/chatbot git@github.com:makerkit/next-firebase-saas-kit-plugins.git chatbot --squash
+```
+
+After running this command, you will have the plugin in your repository at
+`plugins/chatbot`. Once pulled, you can apply any customization you need.
+
+#### Using the CLI
+
+If you're using the CLI, you can run the following command to install the plugin:
+
+```bash
+npx @makerkit/cli@latest plugins install
+```
+
+Follow the instructions to install the plugin.
+
+#### If the installation fails
+
+Some users are not able to install using the GitHub SSH URL. If you're having issues with that:
+
+1. properly set up SSH access to GitHub with your SSH key
+2. use the HTTPS URL instead of the SSH URL
+
+To use the HTTPS URL, you can run the following command:
+
+```bash
+git subtree add --prefix plugins/chatbot https://github.com/makerkit/next-firebase-saas-kit-plugins chatbot --squash
+```
+
+#### Add the plugin as a workspace in your package.json
+
+You can do so by adding the following to your `package.json` file:
+
+```json
+{
+  "workspaces": [
+    "plugins/chatbot"
+  ]
+}
+```
+
+Add it next to the other workspaces in your `package.json` file. Please
+don't miss this step - otherwise, the plugin will install duplicate node
+modules and they will conflict with each other.
+
+#### Add the paths alias to the TypeScript configuration
+
+To make sure that the TypeScript compiler can find the plugin, you will need
+to add the following paths alias to your `tsconfig.json` file, in addition
+to the other paths aliases that you may have:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "~/plugins/*": [
+        "./plugins/*"
+      ]
+    }
+  }
+}
+```
+
+### Update TailwindCSS configuration
+
+To make sure that the plugin's styles are applied, you will need to update
+your TailwindCSS configuration.
+
+Add the plugins path to the `content` array of your `tailwind.config.js` file:
+
+```js
+module.exports = {
+  // ...
+  content: [
+    // ...
+    './plugins/**/*.tsx',
+  ],
+  // ...
+}
+```
+
+This is only needed the first time you install any plugin.
+
+### Installing dependencies
+
+To install the dependencies, you can run the following command:
+
+```bash
+npm i
+```
+
+NPM will install the dependencies in the `plugins/chatbot` folder as an NPM workspace.
+
+### Importing the Plugin
+
+You can import the `Chatbot` component from where you want to display it.
+
+```tsx
+import dynamic from 'next/dynamic';
+
+const ChatBot = dynamic(() => import('~/plugins/chatbot/components/ChatBot'), { ssr: false });
+
+export default function App() {
+  return (
+    <>
+      <ChatBot />
+      {/* ... */}
+    </>
+  );
+}
+```
+
+#### Initial Prompts
+
+You can pass an array of strings to the `defaultPrompts` prop of the
+component:
+
+```tsx
+const DEFAULT_CHAT_PROMPTS = [
+  `Can you tell me more about ${configuration.site.siteName}?`,
+  `What is the price of ${configuration.site.siteName}?`,
+  `How can I contact you?`,
+  `I want to share some feedback`,
+];
+
+// in the component
+
+<Chatbot defaultPrompts={DEFAULT_CHAT_PROMPTS} />
+```
+
+### Configuring the plugin
+
+To configure the plugin, add the following environment variables to your
+`.env.local` files:
+
+```bash
+OPENAI_API_KEY=
+NEXT_PUBLIC_CHATBOT_FALLBACK_URL=
+```
+
+- `OPENAI_API_KEY` - Your OpenAI API key. You can get one from your OpenAI
+dashboard.
+- `NEXT_PUBLIC_CHATBOT_FALLBACK_URL` - The URL of the fallback chatbot. This
+is the link the chatbot will display if it can't answer the question. You
+can use an email such as `mailto:youremail@yourstartup.com` or a link to
+the customer service page of your website.
+
+When going to production, you will need to add these environment variables
+from your provider dashboard.
+
+### Setting the API Route Handler
+
+We will use the App Directory to create a route handler for the chatbot - so we can leverage streaming.
+
+#### Next.js Route
+
+Create a route at `src/app/api/chat/route.ts` with the following content:
+
+```ts
+import handleChatBotRequest from '~/plugins/chatbot/lib/server/route-handler';
+
+export const POST = handleChatBotRequest;
+```
+
+NB: make sure you're using the new App Directory (located at `src/app`) and
+not the Pages Directory (located at `src/pages`). This is because the Pages
+Directory does not support streaming.
+
+Feel free to change the route to whatever you want - but make sure to update
+the route in the `ChatBot` component.
+
+## Creating a Vector Store with LangChain
+
+Given the variety of possible Databases - we don't provide a database vector
+store by default. Instead, we use [LangChain](https://js.langchain.com/) -
+which provides an exhaustive list of Vector Store integrations out of the box.
+
+Therefore - you will need to choose a Vector Store based on the technology
+you want to use (Pinecone, Supabase, Chroma, TypeSense, etc.) and follow the
+[Vector Store integration instructions](https://js.langchain.com/docs/modules/data_connection/vectorstores/).
+
+Once you've decided which Vector Store you want to use, export a default
+vector store from `~/plugins/chatbot/lib/server/vector-store.ts`:
+
+### Example: Using Typesense as a Vector Store
+
+For example, if you want to use TypeSense, you can create the following
+vector store using the `typesense` client and the Langchain integration:
+
+```ts
+import { Typesense, TypesenseConfig } from 'langchain/vectorstores/typesense';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { Client } from 'typesense';
+
+const TYPESENSE_URL = process.env.TYPESENSE_URL;
+const TYPESENSE_HOST = process.env.TYPESENSE_HOST || 'localhost';
+const TYPESENSE_PORT = process.env.TYPESENSE_PORT || 8108;
+const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY || 'xyz';
+
+const TYPESENSE_PROTOCOL =
+  TYPESENSE_HOST.includes('localhost') ? 'http' : 'https';
+
+const nodes = TYPESENSE_URL
+  ? [
+    {
+      url: TYPESENSE_URL,
+    },
+  ]
+  : [
+    {
+      host: TYPESENSE_HOST,
+      port: Number(TYPESENSE_PORT),
+      protocol: TYPESENSE_PROTOCOL,
+    },
+  ];
+
+const typeSense = new Client({
+  nodes,
+  apiKey: TYPESENSE_API_KEY,
+  numRetries: 2,
+  connectionTimeoutSeconds: 5,
+});
+
+const TYPESENSE_SCHEMA_NAME =
+  process.env.TYPESENSE_SCHEMA_NAME || 'chatbot_documents';
+
+const typesenseVectorStoreConfig: TypesenseConfig = {
+  typesenseClient,
+  schemaName: TYPESENSE_SCHEMA_NAME,
+  onFailedAttempt: (error) => {
+    console.error(error);
+  },
+  import: async (data, collectionName) => {
+    await typesenseClient
+      .collections(collectionName)
+      .documents()
+      .import(data, { action: 'emplace', dirty_values: 'drop' });
+  },
+} satisfies TypesenseConfig;
+
+export default function getVectorStore() {
+  return new Typesense(
+    new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    }),
+    typesenseVectorStoreConfig,
+  );
+}
+```
+
+Don't forget to install the required dependencies for your Vector Store.
+
+### Indexing the content's embeddings
+
+By default, the AI will be trained on the content of your website available
+within your documentation pages at `/docs`.
+
+In addition, you can provide a list of questions and answers.
+
+To do so, add MDX files at `plugins/chatbot/questions/<filename>.mdx` file
+and add content with the following format:
+
+```mdx
+---
+
+question: "<question>"
+---
+
+
+<answer>
+```
+
+For example, you can create a file at
+`plugins/chatbot/questions/refund-policy.mdx`:
+
+```mdx
+---
+
+question: "What is your refund policy?"
+---
+
+
+We offer a 30-day money-back guarantee. If you're not happy with our product,
+we will refund you.
+```
+
+To generate the embeddings, you can run the following command:
+
+```bash
+npx tsx plugins/chatbot/cli.ts generate
+```
+
+Follow the instructions to generate the embeddings.
+
+If you are generating the embeddings for your production environment, you
+will need to provide the Vector DB credentials in the `.env.production` file.
+
+### Captcha Protection (optional) (WIP)
+
+To protect your chatbot from bots (ha ha!), you can add a captcha challenge
+using [Cloudflare's Turnstile](https://developers.cloudflare.com/turnstile/)
+service.
+
+To do so, you will need to add the following environment variables to your
+environment files:
+
+```bash
+NEXT_PUBLIC_CHATBOT_TURNSTILE_SITE_KEY=
+```
+
+[You can get the site key from your Turnstile dashboard](https://developers.
+cloudflare.com/turnstile/get-started/).
+
+On the server side, you will need to add the following environment
+variables: `CHATBOT_TURNSTILE_SECRET_KEY`.
+
+You can also get the secret key from your Turnstile dashboard. Since this is
+a secret key - avoid adding it to your repository. Please use the
+environment variables of your provider to add it to your production environment.
+
+### De-duplicating indexing
+
+To avoid indexing the same content multiple times, the CLI generates a file
+named `plugins/chatbot/indexed-files.json` that contains a list of all the
+pages that have been indexed and the SHA256 hash of their content.
+
+If the content of the file changes, the CLI will re-index the pages.
+
+### Keeping the plugin up to date
+
+To keep the plugin up to date, you can use git subtrees again:
+
+```bash
+git subtree pull --prefix plugins/chatbot git@github.com:makerkit/next-firebaase-saas-kit-plugins.git chatbot --squash
+```
+
+## Best Practices
+
+As you may know - the AI is only as good as the data it's trained on. As
+such, make sure to provide as much content as possible to the AI. I don't
+mean dozens of pages - but hundreds. Seriously, the more content you provide
+- the more useful the AI will be. Without context, hallucinations are bound
+to happen - and you don't want that.
+
+### Provide a fallback email
+
+If the AI can't answer the question, it will display a fallback URL. Make
+sure to provide a fallback URL that will allow your users to contact you in
+case the AI can't answer their question.

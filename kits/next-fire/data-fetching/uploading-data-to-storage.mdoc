@@ -1,0 +1,99 @@
+---
+status: "published"
+title: "Uploading data to Storage | Next.js Firebase SaaS Kit"
+description: "Learn how to upload your data to Firebase Storage"
+label: "Uploading data to Storage"
+order: 4
+---
+
+When uploading data to storage, the data needs to be secured so that it
+can only be accessed by the organization that created it; we need to add the
+organization ID to the file's custom data.
+
+By doing so, we will be able to
+compare the custom data ID with the user's organization ID, and verify they
+match.
+
+## 1) Add the Storage Provider
+
+First, we need to wrap the component using Firebase Storage with the
+`FirebaseStorageProvider`, which is responsible for initializing the
+Firebase Storage SDK.
+
+```tsx
+import FirebaseStorageProvider from '~/core/firebase/components/FirebaseStorageProvider';
+
+<FirebaseStorageProvider>
+  <ComponentThatUsesStorage />
+</FirebaseStorageProvider>
+```
+
+## 2) Using the Firebase Storage SDK
+
+Now we can use the Firebase Storage SDK by using the `useStorage` hook. From
+Here, we can simply use the SDK described by the Firebase documentation.
+
+```tsx
+const storage = useStorage();
+```
+
+Let's assume we have a function `uploadFile` that receives a `File`
+parameter, and that we need to upload to Firebase Storage:
+
+```tsx
+import { ref, uploadBytes } from 'firebase/storage';
+import { toast } from 'sonner';
+import { useStorage } from 'reactfire';
+import { useCurrentOrganization } from './use-current-organization';
+
+function Component() {
+  const storage = useStorage();
+  const organization = useCurrentOrganization();
+
+  async function uploadFile(file: File) {
+    if (!organization) return;
+
+    const organizationId = organization.id;
+    const path = `/${organizationId}/uploads/${file.name}`;
+    const reference = ref(storage, path);
+
+    const promise = uploadBytes(reference, file, {
+      cacheControl: 'max-age=31536000',
+      customMetadata: {
+        organizationId,
+      },
+    });
+
+    toast.promise(promise, {
+      success: `Yay, uploaded!`,
+      loading: `Uploading...`,
+      error: `Error :(`
+    });
+  }
+
+  return <UploadForm onFileChosen={uploadFile} />
+}
+```
+
+## 3) Security Rules for Storage
+
+As you can see from the code above, we are setting some custom metadata when we
+upload the file:
+
+```ts
+customMetadata: {
+  organizationId,
+},
+```
+By doing this, we're effectively telling the file to store `organizationId`
+as metadata on the file.
+
+This will help us with the Storage security rules
+for disallowing users in other organizations from reading the file:
+
+```js
+match /organizations/{organizationId}/{fileName=**} {
+  allow read: if resource.metadata.organizationId == request.auth.token.organizationId;
+  allow write: if request.auth.token.organizationId == organizationId;
+}
+```

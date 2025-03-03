@@ -1,0 +1,33 @@
+---
+status: "published"
+title: "Understanding and setting the environment variables in your Next.js Firebase project"
+label: "Environment variables"
+order: 5
+description: "Learn how to set environment variables in your Next.js Firebase project and how to use them in your code."
+---
+
+Makerkit ships with some environment variables pre-configured for you.
+
+If you don't have experience with environment variables, you can think of them as a way to store configuration values for your project.
+
+Here are the types of environment variables you can use in your Next.js project:
+1. **.env**: This file is used to store environment variables that are common to all environments (development, staging, production). **Only use it for public and shared variables**.
+2. **.env.local**: This file is used to store environment variables that are specific to your local development environment. **Do not commit this file to your repository** (this is already ignored by the kit's defaults).
+3. **.env.development**: This file is used to store environment variables that are specific to your development environment. As long as you don't use it for sensitive data, you can commit this file to your repository.
+4. **.env.production**: This file is used to store environment variables that are specific to your production environment. Do not add sensitive data to this file. Instead, use your CI provider.
+
+## If I set mt variables in Vercel/another hosting provider, do I still need to set them in my project?
+
+No. If you set your environment variables in your hosting provider, you don't need to set them in your project.
+
+## Can I add secrets to my environment variables, like my OpenAI API key?
+
+**No.** You should never add secrets to your environment variables. Instead, you should use your CI provider to set them.
+
+## Does Next.js automatically load my environment variables?
+
+Yes, Next.js automatically loads your environment variables. You can access them in your code using `process.env.VARIABLE_NAME`.
+
+## I added a variable to my .env file, but I can't access it in my code. What's wrong?
+
+Next.js only loads environment variables that start with `NEXT_PUBLIC_` if you are trying to access them from your client-side. If you want to access a variable in your client code, you need to prefix it with `NEXT_PUBLIC_`. **Note**: never add secrets to your client-side code, therefore do not prefix them with `NEXT_PUBLIC_` if it's private data.

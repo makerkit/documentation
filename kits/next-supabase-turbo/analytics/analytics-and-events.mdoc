@@ -1,0 +1,167 @@
+---
+status: "published"
+title: 'Understanding Analytics and Events in Makerkit'
+label: 'Analytics and Events'
+description: 'Learn how to use the Analytics and App Events systems in Makerkit to track user behavior and app-wide occurrences.'
+order: 0
+---
+
+Makerkit provides two powerful, interconnected systems for tracking user behavior and app-wide occurrences: **Analytics** and **App Events**.
+
+While these systems are separate, they are designed to work seamlessly together, providing a flexible and maintainable approach to event tracking and analysis in your SaaS application.
+
+One doesn't need the other to function, but they are designed to work together. Here's a brief overview of each system.
+
+## Analytics Providers
+
+The Analytics system is implemented in the `@kit/analytics` package, and is abstracted to allow for easy integration with various analytics services, and not lock you into a specific provider.
+
+The implementations are made possible using Makerkit Plugins, which means you can install them using the normal plugins system. By default, Makerkit provides three analytics providers: Google Analytics, Umami, and PostHog.
+
+However, should you prefer different providers than the ones provided by default, you can easily create your own custom analytics provider.
+
+[Read more about creating a custom analytics provider](custom-analytics-provider).
+
+## Understanding the Relationship Between Analytics and App Events
+
+While separate, the Analytics and App Events systems in Makerkit are designed to work together to provide a centralized approach to event tracking and analysis in your SaaS application.
+
+- **App Events**: A client-side event system for emitting and listening to important app-wide occurrences. Use this to bubble up important events in your app that you can handle centrally.
+- **Analytics**: A centralized system for tracking and analyzing user behavior and app usage. Use this to track important events and user interactions in your app.
+
+While these systems can be used independently, they shine when used together, creating a powerful, centralized approach to event handling and analytics.
+
+{% img src="/assets/images/docs/analytics-events-overview.webp" alt="Analytics and Events in Makerkit" width="1062" height="342" /%}
+
+## Recommended Approach: Centralized Analytics
+
+We strongly recommend using a centralized approach to analytics by leveraging the App Events system. Instead of scattering `analytics.trackEvent()` calls throughout your codebase, use App Events to emit important occurrences, then handle these events centrally to track analytics.
+
+Benefits of this approach:
+
+1. **Cleaner Code**: Keeps your components focused on their primary responsibilities.
+2. **Easier Maintenance**: Centralizes all analytics logic in one place.
+3. **Flexibility**: Easily change or extend analytics tracking without modifying component code.
+4. **Consistency**: Ensures a standardized approach to event tracking across your app.
+5. **Visibility**: Provides a clear picture of all events emitted in your app in one place.
+
+Of course - this is just a recommendation. Nothing prevents you from using the `analytics` object directly in your components. However, we believe that the centralized approach provides a cleaner and more maintainable solution for most SaaS applications.
+
+## Using App Events with Analytics
+
+Here's how to use the pre-configured App Events system for analytics in your Makerkit project:
+
+1. Emit events in your components:
+
+```typescript
+import { useAppEvents } from '@kit/shared/events';
+
+function SomeComponent() {
+  const { emit } = useAppEvents();
+
+  const handleSignUp = (userId: string) => {
+    emit({ type: 'user.signedUp', payload: { userId } });
+  };
+
+  // ...
+}
+```
+
+That's it! Makerkit automatically handles these events and tracks them in your configured analytics service.
+
+## Extending with Custom Events
+
+You can easily extend the system with your own custom events:
+
+### Define your custom events
+
+Create a new file to define your custom events:
+
+```typescript
+import { ConsumerProvidedEventTypes } from '@kit/shared/events';
+
+export interface MyAppEvents extends ConsumerProvidedEventTypes {
+  'feature.used': { featureName: string };
+  'subscription.changed': { newPlan: string };
+}
+```
+
+### Use your custom events
+
+Once you've defined your custom events, you can use them in your components:
+
+```typescript
+import { useAppEvents } from '@kit/shared/events';
+import { MyAppEvents } from './myAppEvents';
+
+function SomeComponent() {
+  const { emit } = useAppEvents<MyAppEvents>();
+
+  const handleFeatureUse = () => {
+    emit({ type: 'feature.used', payload: { featureName: 'coolFeature' } });
+  };
+
+  // ...
+}
+```
+
+### Emit and handle your custom events
+
+A common pattern is to emit custom events in your components and handle them in a centralized location. You can easily extend the App Events system to handle your custom events.
+
+Here's an example of how you might handle custom events in your analytics provider:
+
+ ```typescript {% title="apps/web/components/analytics-provider.tsx" %} {18-21}
+const analyticsMapping: AnalyticsMapping = {
+  'user.signedIn': (event) => {
+    const userId = event.payload.userId;
+
+    if (userId) {
+      analytics.identify(userId);
+    }
+  },
+  'user.signedUp': (event) => {
+    analytics.trackEvent(event.type, event.payload);
+  },
+  'checkout.started': (event) => {
+    analytics.trackEvent(event.type, event.payload);
+  },
+  'user.updated': (event) => {
+    analytics.trackEvent(event.type, event.payload);
+  },
+  'feature.used': (event) => {
+    analytics.trackEvent(event.type, event.payload);
+  },
+};
+```
+
+By following this approach, you can easily extend the App Events system with your own custom events, providing a flexible and maintainable approach to event tracking in your SaaS application.
+
+## Default Event Types
+
+Makerkit provides a set of default event types that are automatically tracked in your analytics service. These events are emitted by the Makerkit components and can be used to track common user interactions and app-wide occurrences.
+
+Here are some of the default event types provided by Makerkit:
+1. `user.signedIn`: Emitted when a user signs in. We use this event to identify the user in the analytics service. This makes sure that all subsequent events are associated with the user.
+2. `user.signedUp`: Emitted when a user signs up. This event is used to track user signups in the analytics service. NB: this does not work automatically for social signups.
+3. `checkout.started`: Emitted when a user starts the checkout process. This event is used to track the start of the checkout process in the analytics service.
+4. `user.updated`: Emitted when a user updates their authentication details. This event is used to track user updates in the analytics service.
+
+In addition to this, Makerkit tracks page views automatically. This means that you don't need to manually track page views in your application. However, you can still use the `trackPageView` method to manually track page views if needed.
+
+### When to use Custom Events
+
+As Makerkit becomes more and more like a framework, there is a need to expose more customization options to developers, ideally without the need to customize the core codebase. This is where Custom Events come in - which allow you to listen to and emit custom events in your application.
+
+Custom Events are useful when you need to track specific user interactions or app-wide occurrences that are not covered by the default event types. For example, you might want to track when a user interacts with a specific feature, or for tracking specific user actions in your app.
+
+By using Custom Events, you can extend the App Events system to track any event that is important to your application, providing a flexible and maintainable approach to event tracking in your SaaS application.
+
+Other use cases may include:
+1. Propagating events from Makerkit's deep components to the top-level application (please do let us know if you need any)
+2. Centralizing event tracking for third-party integrations (e.g., tracking events in Segment, Amplitude, etc.)
+3. Tracking user interactions with specific features in your application
+
+## Conclusion
+
+By using the Analytics and App Events systems in Makerkit, you can easily track (or react to) user behavior and app-wide occurrences in your SaaS application. The centralized approach to event tracking provides a clean and maintainable solution for tracking analytics, while the flexibility of Custom Events allows you to extend the system to track any event that is important to your application.

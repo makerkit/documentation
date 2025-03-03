@@ -1,0 +1,44 @@
+---
+status: "published"
+title: "Onboarding Flow | Remix Supabase SaaS Kit"
+label: Onboarding Flow
+order: 8
+description: "Learn how to onboard your users to your app using the Onboarding Flow in the Remix Supabase SaaS Kit"
+---
+
+After sign-up, users are redirected to the onboarding flow. Here, you can ask users questions, configure their accounts or simply show them around.
+
+By default, Makerkit adds one single step, where it asks users to **create an organization**.
+
+{% img src="/assets/images/posts/onboarding-flow-tutorial.webp" width="2940" height="1972" /%}
+
+Of course, you can extend it and add as many steps as you wish. I would recommend replacing the image on the right-hand side with a screenshot of your application, a video, or something that can help users understand what they are signing up for.
+
+### What happens when the user submits the form?
+
+After the user submits the form, the API will receive the request and:
+
+1. create the user Supabase record in the `users` table
+2. create the organization Supabase record in the `organizations` table
+3. create a membership between the user and the organization in the
+`memberships` table and assign the user the role `owner`
+
+I encourage you to visit the [Local Supabase Studio UI](http://localhost:54323) and see the data created.
+
+### What is an "Organization"?
+
+Organizations are groups of users.
+
+You can call them projects, teams, classrooms, or whatever feels suitable for your domain. But, generally speaking, organizations are the backbone of the data model because it's where we store most of the data shared among users.
+
+Users can:
+
+1. create new Organizations
+2. be invited to other Organizations
+3. switch between organizations using a dropdown
+
+### Can I remove this step?
+
+No, **but you can skip it** by automatically submitting the form.
+
+Yes, you can follow this guide for [removing the onboarding flow and organizations](/recipes/removing-organizations). It is for the Firebase version, but the same principles apply.

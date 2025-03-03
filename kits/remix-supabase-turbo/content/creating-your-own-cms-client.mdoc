@@ -1,0 +1,146 @@
+---
+status: "published"
+label: "Creating your own CMS client | Remix Supabase SaaS Kit"
+title: "Creating your own CMS client with the CMS API"
+description: "Learn how to create your own CMS client using the CMS API in Makerkit (Remix Supabase SaaS Kit) to fetch content from your CMS"
+order: 4
+---
+
+Makerkit may not be able to accomodate everyone's preferences when it comes to CMSs. After all - there are too many to support! But that's okay - you can create your own CMS client using the CMS API in Makerkit.
+
+To create your own CMS API, you need to implement the following methods:
+
+```tsx
+export abstract class CmsClient {
+  /**
+   * Retrieves content items based on the provided options.
+   * @param options - Options for filtering and pagination.
+   * @returns A promise that resolves to an array of content items.
+   */
+  abstract getContentItems(options?: Cms.GetContentItemsOptions): Promise<{
+    total: number;
+    items: Cms.ContentItem[];
+  }>;
+
+  /**
+   * Retrieves a content item by its ID and type.
+   * @returns A promise that resolves to the content item, or undefined if not found.
+   */
+  abstract getContentItemBySlug(params: {
+    slug: string;
+    collection: string;
+  }): Promise<Cms.ContentItem | undefined>;
+
+  /**
+   * Retrieves categories based on the provided options.
+   * @param options - Options for filtering and pagination.
+   * @returns A promise that resolves to an array of categories.
+   */
+  abstract getCategories(
+    options?: Cms.GetCategoriesOptions,
+  ): Promise<Cms.Category[]>;
+
+  /**
+   * Retrieves a category by its slug.
+   * @param slug - The slug of the category.
+   * @returns A promise that resolves to the category, or undefined if not found.
+   */
+  abstract getCategoryBySlug(slug: string): Promise<Cms.Category | undefined>;
+
+  /**
+   * Retrieves tags based on the provided options.
+   * @param options - Options for filtering and pagination.
+   * @returns A promise that resolves to an array of tags.
+   */
+  abstract getTags(options?: Cms.GetTagsOptions): Promise<Cms.Tag[]>;
+
+  /**
+   * Retrieves a tag by its slug.
+   * @param slug - The slug of the tag.
+   * @returns A promise that resolves to the tag, or undefined if not found.
+   */
+  abstract getTagBySlug(slug: string): Promise<Cms.Tag | undefined>;
+}
+```
+
+For a detailed view of the CMS interface, please refer to the API at `packages/cms/core/src/cms-client.ts`.
+
+For example, let' assume you have an HTTP API to a private repository you can access at `https://my-cms-api.com`. You can create a CMS client that interacts with this API as follows:
+
+```tsx
+import { CmsClient } from '@kit/cms';
+
+export class MyCmsClient extends CmsClient {
+  async getContentItems(options) {
+    const response = await fetch('https://my-cms-api.com/content', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    const { total, items } = await response.json();
+
+    return { total, items };
+  }
+
+  async getContentItemBySlug({ slug, collection }) {
+    const response = await fetch(
+      `https://my-cms-api.com/content/${collection}/${slug}`,
+    );
+
+    if (response.status === 404) {
+      return undefined;
+    }
+
+    return response.json();
+  }
+
+  async getCategories(options) {
+    const response = await fetch('https://my-cms-api.com/categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    return response.json();
+  }
+
+  async getCategoryBySlug(slug) {
+    const response = await fetch(`https://my-cms-api.com/categories/${slug}`);
+
+    if (response.status === 404) {
+      return undefined;
+    }
+
+    return response.json();
+  }
+
+  async getTags(options) {
+    const response = await fetch('https://my-cms-api.com/tags', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    return response.json();
+  }
+
+  async getTagBySlug(slug) {
+    const response = await fetch(`https://my-cms-api.com/tags/${slug}`);
+
+    if (response.status === 404) {
+      return undefined;
+    }
+
+    return response.json();
+  }
+}
+```
+
+Of course, you can do the same using SDKs of your preferred CMS client, such as Payload CMS, Strapi, Sanity, and so on.

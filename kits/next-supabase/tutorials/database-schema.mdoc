@@ -1,0 +1,124 @@
+---
+status: "published"
+title: "Database Schema | Next.js Supabase SaaS Kit"
+label: "Database Schema"
+order: 8
+description: "Learn how to get started developing new features from the database schema in your Makerkit Next.js Supabase project."
+---
+
+
+Before writing the React Components, we want to tackle the task of fetching
+data from Supabase.
+
+This involves a couple of steps:
+
+1. We need to define, on paper, what the data model of the Supabase tables
+looks like
+2. We need to update the SQL schema of the database to match the data model
+and write the required RLS policies to secure the data
+3. We need to write the hooks to fetch data from Supabase
+
+### Learning about RLS
+
+Learning RLS is fundamental to understanding how to secure data in Supabase. The best resource (other than checking Makerkit's code) is the [Supabase RLS docs](https://supabase.com/docs/guides/auth/row-level-security).
+
+Please check it out - and if you have any questions, please ask in the Makerkit Discord.
+
+##### How is the data structured?
+
+We can place tasks as our own Postgres table `tasks`. Let's create an SQL
+table that defines the following columns:
+
+```sql
+create table tasks (
+  id bigint generated always as identity primary key,
+  organization_id bigint not null references public.organizations,
+  name text not null,
+  description text,
+  done bool not null,
+  due_date timestamptz not null
+);
+```
+
+Because tasks belong to an
+organization, we need to ensure that only users of that organization can read
+and write those tasks by adding a foreign key to each `task` named
+`organization_id`.
+
+##### Replicating the tasks table as a Type
+
+We can define a `Task` model at `src/lib/tasks/types/task.ts`:
+
+ ```tsx {% title="lib/tasks/types/task.ts" %}
+export interface Task {
+  id: number;
+  name: string;
+  organizationId: string;
+  dueDate: string;
+  done: boolean;
+  description: string | null;
+}
+```
+
+NB: this may not be necessary if you generate the types from the SQL schema.
+Up to you.
+
+##### How do we protect the data with RLS?
+
+We can add an RLS policy to the `tasks` table to ensure that only users of the same organization can read and write tasks.
+
+We know that a user belongs to an organization using the `memberships` table.
+
+The `memberships` table has two foreign keys: `user_id` and
+`organization_id`: we can use these foreign keys to ensure that only users
+of the same organization can read and write tasks.
+
+First, we enable RLS on the `tasks` table:
+
+```sql
+alter table tasks enable row level security;
+```
+
+Then, we can add a policy to the `tasks` table:
+
+```sql
+create policy "Tasks can be read by users of the organizations to which it belongs" on tasks
+  for all
+    using (
+      exists (
+        select
+          1
+        from
+          memberships
+        where
+          user_id = auth.uid () and
+          tasks.organization_id = memberships.organization_id
+      )
+    );
+```
+
+#### Generating the types from the SQL schema
+
+We can generate the types from the SQL schema using the Supabase CLI.
+
+To run this command, you need to ensure Supabase is running locally using
+`npm run supabase:start`.
+
+You can generate the types by running the following command:
+
+```bash
+npm run typegen
+```
+
+The types will be generated at `src/database-types.ts`.
+
+We will import the types whenever we use the Supabase client to ensure that it is typed correctly, which helps us write type-safe queries with the Supabase client.
+
+For example:
+
+```tsx
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '../../database.types';
+
+type Client = SupabaseClient<Database>;
+```

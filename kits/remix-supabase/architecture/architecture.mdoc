@@ -1,0 +1,60 @@
+---
+status: "published"
+title: Architecture and Folder Structure for your Remix SaaS application
+label: Architecture and Folder Structure
+order: 6
+description: 'Learn how MakerKit allows you to build a Remix application
+with a scalable and production-grade architecture and folder structure'
+collapsible: true
+collapsed: true
+---
+
+
+MakerKit's primary goals are:
+
+- **Solid Foundations** - providing you with the necessary code to get up and
+running
+with a Saas with minimal configuration
+- **Extendable and Adaptable** - the ability to change and extend the codebase as efficiently as possible
+
+While it's relatively simple to provide a functioning codebase, it's not always easy to make it:
+- **Simple** - a clean codebase quickly understandable by anyone
+- **Easy to change** - a codebase that can be easily changed to a
+particular domain
+
+Once you start your project, you can begin unpicking and replacing the existing code to adapt it to your application's domain. At the same time, MakerKit may have pushed an update that fixed a bug or added a new cool feature.
+
+The two projects will diverge and inevitably end up in a conflicting state.
+
+Thankfully, Git makes it easy to merge conflicts. But it's still a hassle.
+
+### Core
+
+Let's talk about the lower level: the `core`. This layer is a collection of building blocks, utilities, and APIs that make up MakerKit.
+
+This part of the boilerplate is configurable and makes no assumptions about your domain.
+
+You are still welcome to change this code to suit your needs, but you can expect most updates from upstream to change the code in this directory.
+
+### Lib and Components
+
+The mid-level is in two separate folders (to avoid excessive nesting):
+
+- `lib`: here is where we write most domain-related business logic (hooks, contexts, queries, mutations, etc.)
+- `components`: here is where we write the domain-related components (ex. Profile Page, Create Project form, etc.)
+
+MakerKit comes with some business logic (it would be nearly impossible otherwise to build a genuinely functioning SaaS). You should customize the existing business logic for your application, and it is likely where you will add most of your code.
+
+This layer can still be updated by the `upstream` repository, but you should not expect too many changes unless it's additions for new features or bug fixes.
+
+### Routes
+
+Finally, the `routes` layer is the outer layer of the application.
+
+It's entirely dependent on your application, and you should not expect updates from upstream unless for fixing blatantly buggy code.
+
+The kit splits the routes into three separate layouts:
+- `_site`: the routes of the marketing site
+- `_app`: the routes of the internal app
+- `auth`: the routes of the authentication pages
+

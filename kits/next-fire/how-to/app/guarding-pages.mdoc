@@ -1,0 +1,125 @@
+---
+status: "published"
+title: "Guarding Pages in the Next.js Firebase SaaS kit"
+label: "Guarding Pages"
+order: 4
+description: "Learn how to guard pages in your Next.js Firebase application"
+---
+
+As a server-side rendered application, Next.js Firebase will always render the page on the server before sending it to the client. This means that you can use the `getServerSideProps` function to guard pages from being accessed by unauthorized users.
+
+As shown before, we will reuse the `withAppProps` function to make sure that we initialize the required data before rendering the page.
+
+In the example below:
+1. We use the `withAppProps` function to initialize the required data
+2. We check if the user can access the page
+3. If the user can't access the page, we redirect them to the dashboard
+
+This is a common pattern that you can use to guard pages in your application and redirect users to the dashboard if they are not authorized to access the page.
+
+```tsx
+import { GetServerSidePropsContext } from "next";
+import { withAppProps } from '~/lib/props/with-app-props';
+
+function Page() {
+  // render the page
+}
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  const appProps = await withAppProps(ctx);
+
+  // We augment the props with the data we want
+  // to pass to the client
+  // replace the below with your own logic
+  const canAccessPage = await checkUserCanAccessPage();
+
+  if (!canAccessPage) {
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    }
+  }
+
+  return appProps;
+}
+```
+
+## Guarding Application Pages with User Roles
+
+Let's make a more complete example by checking the user role and redirecting them to the dashboard if they are not an admin.
+
+```tsx
+import { GetServerSidePropsContext } from "next";
+import { withAppProps } from '~/lib/props/with-app-props';
+import { MembershipRole } from '~/lib/organizations/types/membership-role';
+
+function Page() {
+  // render the page
+}
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  const appProps = await withAppProps(ctx);
+
+  // get user role within the organization
+  const userRole = appProps.organization.members[appProps.user.id].role;
+
+  if (!canAccessPage(userRole)) {
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    }
+  }
+
+  return appProps;
+}
+
+function canAccessPage(role: MembershipRole) {
+  return role >= MembershipRole.Admin;
+}
+```
+
+## Guarding Application Pages with Organization Subscriptions
+
+In this example, we want to make sure the Organization is subscribed to a plan before allowing the user to access the page.
+
+To do so, we check the `subscription` property of the `Organization` object and redirect the user to the dashboard if the subscription is `active` or `trialing`.
+
+```tsx
+import { GetServerSidePropsContext } from "next";
+import { withAppProps } from '~/lib/props/with-app-props';
+import { OrganizationSubscription } from '~/lib/organizations/types/organization-subscription';
+
+function Page() {
+  // render the page
+}
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  const appProps = await withAppProps(ctx);
+  const subscription = appProps.organization.subscription;
+
+  if (!canAccessPage(subscription)) {
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    }
+  }
+
+  return appProps;
+}
+
+function canAccessPage(subscription: OrganizationSubscription) {
+  return ['active', 'trialing'].includes(subscription.status);
+}
+```

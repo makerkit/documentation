@@ -1,0 +1,102 @@
+---
+status: "published"
+title: "Adding pages to the Marketing Site | Next.js Supabase SaaS Kit"
+label: "Adding pages to the Marketing Site"
+order: 15
+description: "Learn how to add pages to the Marketing Site of your Next.js Supabase application, and how to add them to the navigation menu."
+---
+
+Adding pages to the Marketing Site is easy.
+
+The marketing/site pages are placed under the `app/(site)` directory, and are part of the `site` layout.
+
+ ```tsx {% title="app/(site)/about/page.tsx" %}
+import Hero from '~/core/ui/Hero';
+import Container from '~/core/ui/Container';
+import SubHeading from '~/core/ui/SubHeading';
+
+export const metadata = {
+  title: 'About',
+};
+
+const AboutPage = () => {
+  return (
+    <div>
+      <Container>
+        <div className={'flex flex-col space-y-14'}>
+          <div className={'flex flex-col items-center'}>
+            <Hero>About us</Hero>
+
+            <SubHeading>
+              We are a team of passionate developers and designers who love to
+              build great products.
+            </SubHeading>
+          </div>
+        </div>
+
+        <div>
+          <!-- Content -->
+        </div>
+      </Container>
+    </div>
+  );
+};
+
+export default AboutPage;
+```
+
+### Adding the page to the site's navigation menu
+
+To update the site's navigation menu, you can visit the `SiteNavigation.tsx` component and add a new entry to the menu.
+
+By default, you will see the following object `links`:
+
+ ```tsx {% title="components/SiteNavigation.tsx" %}
+const links: Record<string, Link> = {
+  Blog: {
+    label: 'Blog',
+    path: '/blog',
+  },
+  Docs: {
+    label: 'Docs',
+    path: '/docs',
+  },
+  Pricing: {
+    label: 'Pricing',
+    path: '/pricing',
+  },
+  FAQ: {
+    label: 'FAQ',
+    path: '/faq',
+  },
+};
+```
+
+The menu is defined in the render function:
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuItem link={links.Blog} />
+  <NavigationMenuItem link={links.Docs} />
+  <NavigationMenuItem link={links.Pricing} />
+  <NavigationMenuItem link={links.FAQ} />
+</NavigationMenu>
+```
+
+Assuming we want to add a new menu entry, say `About`, we would first add the link object:
+
+```tsx
+About: {
+  label: 'About',
+  path: '/about',
+},
+```
+
+And then we update the menu:
+
+```tsx
+<NavigationMenu>
+  <NavigationMenuItem link={links.About} />
+  ...
+</NavigationMenu>
+```

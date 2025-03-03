@@ -1,0 +1,66 @@
+---
+status: "published"
+
+title: "Updating the navigation menu of your Makerkit SaaS application"
+label: Updating the Navigation menu
+order: 0
+description: "Learn how to update the navigation menu of your Makerkit landing pages"
+---
+
+
+The navigation menu of your Makerkit SaaS application's landing pages (or marketing side) is defined in the `SiteNavigation` component defined at `src/components/SiteNavigation.tsx`.
+
+### Adding a new menu entry to the navigation menu
+
+To add a new menu entry, simply add a new entry to the `links` object.
+
+The key of the object is the name of the menu entry, and the value is an object with the `label` and `path` properties.
+
+ ```tsx {% title="src/components/SiteNavigation.tsx" %} {22-25}
+const links = {
+  SignIn: {
+    label: 'Sign In',
+    path: '/auth/sign-in',
+  },
+  Blog: {
+    label: 'Blog',
+    path: '/blog',
+  },
+  Docs: {
+    label: 'Docs',
+    path: '/docs',
+  },
+  Pricing: {
+    label: 'Pricing',
+    path: '/pricing',
+  },
+  FAQ: {
+    label: 'FAQ',
+    path: '/faq',
+  },
+  NewPage: {
+    label: 'New Page',
+    path: '/new-page',
+  },
+};
+```
+
+Then, add a new `NavigationMenuItem` component to the `NavigationMenu` component.
+
+ ```tsx {% title="src/components/SiteNavigation.tsx" %} {12}
+<NavigationMenu>
+  <NavigationMenuItem
+    className={'flex lg:hidden'}
+    link={links.SignIn}
+  />
+
+  <NavigationMenuItem link={links.Blog} />
+  <NavigationMenuItem link={links.Docs} />
+  <NavigationMenuItem link={links.Pricing} />
+  <NavigationMenuItem link={links.FAQ} />
+
+  <NavigationMenuItem link={links.NewPage} />
+</NavigationMenu>
+```
+
+Et voilà! Your new menu entry is now available in the navigation menu.

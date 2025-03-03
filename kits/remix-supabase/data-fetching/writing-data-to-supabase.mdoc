@@ -1,0 +1,140 @@
+---
+status: "published"
+title: "Writing data to Database | Remix Supabase SaaS Kit"
+label: "Writing data to Database"
+order: 0
+description: "Learn how to write, update and delete data using the Supabase Database in Remix Supabase SaaS Kit project."
+---
+
+Similarly to reading data, we may want to create a `custom
+hook` also when we write, update or delete data to our Supabase database.
+
+Assuming we have an entity called `tasks`, and we want to create a hook to
+create a new `Task`, we can do the following.
+
+1. First, we create a new hook at `lib/tasks/hooks/use-create-task.ts`
+2. We add the `tasks` table name to `lib/db-tables.ts`
+3. We create a `mutations.ts` file within `lib/tasks`
+
+```ts
+export const TASKS_TABLE = `tasks`;
+```
+
+In our mutations file, we will add all the mutations we want to perform on
+the `tasks` table. In this case, we will add a `createTask` mutation.
+
+```ts
+export function createTask(
+  client: Client,
+  task: Task,
+) {
+  return client.from(TASKS_TABLE).insert(task).throwOnError();
+}
+````
+
+Now, we can use the `createTask` mutation in our `useCreateTask` hook.
+
+We will be using the `useMutation` hook from `react-query` to create our hook.
+
+ ```tsx {% title="lib/tasks/hooks/use-create-task.ts" %}
+function useCreateTaskMutation(task: Task) {
+  const client = useSupabase();
+
+  return useMutation(
+    async (task: Task) => {
+      return createTask(client, task);
+    }
+  );
+}
+
+export default useCreateTaskMutation;
+```
+
+Let's take a look at a complete example of a form that makes a request using
+the hook above:
+
+ ```tsx {% title="components/tasks/CreateTaskForm.tsx" %}
+import { useNavigate } from '@remix-run/react';
+import type { FormEventHandler } from 'react';
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+
+import TextField from '~/core/ui/TextField';
+import Button from '~/core/ui/Button';
+import useCreateTaskMutation from '~/lib/tasks/hooks/use-create-task';
+
+import useCurrentOrganization from '~/lib/organizations/hooks/use-current-organization';
+
+const CreateTaskForm = () => {
+  const createTaskMutation = useCreateTaskMutation();
+  const navigate = useNavigate();
+  const organization = useCurrentOrganization();
+  const organizationId = organization?.id as number;
+
+  const onCreateTask: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault();
+
+      const target = event.currentTarget;
+      const data = new FormData(target);
+      const name = data.get('name') as string;
+      const dueDate = (data.get('dueDate') as string) || getDefaultDueDate();
+
+      if (name.trim().length < 3) {
+        toast.error('Task name must be at least 3 characters long');
+
+        return;
+      }
+
+      const task = {
+        organizationId,
+        name,
+        dueDate,
+        done: false,
+      };
+
+      // create task
+      await createTaskMutation.mutateAsync(task);
+
+      // redirect to /tasks
+      return navigate(`/tasks`);
+    },
+    [navigate, createTaskMutation, organizationId]
+  );
+
+  return (
+    <form onSubmit={onCreateTask}>
+      <div>
+        <TextField.Label>
+          Name
+          <TextField.Input
+            required
+            name={'name'}
+            placeholder={'ex. Launch on IndieHackers'}
+          />
+          <TextField.Hint>Hint: whatever you do, ship!</TextField.Hint>
+        </TextField.Label>
+
+        <TextField.Label>
+          Due date
+          <TextField.Input name={'dueDate'} type={'date'} />
+        </TextField.Label>
+
+        <div>
+          <Button>Create Task</Button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+export default CreateTaskForm;
+
+function getDefaultDueDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(23, 59, 59);
+
+  return date.toDateString();
+}
+```

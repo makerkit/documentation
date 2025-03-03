@@ -1,0 +1,32 @@
+---
+status: "published"
+
+title: withExceptionFilter
+label: withExceptionFilter
+order: 11
+description: 'The "withExceptionFilter" is a utility function that help you gracefully handle exceptions in your API endpoints.'
+---
+
+The `withExceptionFilter` function is used to handle exceptions in API endpoints. It will log errors and report to Sentry when errors are encountered.
+
+```ts {18}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```

@@ -1,0 +1,35 @@
+---
+status: "published"
+title: Organization React Hooks | Next.js Firebase SaaS kit
+label: Custom React Hooks
+order: 10
+description: 'Reference for the organizations React hooks in your Next.js Firebase SaaS kit'
+---
+
+## useCurrentOrganization
+
+This hook returns the current organization. It's a wrapper around the `OrganizationContext` context. The returned value is an `Organization` object.
+
+```tsx
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const organzation = useCurrentOrganization();
+```
+
+## useIsSubscriptionActive
+
+This hook returns a boolean indicating whether the current organization has
+an active subscription. It's a shortcut around the `useCurrentOrganization`
+hook that checks if the `status` property is set to `active` or `trialing`.
+
+```tsx
+import { useIsSubscriptionActive } from '~/lib/organizations/hooks/use-is-subscription-active';
+
+const isSubscriptionActive = useIsSubscriptionActive();
+```
+
+## Other Organization Hooks
+
+The kit has many more hooks that are used internally: they are not meant to be used directly unless you want to update the logic or fix a bug.
+
+All the hooks are available in the `~/lib/organizations/hooks` directory.

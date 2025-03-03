@@ -1,0 +1,117 @@
+---
+status: "published"
+title: Enabling One-Time Payments with Stripe | Next.js Supabase Lite
+label: One-Time Payments
+order: 3
+description: 'Learn how to switch from Stripe Subscriptions to One-Time Payments in your Makerkit application'
+canonical: '/docs/next-supabase/stripe-one-time-payments'
+---
+
+While Makerkit uses subscriptions by default, you can offer your customers one-time payments.
+
+Fortunately, Stripe Checkout makes it insanely easy. Let's see how to update  Makerkit's codebase to enable Stripe one-off payments for your product.
+
+1) First, when choosing your Stripe Price's billing type, select `One Time.` [Learn more about creating Prices with Stripe](https://support.stripe.com/questions/how-to-create-products-and-prices).
+
+2) Secondly, we need to change the payment mode in Makerkit's codebase. To do so, we will update the `createStripeCheckout` function defined at `~/lib/stripe/create-checkout.ts`.
+
+If you open the file, you'll find the line below:
+
+```tsx
+const mode: Stripe.Checkout.SessionCreateParams.Mode = 'subscription';
+
+// some code here...
+
+return stripe.checkout.sessions.create({
+  mode,
+  // more code here...
+});
+```
+
+To enable one-time payments, we will replace the `mode` constant from `subscription` to `payment`:
+
+```tsx
+const mode: Stripe.Checkout.SessionCreateParams.Mode = 'payment';
+
+// some code here...
+
+return stripe.checkout.sessions.create({
+  mode,
+  // more code here...
+});
+```
+
+Now, **make sure to remove** the `subscription_data` parameter from the `stripe.checkout.sessions.create` function call. Otherwise, it will throw an error.
+
+```tsx {7}
+return stripe.checkout.sessions.create({
+  mode,
+  ui_mode: uiMode,
+  customer,
+  line_items: [lineItem],
+  client_reference_id: clientReferenceId.toString(),
+  subscription_data: subscriptionData,
+  customer_email: params.customerEmail,
+  ...urls,
+});
+```
+
+And that's it! Stripe will not charge our users recurringly but will simply charge them once.
+
+{% alert type="warning" %}
+As the UI is set up for recurring subscriptions, you may want to tweak the Subscription Page UI to reflect that charges are not recurring and that the product has been successfully purchased.
+{% /alert %}
+
+## Handling the Payment Method dynamically
+
+The above works great if you only offer one plan. However, let's assume you have multiple prices and want to dynamically update the payment mode based on the selected price.
+
+In this case, let's do the following:
+1. Extend the plan information in the application configuration
+2. Select the appropriate method when creating the checkout by retrieving the plan's model
+
+If you open your application's configuration, you will notice that plans have the following interface:
+
+ ```tsx {% title="src/configuration.ts" %}
+{
+  name: 'Basic',
+  description: 'Unlimited applications and 2-hour onboarding session',
+  price: '$249/year',
+  stripePriceId: 'price_***********',
+}
+```
+
+Now, we can extend it with the payment mode, which would be `subscription` or `payment`:
+
+```tsx
+{
+  name: 'Basic',
+  description: 'Unlimited applications and 2-hour onboarding session',
+  price: '$249 one off!',
+  stripePriceId: 'price_***********',
+  mode: 'payment'
+}
+```
+
+Now, let's reopen the file `create-checkout.ts` file and find the payment mode of the selected price ID:
+
+```tsx
+const price = configuration.plans.find(item => {
+  return item.stripePriceId === params.priceId;
+});
+
+if (!price) {
+  throw new Error(`Price with ID ${params.priceId} not found in config`);
+}
+
+const mode: Stripe.Checkout.SessionCreateParams.Mode = price.mode;
+
+// some code here...
+
+return stripe.checkout.sessions.create({
+  mode,
+  // more code here...
+});
+```
+
+🎉 Now it looks better and works for multiple plans based on their payment mode!

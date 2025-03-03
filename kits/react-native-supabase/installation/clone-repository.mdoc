@@ -1,0 +1,127 @@
+---
+status: "published"
+title: "Clone the React Native Supabase SaaS Kit Turbo Repository"
+label: "Clone the Repository"
+order: 4
+description: "Clone the React Native Supabase SaaS Kit Turbo repository to your local machine."
+---
+
+## This is a preview of the React Native Supabase Kit Turbo repository
+
+Hi, this is a preview of the React Native Supabase Kit Turbo repository. It
+may contain bugs and errors. If you spot any, please open an issue on the
+[GitHub repository](https://github.com/makerkit/react-native-expo-turbo-saas-kit).
+
+## Prerequisites
+
+To get started with Makerkit, ensure you have the following prerequisites installed and set up:
+
+- **Node.js 18.x or later**
+- **Docker**
+- **Pnpm**
+- **Supabase account** (optional for local development)
+- **Email Service account** (optional for local development)
+
+## Cloning the Repository
+
+Clone the repository using the following command:
+
+```bash
+git clone git@github.com:makerkit/react-native-expo-turbo-saas-kit.git
+```
+
+**Note:** If your SSH key isn't set up, use HTTPS instead:
+
+```bash
+git clone https://github.com/makerkit/react-native-expo-turbo-saas-kit
+```
+
+#### Windows Users: place the repository near the root of your drive
+
+Some Windows users hit errors loading certain modules due to very long paths. To avoid this, try placing the repository near the root of your drive.
+
+Avoid using OneDrive, as it can cause issues with Node.js.
+
+### Important: Use HTTPS for All Commands if Not Using SSH
+
+If you are not using SSH, ensure you switch to HTTPS for all Git commands, not just the clone command.
+
+## Configuring Git Remotes
+
+After cloning the repository, remove the original `origin` remote:
+
+```bash
+git remote rm origin
+```
+
+Add the upstream remote pointing to the original repository to pull updates:
+
+```bash
+git remote add upstream git@github.com:makerkit/react-native-expo-turbo-saas-kit
+```
+
+Once you have your own repository set up, add your repository as the `origin`:
+
+```bash
+git remote add origin <your-repository-url>
+```
+
+### Keeping Your Repository Up to Date
+
+To pull updates from the upstream repository, run the following command daily (preferably with your morning coffee ☕):
+
+```bash
+git pull upstream main
+```
+
+This ensures your repository stays up to date with the latest changes.
+
+## 0.1. Install Pnpm
+
+Install Pnpm globally with the following command:
+
+```bash
+npm i -g pnpm
+```
+
+## 1. Setup Dependencies
+
+Install the necessary dependencies for the project:
+
+```bash
+pnpm i
+```
+
+With these steps completed, your development environment will be set up and ready to go! 🚀
+
+## 2. Post-merge Hooks
+
+It's very useful to run the following command after pulling updates from the upstream repository:
+
+```bash
+pnpm i
+```
+
+This ensures that any new dependencies are installed and the project is up to date. We can run this command automatically after pulling updates by setting up a post-merge hook.
+
+Create a new file named `post-merge` in the `.git/hooks` directory:
+
+```bash
+touch .git/hooks/post-merge
+```
+
+Add the following content to the `post-merge` file:
+
+```bash
+#!/bin/bash
+
+pnpm i
+```
+
+Make the `post-merge` file executable:
+
+```bash
+chmod +x .git/hooks/post-merge
+```
+
+Now, every time you pull updates from the upstream repository, the `pnpm i` command will run automatically to ensure your project is up to date. This ensures you're always working with the latest changes and dependencies and avoid errors that may arise from outdated dependencies.

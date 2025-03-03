@@ -1,0 +1,41 @@
+---
+status: "published"
+title: "Running the React Native Supabase Turbo project"
+label: "Running the Project"
+order: 4
+description: "Learn how to run the React Native Supabase Turbo project on your local machine."
+---
+
+To run the project, follow these steps to start the development server, Supabase, and Stripe (optional for billing system testing).
+
+## 1. Start the Development Server
+
+To start the web application development server, run:
+
+```bash
+# Start the development server
+pnpm dev
+```
+
+This command launches the web application.
+
+### Quick Start Credentials
+
+Use the following credentials to get started right away:
+
+- **Email**: `test@makerkit.dev`
+- **Password**: `testingpassword`
+
+To confirm email addresses, visit [Inbucket](http://localhost:54324/status). Supabase uses Inbucket to capture emails sent during the authentication process.
+
+Bookmark the Inbucket URL, as you will need it quite often.
+
+## 2. Start Supabase
+
+Ensure Docker is running, then start Supabase with:
+
+```bash
+pnpm run supabase:web:start
+```
+
+This command initiates the local Supabase web server. This allows us to develop locally without having to deploy to Supabase.

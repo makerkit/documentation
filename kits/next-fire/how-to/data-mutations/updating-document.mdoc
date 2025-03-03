@@ -1,0 +1,93 @@
+---
+status: "published"
+
+title: "Updating a Document"
+label: "Updating a Document"
+order: 1
+description: "Learn how to update a document in Firestore in your Next.js Firebase app"
+---
+
+
+Updating a document in Firestore can be achieved using both the Web (Client) and the Admin SDK (Server). Depending on the use-case, you will use one or the other.
+
+1. **Client SDK**: When you want to update a document from the browser, you will use the Client SDK. This is the most common use-case, and can be done when the user has the permissions required to update a document based on their security rules.
+2. **Admin SDK**: When you want to update a document from a server, you will use the Admin SDK. This is useful when you want to update a document from a server, or when you want to update a document that the user does not have permission to update.
+
+## Client SDK
+
+To update a Firestore document, we will use the `addDoc` function from the Web Firebase SDK.
+
+We can use hooks to make sure we have access to the Firestore instance, and the collection we want to add the document to.
+
+```tsx
+import { useFirestore } from 'reactfire';
+import { useCallback } from 'react';
+import { updateDoc, doc } from "firebase/firestore";
+
+function useUpdateTask(id: string) {
+  const firestore = useFirestore();
+  const tasksDoc = doc(firestore, `/tasks`, id);
+
+  return useCallback(
+    (task: {
+      title: string;
+      description: string;
+      completed: boolean;
+    }) => {
+      return updateDoc(tasksDoc, task);
+    },
+    [tasksDoc]
+  );
+}
+```
+
+We can then use this hook in our component to create a new task.
+
+```tsx
+import { useCallback } from "react";
+
+const UpdateTaskForm = ({ id }: { id: string }) => {
+  const updateTask = useUpdateTask(id);
+
+  // ... other code
+
+  const onSubmit = useCallback(async (task: {
+    title: string;
+    description: string;
+    completed: boolean;
+  }) => {
+    await updateTask(task);
+  }, [updateTask]);
+
+  // ... other code
+};
+```
+
+## Admin SDK
+
+To create a document, we will use the `update` function from the Admin Firebase SDK.
+
+We can use the Admin SDK only in API Route handlers and the `getServerSideProps` function. For two reasons:
+
+1. The Admin SDK is for Node.js environments, and cannot be used in the browser.
+2. The Admin SDK requires a service account, which should not be exposed to the browser.
+
+```tsx
+import getRestFirestore from '~/core/firebase/admin/get-rest-firestore';
+
+async function updateTaskFromServer(task: {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+}) {
+  const firestore = getRestFirestore();
+  const taskRef = firestore.collection(firestore, `tasks`).doc(task.id);
+
+  await taskRef.update(task);
+
+  return task;
+}
+```
+
+You can now use the function `updateTaskFromServer` in your API Route handlers and `getServerSideProps` functions.

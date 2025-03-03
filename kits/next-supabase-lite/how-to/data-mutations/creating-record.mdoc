@@ -1,0 +1,124 @@
+---
+status: "published"
+title: "Creating a Record | Next.js Supabase SaaS Kit (Lite)"
+label: "Creating a Record"
+order: 0
+description: "In this tutorial we show how you can create a record in Postgres using Supabase and Next.js (Lite)"
+---
+
+Creating a record with Supabase is easy. We can use the `insert` method to create a record in a table.
+
+We combine the mutation with Next.js Server Actions so that we get data revalidation on-the-fly - pretty magical! 🧙‍♂️
+
+The Makerkit convention is to store these in files called `mutations.ts` in the `lib` folder of your entity.
+
+For example, here is a mutations file for a `task` entity.
+
+```tsx
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '~/database.types';
+
+type Task = {
+  id: string;
+  name: string;
+  userId: string;
+  description: string;
+  dueDate: Date;
+  done: boolean;
+};
+
+export function createTask(
+  client: SupabaseClient<Database>,
+  task: Omit<Task, 'id'>
+) {
+  return client.from('tasks').insert({
+    name: task.name,
+    user_id: task.userId,
+    description: task.description,
+    due_date: task.dueDate,
+    done: task.done,
+  });
+}
+```
+
+Ideally, the `Task` interface is defined externally, but I am showing it here for simplicity and clarity.
+
+### Calling the mutation in a Server Action
+
+We can now export a server action that uses this function to create a task.
+
+```tsx
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+
+import { createTask } from '~/lib/tasks/mutations';
+import type Task from '~/lib/tasks/types/task';
+import { withSession } from '~/core/generic/actions-utils';
+import getSupabaseServerActionClient from '~/core/supabase/action-client';
+
+type CreateTaskParams = {
+  task: Omit<Task, 'id'>;
+  csrfToken: string;
+};
+
+export const createTaskAction = withSession(
+  async (params: CreateTaskParams) => {
+    const client = getSupabaseServerActionClient();
+    const path = `/tasks`;
+
+    await createTask(client, params.task);
+
+    // revalidate the tasks page
+    revalidatePath(path, 'page');
+
+    // redirect to the tasks page
+    redirect(path);
+  },
+);
+```
+
+The `withSession` function is a helper that ensures that the user is logged in. If not, it will redirect to the login page. Use it for all server actions that require a user to be logged in.
+
+### Calling the mutation in a React component
+
+Finally, it's a matter of calling the Next.js Server Action within the React component that handles the form submission.
+
+Assuming you have a `form` element, you can do something like this:
+
+```tsx
+import { createTaskAction } from '~/lib/tasks/actions';
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+function TaskForm() {
+  const csrfToken = useCsrfToken();
+
+  return (
+    <form action={createTaskAction}>
+      <input type="text" name="task.name" />
+      <input type="text" name="task.description" />
+      <input type="date" name="task.dueDate" />
+      <input type="hidden" name="csrfToken" value={csrfToken} />
+      <button type="submit">Create Task</button>
+    </form>
+  );
+}
+```
+
+Adding the CSRF token is required in all POST requests. You can use the `useCsrfToken` hook to get the token and passing it as a hidden input.
+
+You can also call the function imperatively if you don't use a traditional form component.
+
+```tsx
+import { useTransition } from "react";
+import useCsrfToken from '~/core/hooks/use-csrf-token';
+
+const [isPending, starTransition] = useTransition()
+
+const onSubmit = (task: Task) => {
+  startTransition(async () => {
+    await createTaskAction({ task, csrfToken });
+  })
+};
+```

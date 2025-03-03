@@ -1,0 +1,88 @@
+---
+status: "published"
+
+title: "Reading data from Storage"
+label: "Reading data from Storage"
+order: 3
+---
+
+
+## 1) Add the Storage Provider
+
+First, we need to wrap the component using Firebase Storage with the
+`FirebaseStorageProvider`, which is responsible for initializing the
+Firebase Storage SDK.
+
+```tsx
+import FirebaseStorageProvider from '~/core/firebase/components/FirebaseStorageProvider';
+
+<FirebaseStorageProvider>
+  <ComponentThatUsesStorage />
+</FirebaseStorageProvider>
+```
+
+## 2) Create a Hook to fetch data from Storage
+
+Let's assume we want to fetch a list of files from storage by getting their
+`url`. This is a common scenario for retrieving images stored in Firebase
+Storage.
+
+```tsx
+function useOrganizationAssets() {
+  const storage = useStorage();
+
+  const { setData, setError, setLoading, state } =
+    useRequestState<MediaItem[]>();
+
+  const path = `/${organizationId}/uploads`;
+  const reference = ref(storage, path);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await list(reference);
+
+        const items = await Promise.all(
+          result.items.map(async (item) => {
+            const url = await getDownloadURL(item);
+
+            return url;
+          })
+        );
+
+        setData(items);
+      } catch (e) {
+        setError(e);
+      }
+    })();
+  }, [reference, setData, setError]);
+
+  return state;
+}
+```
+
+## 3) Use the custom hook in your components
+
+And then we can use the hook in our components:
+
+```tsx
+function MyImages() {
+  const { data, loading, error } = useOrganizationAssets();
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>We could not fetch your images :(</p>;
+  }
+
+  return (
+    <div className={'flex flex-col space-y-2'}>
+      {data.map(image => {
+        return <img src={image} key={image} />
+      })}
+    </div>
+  );
+}
+```

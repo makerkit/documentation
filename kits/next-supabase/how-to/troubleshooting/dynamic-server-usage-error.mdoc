@@ -1,0 +1,21 @@
+---
+status: "published"
+title: "How to fix the Next.js error Dynamic Server Usage in Next.js Supabase"
+label: "Dynamic server usage error"
+order: 4
+description: "The error Dynamic server usage Page couldn't be rendered statically because it used `cookies` is a common issue in Next.js. Here is the fix."
+---
+
+If you encounter the following error when starting the Makerkit application:
+
+```
+[ERROR] Dynamic server usage Page couldn't be rendered statically because it used `cookies`.
+```
+
+You can fix it by adding the following line to the nearest layout of the page that is causing the error:
+
+```ts
+export const dynamic = 'force-dynamic';
+```
+
+If it keeps happening, try to see if it is happening in yet another layout and add the line there as well. Do it until the error goes away.

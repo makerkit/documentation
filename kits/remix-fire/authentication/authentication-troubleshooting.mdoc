@@ -1,0 +1,40 @@
+---
+status: "published"
+
+title: Authentication Troubleshooting
+label: Troubleshooting
+order: 11
+description: 'Common issues with authentication'
+---
+
+
+Here are some common issues with authentication and how to fix them.
+
+## I keep getting signed out after signing in
+
+**Possible cause**: You are using the wrong Firebase private key.
+
+This issue is usually caused by a misconfigured Firebase private key. Make sure you are using the correct private key and that it is not expired.
+
+The Firebase private key is downloaded from the JSON Service Account file after you create a new service account in the Firebase console
+
+The key looks like this:
+
+```
+---
+--BEGIN PRIVATE KEY---
+--
+***************************
+---
+--END PRIVATE KEY---
+---
+-
+```
+
+It's much longer than the above, but you get the idea.
+
+The key needs to be added to your environment variables settings. Please use your CI to add this key since it's a secret key:
+
+```
+SERVICE_ACCOUNT_PRIVATE_KEY=
+```

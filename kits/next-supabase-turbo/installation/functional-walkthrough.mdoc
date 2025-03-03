@@ -1,0 +1,282 @@
+---
+status: "published"
+title: 'Functional Walkthrough - Next.js Supabase Turbo Starter Kit'
+label: 'Walkthrough'
+order: 8
+description: 'A functional walkthrough of the Next.js Supabase Turbo Starter Kit. Understand the features and how to use the kit.'
+---
+
+This is a functional walkthrough of the Next.js Supabase Turbo Starter Kit. In this guide, you'll learn about the functional aspects of the kit.
+
+## Overview of the Next.js Supabase Turbo Starter Kit
+
+We can break down the Next.js Supabase Turbo Starter Kit into the following functional sections:
+
+1. **Marketing / External Section** - the public-facing part of the application. This also includes the blog and documentation.
+2. **Authentication** - the authentication system of the application.
+3. **Personal Account Features** - the features available to personal accounts.
+4. **Team Account Features** - the features available to team accounts.
+5. **Invitations** - the invitation system of the application.
+6. **Super Admin** - the super admin features of the application.
+
+## Marketing / External Section
+
+The marketing section is the public-facing part of the application. It is where users can learn about the product, the pricing and the legal information.
+
+### Home Page
+
+The home page is the landing page of the application. It showcases the features of the product and encourages users to sign up.
+
+{% img src="/assets/images/docs/walkthrough/home-page.webp" width="3420" height="2142" /%}
+
+### Pricing
+
+The pricing page is where users can learn about the different pricing plans of the product.
+
+{% img src="/assets/images/docs/walkthrough/pricing.webp" width="3420" height="2142" /%}
+
+This section is also added to the home page.
+
+### FAQ
+
+The FAQ page is where users can find answers to common questions about the product.
+
+{% img src="/assets/images/docs/walkthrough/faq.webp" width="3420" height="2142" /%}
+
+### Contact
+
+The contact page is where users can get in touch with the company. It includes a contact form that allows users to send messages to the company directly.
+
+{% img src="/assets/images/docs/walkthrough/contact.webp" width="3420" height="2142" /%}
+
+### Content Pages
+
+Content pages can be displayed using the CMS that you have setup. By default, the kit implements a Blog and a Documentation systems using either Keystatic or Wordpress. You can choose which one you prefer.
+
+#### Blog
+
+The blog is where the company can publish articles about the product, the industry, and other topics.
+
+Below is the page where all the latest blog posts are listed:
+
+{% img src="/assets/images/docs/walkthrough/blog.webp" width="3420" height="2142" /%}
+
+And here is an example of a blog post:
+
+{% img src="/assets/images/docs/walkthrough/blog-post.webp" width="3420" height="2142" /%}
+
+#### Documentation
+
+The documentation is where users can learn how to use the product. It includes guides, tutorials, and reference material.
+
+{% img src="/assets/images/docs/walkthrough/walkthrough-documentation.webp" width="3420" height="2142" /%}
+
+### Legal Pages
+
+The legal pages are, of course, empty and need to be filled in with the appropriate legal information.
+
+Don't use ChatGPT to fill them up. It's a bad idea.
+
+## Authentication
+
+The authentication system is where users can sign up, sign in, reset their password. It also includes multi-factor authentication.
+
+### Sign Up
+
+The sign-up page is where users can create an account. They need to provide their email address and password.
+
+{% img src="/assets/images/docs/walkthrough/sign-up.webp" width="3420" height="2142" /%}
+
+Once successful, users are asked to confirm their email address. This is enabled by default - and due to security reasons, it's not possible to disable it.
+
+{% img src="/assets/images/docs/walkthrough/sign-up-success.webp" width="3420" height="2142" /%}
+
+### Sign In
+
+The sign-in page is where users can log in to their account. They need to provide their email address and password.
+
+{% img src="/assets/images/docs/walkthrough/sign-in.webp" width="3420" height="2142" /%}
+
+### Password Reset
+
+The password reset page is where users can reset their password. They need to provide their email address.
+
+{% img src="/assets/images/docs/walkthrough/password-reset.webp" width="3420" height="2142" /%}
+
+### Multi-Factor Authentication
+
+Multi-Factor Authentication (MFA) is an additional layer of security that requires users to provide two or more verification factors to sign in to their account.
+
+First, users need to enable MFA and add a factor:
+
+{% img src="/assets/images/docs/walkthrough/setup-mfa.webp" width="3420" height="2142" /%}
+
+Then, after signing in, users need to provide the verification code:
+
+{% img src="/assets/images/docs/walkthrough/verify-mfa.webp" width="3420" height="2142" /%}
+
+## Internal / Behind authentication pages
+
+After signing in - users are redirected to the internal pages of the application. These pages are only accessible to authenticated users.
+
+The internal part of the application is divided into two workspaces:
+
+1. The user workspace
+2. The team workspace (optional)
+
+This is how this works:
+
+1. **Personal Account** - all users have a personal account. This is where they can: manage their settings, choose a team account - and **optionally** subscribe to a plan, or access the features you provide.
+2. **Team Account (optional)** - users can create a team account - and invite other users to join. The team account has its own workspace - where users can manage the team settings, members, and billing.
+
+Generally speaking, **it's up to you** to decide what features are available to personal accounts and team accounts. You can choose to disable billing for personal accounts - and only enable it for team accounts - or vice versa.
+
+One simple rule of a thumb is that personal accounts are for individuals - and team accounts are for organizations. Personal accounts cannot be disabled, as that would disallow users from accessing the application should they not be part of a team - which doesn't make sense.
+
+## Personal Account Features
+
+The personal account workspace is where users can access the features available to their personal account.
+
+This is the home page after logging in - and it's the user workspace:
+
+1. Home Page - empty by default (but you can optionally provide the list of teams the user is part of)
+2. Account Settings
+3. Billing (if enabled)
+
+### Home Page of the user workspace
+
+By default - the user home is an empty page - as it's likely you will want to place some content that is unique to your SaaS.
+
+However, we provide a component that allows you to lists the team an account is part of: this is useful for B2B SaaS rather than B2C.
+
+The internal pages have two layouts:
+
+1. A sidebar layout (default)
+2. A top navigation layout
+
+You can choose any of the two - and also choose either one for the user layout or the account layout.
+
+Below is the user home page with the sidebar layout:
+
+{% img src="/assets/images/docs/walkthrough/user-home-sidebar.webp" width="3420" height="2142" /%}
+
+And below is the user home page with the top navigation layout:
+
+{% img src="/assets/images/docs/walkthrough/user-home-header.webp" width="3420" height="2142" /%}
+
+You can choose the one that fits your needs.
+
+### Account Settings of the user workspace
+
+From the navigation - users can access their account settings. Here they can update their profile information, change their password, language, multi-factor authentication, and more.
+
+We've used light mode so far - how about dark mode? Let's switch to dark mode:
+
+{% img src="/assets/images/docs/walkthrough/user-account-settings.webp" width="3420" height="2142" /%}
+
+### Billing of the user workspace
+
+Users can check out and subscribe to a plan - or visit the billing portal - from the billing page.
+
+**This is only visible if billing is enabled**: you can choose to disable billing for a personal account - and only enable it for team accounts - or vice versa.
+
+{% img src="/assets/images/docs/walkthrough/user-billing.webp" width="3420" height="2142" /%}
+
+Once choosing a plan - we load the embedded checkout form from Stripe (or Lemon Squeezy).
+
+After subscribing, the billing page will show the subscription details.
+
+{% img src="/assets/images/docs/walkthrough/user-billing-plan.webp" width="3420" height="2142" /%}
+
+## Team Account Features
+
+From the profile dropdown, users can choose:
+
+1. Switch to a team account
+2. Create a team account
+
+{% img src="/assets/images/docs/walkthrough/user-profile-dropdown.webp" width="876" height="796" /%}
+
+In a team account workspace - users can access the following features:
+
+1. A team account home page: by default - we display a mock dashboard, just as an example.
+2. Account settings: users can update the team account settings.
+3. Members: users can view the members of the team account.
+4. Billing: users can view the billing of the team account.
+
+### Home Page of the team workspace
+
+By default - the team home is a mock dashboard - just as an example. You can replace this with your own dashboard - or any other content.
+
+{% img src="/assets/images/docs/walkthrough/team-account-dashboard.webp" width="3420" height="2142" /%}
+
+### Account Settings of the team workspace
+
+From the navigation - users can access the team account settings. Here they can update the team account information, or delete the team account (if owner), or leave the team account (if member).
+
+{% img src="/assets/images/docs/walkthrough/team-account-settings.webp" width="3420" height="2142" /%}
+
+### Members page of the team workspace
+
+From the navigation - users can access the members of the team account.
+
+Here they can:
+
+1. view the members
+2. invite new members
+3. remove or update an existing member
+4. transfer ownership to another member
+5. remove or update an invitation
+
+{% img src="/assets/images/docs/walkthrough/team-account-members.webp" width="3420" height="2142" /%}
+
+### Billing of the team workspace
+
+If enabled - users can view the billing of the team account - and subscribe to a plan or visit the billing portal.
+
+{% img src="/assets/images/docs/walkthrough/team-account-billing.webp" width="3420" height="2142" /%}
+
+## Joining a team account
+
+When a user is invited to join a team account - they receive an email with an invitation link. After signing up or signing in - they are redirected to the join page.
+
+{% img src="/assets/images/docs/walkthrough/sign-up-invite.webp" width="3420" height="2142" /%}
+
+### Join Page
+
+The join page is where users can join a team account.
+
+{% img src="/assets/images/docs/walkthrough/join-team.webp" width="3420" height="2142" /%}
+
+## Super Admin
+
+The super admin is the administrator of the SaaS. They have access to a special set of features that allow them to manage the accounts of the SaaS.
+
+### Home Page of the super admin
+
+The home page is a small overview of the SaaS.
+
+You can easily customize this page to show the most important metrics of your SaaS.
+
+{% img src="/assets/images/docs/walkthrough/super-admin-dashboard.jpg" width="3420" height="2142" /%}
+
+### Listing the accounts of the SaaS
+
+The super admin can view all the accounts of the SaaS. They can filter the accounts by personal accounts, team accounts, or all accounts.
+
+{% img src="/assets/images/docs/walkthrough/super-admin-accounts.webp" width="3420" height="2142" /%}
+
+### Viewing the account details
+
+The super admin can view the details of an account. They can see the account information, the members of the account, and the billing information.
+
+Additionally, they can perform the following actions:
+
+1. Ban the account (or unban)
+2. Delete the account
+
+{% img src="/assets/images/docs/walkthrough/super-admin-account.webp" width="3420" height="2142" /%}
+
+## Conclusion
+
+This concludes the functional walkthrough of the Next.js Supabase Turbo Starter Kit. You should now have a good understanding of the features of the kit and how to use it. If you have any questions, feel free to reach out to us. We're here to help!

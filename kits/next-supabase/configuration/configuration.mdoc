@@ -1,0 +1,167 @@
+---
+status: "published"
+
+title: "Define the global configuration of your MakerKit SaaS application
+with Next.js and Supabase"
+label: "Global Configuration"
+order: 0
+description: "Learn how to define the global configuration of a MakerKit
+application with Next.js and Supabase"
+---
+
+
+We store the global configuration of a MakerKit application in `/configuration.ts`.
+
+Within any application file, we can use the path `~/configuration` to
+import it from any other file.
+
+{% alert type="info" %}
+You do not need any changes to start developing your application. Feel free
+to complete the configuration once you want to deploy the app for the first
+time.
+{% /alert %}
+
+The configuration has the following structure:
+
+ ```typescript {% title="app/configuration.ts" %}
+export default {
+  site: {
+    name: '',
+    description: '',
+    themeColor: '#ffffff',
+    themeColorDark: '#0a0a0a',
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
+    siteName: '',
+    twitterHandle: '',
+    githubHandle: '',
+    language: 'en',
+    convertKitFormId: '',
+    locale: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
+  },
+  paths: {
+    signIn: '/auth/sign-in',
+    signUp: '/auth/sign-up',
+    emailLinkSignIn: '/auth/link',
+    onboarding: `/onboarding`,
+    appHome: '/tasks',
+    settings: {
+      profile: '/settings/profile',
+      authentication: '/settings/profile/authentication',
+      email: '/settings/profile/email',
+      password: '/settings/profile/password',
+    },
+    api: {
+      checkout: `/api/stripe/checkout`,
+      billingPortal: `/api/stripe/portal`,
+      organizations: {
+        create: `/api/organizations`,
+        current: `/api/organizations/[organization]/current`,
+        transferOwnership: `/api/organizations/owner`,
+        members: `/api/organizations/members`,
+        member: `/api/organizations/members/[member]`,
+      },
+    },
+  },
+  auth: {
+    requireEmailConfirmation:
+      process.env.NEXT_PUBLIC_REQUIRE_EMAIL_CONFIRMATION === 'true',
+    // NB: Enable the providers below in the Supabase Console
+    // in your production project
+    providers: {
+      emailPassword: true,
+      phoneNumber: false,
+      emailLink: false,
+      oAuth: ['google'],
+    },
+  },
+  environment: process.env.NEXT_PUBLIC_ENVIRONMENT,
+  production: process.env.NODE_ENV === 'production',
+  features: {
+    enableThemeSwitcher: true,
+  },
+  theme: Themes.Light,
+  stripe: {
+    products: [
+      {
+        name: 'Basic',
+        description: 'Describe your basic plan',
+        plans: [
+          {
+            price: '$249/year',
+            stripePriceId: '<STRIPE_PRICE_ID>',
+          }
+        ],
+      },
+      {
+        name: 'Pro',
+        description: 'Describe your pro plan',
+        plans: [
+          {
+            price: '$249/year',
+            stripePriceId: '<STRIPE_PRICE_ID>',
+          }
+        ],
+      },
+    ],
+  },
+};
+```
+
+These values are used throughout the application instead of being hardcoded into the codebase. You can assign public environment variables to these values to make them available in your application.
+
+## Environment Variables
+
+Makerkit provides templates for configuring your environment variables correctly and the **minimum** environment variables to run your local environment.
+
+To push your project to production, **you must fill these variables by creating your Supabase project** and adding the required values.
+
+### Development Environment Variables
+
+The development environment variables set your application up for the
+Supabase environment:
+
+```
+DEFAULT_LOCALE=en
+SITE_URL=http://localhost:3000
+
+# SUPABASE
+NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# STRIPE
+STRIPE_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+
+# EMAIL
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+#### Use your CI/CD to set environment variables for your production environment
+
+Some of the variables above are secret. We show them here and in the .env files for clarity, but you should **never** commit them to your repository.
+
+**You must add these from your CI/CD environment**. For example, if you use Vercel, you can add them in the project settings.
+
+```
+# SUPABASE
+SUPABASE_SERVICE_ROLE_KEY=
+
+# STRIPE
+STRIPE_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+
+# EMAIL -
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+If you wish, you can safely add public or non-secret variables to your `.env.production` file for your production environment, such as your production site URL. This is fine.

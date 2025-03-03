@@ -1,0 +1,84 @@
+---
+status: "published"
+
+title: The technologies that make up a MakerKit application
+label: Technical Details
+order: 1
+description: 'MakerKit uses Next.js, Supabase, Tailwind CSS, Zod, React Query,
+Pino, Radix UI, Typescript and Cypress to build wonderful SaaS applications'
+canonical: '/docs/next-supabase/technical-details'
+---
+
+
+MakerKit is built primarily with Next.js, Supabase, and Tailwind CSS.
+
+Under the hood, there are many more libraries and architectural
+decisions you should know.
+
+### 1) A Scalable Next.js Application
+The codebase is entirely built with [Next.js](https://nextjs.org) using the experimental app directory and React Server Components.
+
+The front end is fully built with React, leveraging React Hooks
+and the best practices available today.
+
+### 2) Built on top of Supabase
+
+[Supabase](https://supabase.com) is an open source Firebase alternative,
+ a great choice for a backend for a SaaS application.
+
+MakerKit uses Supabase for Authentication, Database (Postgres) for storing data and Storage for storing files.
+
+This kit **does not use Prisma**. We use Supabase's own client library.
+
+### 3) Theme built with Tailwind CSS 3
+
+The bulk of the application's theme, built with [Tailwind CSS 3](https://tailwindcss.com/), is
+stored in three CSS files rather than HTML.
+
+It may sound like a bad practice, but we approached this way to help you find and edit
+the theme's CSS in one single place.
+
+We designed the theme in light and dark, so you can choose to use both according to your user's OS settings or manage it using a local cookie.
+
+### 4) Radix UI Components
+
+All the kits use [Radix UI](https://radix-ui.com), arguably the best headless UI library for React.
+
+The components are styled using Tailwind CSS. Many components are inspired by the template made by [Shad CN](https://ui.shadcn.com/). We recommend taking a look if you want to build your own components.
+
+Some components are still using Headless UI, but will be phased out in the future.
+
+### 5) Fully and Strictly Typed with Typescript
+
+We wrote every single line of code with *strictly-typed Typescript* both on the client and server side.
+
+### 6) Payload validation with Zod
+
+The API endpoints are **validated and protected with [Zod](https://github.com/colinhacks/zod)**, which also helps with strong-typing.
+
+### 7) E2E testing with Cypress
+
+We ship MakerKit with [Cypress](https://www.cypress.io/), likely the most
+popular E2E testing framework.
+
+We made lots of examples and utilities to change the tests as you develop
+your application.
+
+### 8) Linted with EsLint and formatted with Prettier
+
+We lint the codebase with **a very strict EsLint configuration**, but we distribute it with less strict params so that it won't be in your way as you're experimenting with the starter.
+
+We will show you how to add stricter parameters if that's your thing, but we do not recommend jumping head-in with it. It's much better to activate the stricter configuration once you have already shipped the product and are looking to stabilize it.
+
+Furthermore, the codebase is **formatted with Prettier** automatically.
+
+### 9) Logging with Pino
+
+MakerKit uses [Pino](https://github.com/pinojs/pino), a lightweight logging library.
+
+API errors are logged with just enough information to help you debug
+your API routes.
+
+### 10) SWR for data fetching and mutations
+
+MakerKit uses Vercel's SWR for data fetching and mutations when used from the client-side, which is in very few places, as we mostly use Server Actions.

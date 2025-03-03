@@ -1,0 +1,22 @@
+---
+status: "published"
+title: "Installation in Next.js Supabase Turbo"
+label: "Installation"
+order: 1
+description: "Installation in Next.js Supabase Turbo"
+collapsible: true
+collapsed: true
+---
+
+Hi, welcome to the installation guide for the Next.js Supabase SaaS Kit Turbo. This guide will help you set up your development environment and get started with the kit.
+
+In this section, we will cover:
+
+1. [Introduction](introduction): the second version of Makerkit
+2. [Technical Details](technical-details): the technical details of this kit
+3. [Conventions](conventions): some of the conventions used in this kit
+4. [Clone the Repository](clone-repository): cloning the repository
+5. [Running the Project](running-the-project): running the project
+6. [Common Commands](common-commands): some common commands to help you work with the project
+7. [Updating the Project](updating-codebase): how to update the codebase
+

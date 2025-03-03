@@ -1,0 +1,86 @@
+---
+status: "published"
+title: "Using Lemon Squeezy instead of Stripe in your Remix Supabase application"
+label: Using Lemon Squeezy instead of Stripe
+order: 4
+description: "How to use Lemon Squeezy instead of Stripe in your Remix Supabase application"
+---
+
+To use Lemon Squeezy instead of Stripe, you should use the branch `main-ls` to develop your SaaS.
+
+The Lemon Squeezy configuration is slightly different from the Stripe configuration as it accepts a variant ID instead of a price ID.
+
+```tsx
+subscriptions: {
+  plans: [
+    {
+      name: 'Basic',
+      description: 'Description of your Basic plan',
+      badge: `Up to 20 users`,
+      features: [
+        'Basic Reporting',
+        'Up to 20 users',
+        '1GB for each user',
+        'Chat Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$9',
+          variantID: '<your variant ID>',
+        },
+        {
+          name: 'Yearly',
+          price: '$90',
+           variantID: '<your variant ID>',
+        },
+      ],
+    },
+    {
+      name: 'Pro',
+      badge: `Most Popular`,
+      recommended: true,
+      description: 'Description of your Pro plan',
+      features: [
+        'Advanced Reporting',
+        'Up to 50 users',
+        '5GB for each user',
+        'Chat and Phone Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$29',
+           variantID: '<your variant ID>',
+        },
+        {
+          name: 'Yearly',
+          price: '$200',
+          variantID: '<your variant ID>',
+        },
+      ],
+    },
+    {
+      name: 'Premium',
+      description: 'Description of your Premium plan',
+      badge: ``,
+      features: [
+        'Advanced Reporting',
+        'Unlimited users',
+        '50GB for each user',
+        'Account Manager',
+      ],
+      plans: [
+        {
+          name: '',
+          price: 'Contact us',
+          label: `Contact us`,
+          href: `/contact`,
+        },
+      ],
+    },
+  ]
+}
+```
+
+Please refer to the [complete Lemon Squeezy documentation](/docs/next-supabase/lemon-squeezy) for more details.

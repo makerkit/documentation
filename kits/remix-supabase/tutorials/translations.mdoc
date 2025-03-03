@@ -1,0 +1,56 @@
+---
+status: "published"
+
+title: "Translations"
+label: "Translations"
+order: 18
+description: "Learn how to easily translate your Remix Firebase Makerkit SaaS into multiple languages with our guide. Optimize your app and reach a wider audience."
+---
+
+
+Most strings in the Makerkit template's application use `remix-i18next`, a
+library to translate your application into multiple languages. Thanks to
+this library, we can store all the application's text in `json` files for each supported language.
+
+For example, if you are serving your application in English and Spanish, you'd have the following files:
+
+- **English** translation files at `/public/locales/en/{file}.json`
+- **Spanish** translation files at `/public/locales/es/{file}.json`
+
+There are valid reasons to use translation files, even if you are not planning on translating your application, such as:
+
+1. it's easier to search and replace text
+2. tidier render functions
+3. easy update path if you do decide to support a new language
+
+### Adding new languages
+
+By default, Makerkit uses English for translating the website's text. All the files are stored in the files at `/public/locales/en`.
+
+Adding a new language is very simple:
+
+1. **Translation Files**: First, we need to create a new folder, such as `/public/locales/es`, and then copy over the files from the English version and start translating files.
+2. **Remix i18n config**: We need to also add a new language to the Remix
+configuration at `app/i18n/i18next.config.ts`. Simply add your new
+language's code to the `supportedLanguages` array.
+
+The configuration will look like the below:
+
+ ```js {% title="app/i18n/i18next.config.ts" %}
+const i18Config = {
+  fallbackLanguage: DEFAULT_LOCALE,
+  supportedLanguages: [DEFAULT_LOCALE, 'es'],
+  defaultNS: ['common', 'auth', 'organization', 'profile', 'subscription'],
+  react: { useSuspense: false },
+};
+```
+
+#### Setting the default Locale
+
+To set the default locale, simply update the environment variable `DEFAULT_LOCALE` stored in `.env`.
+
+So, open the `.env` file, and update the variable:
+
+ ```txt {% title=".env" %}
+DEFAULT_LOCALE=de
+```

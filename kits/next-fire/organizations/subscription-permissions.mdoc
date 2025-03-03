@@ -1,0 +1,186 @@
+---
+status: "published"
+title: Subscription Permissions | Next.js Firebase SaaS Kit
+label: Subscription Permissions
+order: 3
+description: "Learn how to gate access to certain features or pagess based
+on the organization's subscription"
+---
+
+Makerkit provides some utilities to retrieve the current organization's
+subscription: you can use these utilities to allow or gate access to
+specific features, pages, or to perform certain actions.
+
+1. On the client side, we can use the hook `useIsSubscriptionActive`
+2. On the server-side, we can use the functions
+`isOrganizationSubscriptionActive` and `getOrganizationSubscription`
+
+## Client Side Gating
+
+Let's assume we want to allow only users who belong to paying organizations to
+perform a certain action:
+
+ ```tsx {% title="src/lib/organizations/permissions.ts" %}
+function isAdmin(
+  role: MembershipRole
+) {
+  return role === MembershipRole.Admin;
+}
+```
+
+Now, combine this function with other conditions:
+
+ ```tsx {% title="src/lib/organizations/permissions.ts" %}
+export function useCreateNewThing(
+  userRole: MembershipRole,
+) {
+  const isPayingUser = useIsSubscriptionActive();
+
+  return isPayingUser && isAdmin(userRole);
+}
+```
+
+As you may know, I recommend adding all the permissions logic to the file
+`permissions.ts` (or similar files), and never inline it: this makes it easy to
+store logic in one single place rather than scattered across the
+application. 
+
+Inlining logic in our code will make it hard to track logic
+down and debugging it.
+
+Once defined out logic functions in `permissions.ts`, we can then use these
+in our components to hide the sections that users do
+not have access to:
+
+```tsx
+function Feature() {
+  const userRole = useCurrentUserRole();
+  const canCreateThing = useCreateNewThing(userRole);
+
+  if (!canCreateThing) {
+    return <div>Sorry, you do not have access to this feature. Subscribe?</div>
+  }
+
+  return <FeatureContainer />;
+}
+```
+
+### Firestore Rules
+
+Another essential thing to take into account is securing our Firestore
+rules using the organization's subscription.
+
+For example, let's assume your application requires organizations to be
+paying customers to write to a certain collection:
+
+```js
+function getOrganizationSubscription() {
+  let organization = getOrganization(organizationId);
+
+  return organization.subscription;
+}
+
+function isPayingOrganization(subscription) {
+  return subscription != null && (subscription.status == 'paid' || subscription.status == 'trialing');
+}
+
+function isProPlan(subscription) {
+  let organization = getOrganization(organizationId);
+
+  return subscription.stripePriceId == 'pro-plan-id';
+}
+
+function canWriteToCollection(organizationId) {
+  let subscription = getOrganizationSubscription();
+
+  return isPayingOrganization(subscription) && isProPlan(subscription);
+}
+
+match /organizations/{organizationId} {
+  match /tasks/{task} {
+    allow create: canWriteToCollection(organizationId);
+    allow list: if userIsMemberByOrganizationId(organizationId);
+  }
+}
+```
+
+## Server Side Gating
+
+When gating access on the server side, we can use two utilities that allow
+us to get the organization's subscription by its ID.
+
+### Using Firestore utilities
+
+When you need to check the user's subscription in your API functions, you can
+use the functions `isOrganizationSubscriptionActive` and
+`getOrganizationSubscription` exported from
+`src/lib/server/organizations/memberships.ts`.
+
+For example, let's assume we have an API handler that performs an action:
+
+```tsx
+export default function async apiHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const organization = req.cookies.organization;
+
+  const isSubscriptionActive =
+    await isOrganizationSubscriptionActive(organization);
+
+  if (!isSubscriptionActive) {
+    return throwForbiddenError();
+  }
+
+  // all good! perform action
+}
+```
+
+### Gating access to pages server-side
+
+For example, let's assume we want to gate access to a page if the
+`organization` is not on a paid plan. To do so, we can add some logic to
+`getServerSideProps`:
+
+```tsx
+import { withAppProps } from './with-app-props';
+import { Stripe } from "stripe";
+
+function GatedPage() {
+  return <div>...</div>;
+}
+
+export default GatedPage;
+
+export async function getServerSideProps(ctx) {
+  const appProps = await withAppProps(ctx);
+
+  // something wrong happened, user gets redirected either way
+  if ('redirect' in appProps) {
+    return appProps;
+  }
+
+  // get organization from subscription
+  const subscription = appProps.props.organization?.subscription;
+
+  // check the subscription exists and status is "active" or "trialing"
+  if (!subscription || !isSubscriptionActive(subscription.status)) {
+    return {
+      redirect: {
+        destination: '/dashboard?error=forbidden-subscription',
+      },
+    };
+  }
+
+  // all good, we can simply return the props
+  return appProps;
+}
+
+function isSubscriptionActive(status: Stripe.Subscription.Status) {
+  return ['active', 'trialing'].includes(status);
+}
+```
+
+Of course, in this case, you could extend `with-app-props` and make the
+above reusable for all the routes that require organizations to have
+additional permissions.

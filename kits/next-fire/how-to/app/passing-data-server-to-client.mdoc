@@ -1,0 +1,67 @@
+---
+status: "published"
+
+title: "Passing data from the server to the client in your Next.js Pages"
+label: Passing data from server to client
+order: 3
+description: "Being a server-side rendered app, we can pass data from the server to the client whenever the user visits the page. Here is how"
+---
+
+
+Passing data from the server to a client during SSR is a common task.
+
+In Makerkit, you can use the following pattern to pass data from the server to the client.
+
+1. We use `withAppProps` to initialize the data on the server and making the required checks.
+2. We augment the `props` property returned by `withAppProps` with the data we want to pass to the client.
+
+```tsx
+import { GetServerSidePropsContext } from "next";
+import { withAppProps } from '~/lib/props/with-app-props';
+
+type Data = {
+  // ...
+}
+
+function Page({ data }: { data: Data }) {
+  // you can use the data here
+}
+
+export async function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  const { props } = await withAppProps(ctx);
+
+  // We augment the props with the data we want
+  // to pass to the client
+  // replace the below with your own logic
+  const data = await getDataFromServer();
+
+  return {
+    props: {
+      ...props,
+      data,
+    }
+  };
+}
+```
+
+As you can see - we augment the `props` property returned by `withAppProps` with the data we want to pass to the client.
+
+The property `data` will then be available in the `props` property of the page component `Page`.
+
+```tsx
+type Data = {
+  // ...
+}
+
+interface PageParams {
+  data: Data
+}
+
+function Page({ data }: { data: Data }) {
+  // you can use the data here
+}
+
+export default Page;
+```

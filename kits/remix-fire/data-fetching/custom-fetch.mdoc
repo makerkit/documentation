@@ -1,0 +1,45 @@
+---
+status: "published"
+
+title: "Writing your own Fetch"
+label: "Writing your own Fetch"
+order: 5
+description: "Guide to writing your own fetch implementation"
+---
+
+
+By default, MakerKit uses a custom hook that wraps the browser's `fetch` to make it easier to use with React's components named `useApiRequest`. 
+
+Additionally, this custom hook automatically adds two headers for security reasons: 
+- `X-Firebase-AppCheck` - which is the token generated when using **Firebase AppCheck**
+- `x-csrf-token` - the page's CSRF token generated when the page is server-rendered. It's needed to protect the page from CSRF attacks.
+
+Since the `useApiRequest` hook is pretty basic, if you make complex queries to your API, you may want to use a more complete implementation such as `react-query` or `swc`. However, If you don't make complex queries, it can be unnecessary since most of your queries will be to Firestore, which uses its own client-side data-fetching method.
+
+To make these libraries seamlessly work with the API, you only need to consider the headers above if the API uses them to protect your application's endpoints.
+
+### Generating an App Check Token
+
+To generate an App Check token, you can use the `useGetAppCheckToken` hook:
+
+```tsx
+const getAppCheckToken = useGetAppCheckToken();
+const appCheckToken = await getAppCheckToken();
+
+console.log(appCheckToken) // token
+```
+
+You will need to send a header `X-Firebase-AppCheck` with the resolved value returned by the promise `getAppCheckToken()`.
+
+### Sending the CSRF Token
+
+To retrieve the page's CSRF token, you can use the `useGetCsrfToken` hook:
+
+```tsx
+const getCsrfToken = useGetCsrfToken();
+const csrfToken = getCsrfToken();
+
+console.log(csrfToken) // token
+```
+
+You will need to send a header `x-csrf-token` with the value returned by `getCsrfToken()`.

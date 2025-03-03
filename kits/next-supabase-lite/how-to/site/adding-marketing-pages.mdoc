@@ -1,0 +1,51 @@
+---
+status: "published"
+title: "Adding pages to the marketing site of your Makerkit Next.js Lite Supabase project"
+label: Adding Pages
+order: 3
+description: "Learn how to add new pages to the marketing site of your Makerkit Next.js Supabase Lite project."
+---
+
+To add a new page to the marketing site of your Next.js project, you can create a new page in the `src/app/(site)` directory.
+
+By "marketing site", we mean the public pages of your project, such as the homepage, the about page, the contact page, etc.
+
+{% alert type="warning" %}
+      Use the below code only for public pages accessible by everyone, such as the homepage, the about page, the contact
+      page, etc.
+
+{% /alert %}
+
+### Adding a new page to the marketing site
+
+As you know already, we can add pages to our Next.js App Router application by creating files within the `src/app` directory named as `page.tsx`.
+
+For example, if you want to add a page at `/about`, you can create a new file at `src/app/(site)/about/page.tsx` with the following content:
+
+ ```tsx {% title="src/app/(site)/about/page.tsx" %}
+function AboutPage() {
+  return <div>About page</div>;
+}
+
+export default AboutPage;
+```
+
+This page will **automatically inherit the site layout** from `src/app/(site)/layout.tsx` - which means it will already display the header and footer.
+
+#### I don't want to use the same layout though?
+
+If you don't want to use the site layout, create a route group inside `src/app`, and add your page there.
+
+### Adding a new page to the marketing site with translations
+
+If you have translations on your marketing site - to ensure the page is translated correctly server-side, we use the `withI18n` HOC:
+
+ ```tsx {% title="src/app/(site)/about/page.tsx" %}
+import { withI18n } from '~/i18n/with-i18n';
+
+function AboutPage() {
+  return <div>About page</div>;
+}
+
+export default withI18n(AboutPage);
+```

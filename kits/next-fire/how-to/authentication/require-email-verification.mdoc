@@ -1,0 +1,25 @@
+---
+status: "published"
+
+title: "How to require email verification"
+label: Require Email Verification
+order: 1
+description: "Learn how to require email verification for your users using the Firebase kit."
+---
+
+
+By default, Firebase does not enforce email verification. However, we added support for this feature in the Firebase kit by using server-side checks.
+
+### Can I require email verification for my users using the Firebase kit?
+
+**Yes** - you can.
+
+If you decide to enable this functionality, we will check server-side if the user has verified their email address before allowing them to view the protected pages.
+
+To enable this functionality, you need to set the environment variable `NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION` to `true` in your `.env` file.
+
+```tsx
+NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION=true
+```
+
+Feel free to add this variable to the chosen environment file (`.env.development`, `.env.production`, etc) or to the `.env` file if you want to enable it for all environments.

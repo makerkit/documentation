@@ -1,0 +1,155 @@
+---
+status: "published"
+title: "Supabase Clients in Next.js Supabase Turbo"
+label: "Supabase Clients"
+description: "Depending on whether you are running your code in the browser or on the server, you will need to use different clients to interact with Supabase."
+order: 0
+---
+
+Before diving into the various ways we can communicate with the server, we need to introduce how we communicate with Supabase, which is hosting the database and therefore the source of our data.
+
+## Using the Supabase client
+
+Depending on whether you are running your code in the browser or on the server, you will need to use different clients to interact with Supabase.
+
+### Using the Supabase client in the browser
+
+To import the Supabase client in a browser environment,  you can use the `useSupabase` hook:
+
+```tsx
+import { useSupabase } from '@kit/supabase/hooks/use-supabase';
+
+export default function Home() {
+  const supabase = useSupabase()
+
+  return (
+    <div>
+      <h1>Supabase Browser Client</h1>
+      <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
+    </div>
+  )
+}
+```
+
+### Using the Supabase client in a Server environment
+
+To import the Supabase client in a server environment, you can use the `getSupabaseServerClient` function, and you can do the same across all server environments like Server Actions, Route Handlers, and Server Components:
+
+```tsx
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+export async function myServerAction() {
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase.from('users').select('*')
+
+  return {
+    success: true,
+  };
+}
+```
+
+To use the Server Admin, e.g. an admin client with elevated privileges, you can use the `getSupabaseServerAdminClient` function:
+
+```tsx
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+
+export async function myServerAction() {
+  const supabase = getSupabaseServerAdminClient();
+
+  const { data, error } = await supabase.from('users').select('*')
+
+  return {
+    success: true,
+  };
+}
+```
+
+NB: The `getSupabaseServerAdminClient` function should only be used in server environments, as it requires the `SUPABASE_SERVICE_ROLE_KEY` environment variable to be set. Additionally, it should only be used in very exceptional cases, as it has elevated privileges. In most cases, please use the `getSupabaseServerClient` function.
+
+### DEPRECATED: Older Versions of the Kit
+
+NB: the below applies to older versions of the kit.
+
+In older versions of the kit, you may see different ways of importing the Supabase client. The code below will work, but please note that it is deprecated and will be removed in future versions of the kit.
+
+Depending on where your code runs, you may need to use different clients to interact with Supabase. This is due to how cookies are set differently in various parts of the Next.js application.
+
+You can use 4 different clients to interact with Supabase:
+
+1. **Browser** - This runs in the browser and is used to interact with Supabase from the client
+2. **Server Actions** - This runs in Server Actions and is used to interact with Supabase from the server
+3. **Route Handlers** - This runs in Route Handlers and is used to interact with Supabase from the server
+4. **Server Components** - This runs in Server Components and is used to interact with Supabase from the server
+
+## Browser
+
+To use the browser client, use the `useSupabase` hook:
+
+```tsx
+import { useSupabase } from '@kit/supabase/hooks/use-supabase';
+
+export default function Home() {
+  const supabase = useSupabase()
+
+  return (
+    <div>
+      <h1>Supabase Browser Client</h1>
+      <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
+    </div>
+  )
+}
+```
+
+## Server Actions
+
+To use the server actions client, use the `getSupabaseServerActionClient` hook:
+
+```tsx
+'use server';
+
+import { getSupabaseServerActionClient } from '@kit/supabase/server-actions-client';
+
+export async function myServerAction() {
+  const supabase = getSupabaseServerActionClient();
+
+  const { data, error } = await supabase.from('users').select('*')
+
+  return {
+    success: true,
+  };
+}
+```
+
+## Route Handlers
+
+To use the route handlers client, use the `getSupabaseRouteHandlerClient` function:
+
+```tsx
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseRouteHandlerClient } from '@kit/supabase/route-handlers-client';
+
+export async function POST(req: NextRequest) {
+  const supabase = getSupabaseRouteHandlerClient();
+
+  const { data, error } = await supabase.from('users').select('*')
+
+  return NextResponse.json({ data });
+}
+```
+
+## Server Components
+
+To use the server components client, use the `getSupabaseServerComponentClient` function:
+
+```tsx
+import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+
+export default async function TasksPage() {
+  const supabase = getSupabaseServerComponentClient();
+
+  const { data, error } = await supabase.from('users').select('*');
+
+  return <TasksList tasks={data} />
+}
+```

@@ -1,0 +1,109 @@
+---
+status: "published"
+
+title: "Fetching the signed in User"
+label:  "Fetching the signed in User"
+order: 0
+description: "Learn how to fetch the signed in user from the backend and frontend."
+---
+
+
+There are several ways to fetch the signed in user, depending on the use-case.
+
+## Fetching the signed in user from the backend
+
+To do so, use the function `requireSession`, which also takes care of redirecting the user to the login page if they are not signed in, and checking the correct MFA access level if the user opted in.
+
+You can use this function in:
+- API Routes
+- Server Actions
+- Server Components
+
+### Using "requireSession" in API Routes
+
+When using API routes, you can retrieve the signed in user using the `requireSession` function.
+
+```tsx
+import getSupabaseServerClient from '~/core/supabase/server-client';
+import requireSession from '~/lib/user/require-session.server';
+
+export async function POST() {
+  const client = getSupabaseServerClient();
+  const session = await requireSession(client);
+}
+```
+
+### Using "requireSession" in Loaders
+
+When using Remix Loaders, you can retrieve the signed in user using the `requireSession` function.
+
+```tsx
+import { LaaderFunctionArgs } from '@remix-run/node';
+
+import getSupabaseServerClient from '~/core/supabase/server-client';
+import requireSession from '~/lib/user/require-session.server';
+
+export async function loader(args: LaaderFunctionArgs) {
+  const client = getSupabaseServerClient();
+  const session = await requireSession(client);
+
+  // use session here
+}
+```
+
+### Using "requireSession" Actions
+
+You can use the `requireSession` function in Remix Actions to retrieve the signed in user.
+
+```tsx
+import { ActionFunctionArgs } from '@remix-run/node';
+
+export async function action(args: ActionFunctionArgs) {
+  const client = getSupabaseServerClient(args.request);
+  const session = await requireSession(client);
+
+  // use session here
+}
+```
+
+## Fetching the signed in user from the frontend
+
+When in the scope of the `_app` layout, the app automatically injects the user session in the context layout.
+
+This includes the user ID, email, and other authentication data, as well as the user's Supabase DB record.
+
+### Getting the user Session with "useUserSession"
+
+To retrieve the signed in user from the frontend, you can use the `useUserSession` hook:
+
+```tsx
+import useUserSession from '~/core/hooks/use-user-session';
+
+const userSession = useUserSession();
+```
+
+This is a React hook and can only be used inside a React component.
+
+### Getting the user ID with "useUserId"
+
+To retrieve the signed in user ID from the frontend, you can use the `useUserId` hook:
+
+```tsx
+import useUserId from '~/core/hooks/use-user-id';
+
+const userId = useUserId();
+```
+
+This is a React hook and can only be used inside a React component.
+
+### Getting the user role within the organization with "useUserRole"
+
+To retrieve the signed in user role of the current organization from the frontend, you can use the `useUserRole` hook:
+
+```tsx
+import useCurrentUserRole from '~/core/hooks/use-current-user-role';
+
+const role = useCurrentUserRole();
+```
+
+This is a React hook and can only be used inside a React component.

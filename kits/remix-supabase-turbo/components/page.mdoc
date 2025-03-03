@@ -1,0 +1,136 @@
+---
+status: "published"
+
+label: "Page"
+title: "Page Component in the Remix Supabase SaaS kit"
+description: "Learn how to use the Page component in the Remix Supabase SaaS kit"
+order: 5
+---
+
+
+The Page component is a versatile layout component that provides different page structures based on the specified style. It's designed to create consistent layouts across your application with support for sidebar and header-based designs.
+
+## Usage
+
+```jsx
+import { Page, PageNavigation, PageBody, PageHeader } from '@kit/ui/page';
+
+function MyPage() {
+  return (
+    <Page style="sidebar">
+      <PageNavigation>
+        {/* Navigation content */}
+      </PageNavigation>
+      <PageHeader title="Dashboard" description="Welcome to your dashboard">
+        {/* Optional header content */}
+      </PageHeader>
+      <PageBody>
+        {/* Main page content */}
+      </PageBody>
+    </Page>
+  );
+}
+```
+
+## Page Component Props
+
+- `style?: 'sidebar' | 'header' | 'custom'`: Determines the layout style (default: 'sidebar')
+- `contentContainerClassName?: string`: Custom class for the content container
+- `className?: string`: Additional classes for the main container
+- `sticky?: boolean`: Whether to make the header sticky (for 'header' style)
+
+## Sub-components
+
+### PageNavigation
+
+Wraps the navigation content, typically used within the Page component.
+
+### PageMobileNavigation
+
+Wraps the mobile navigation content, displayed only on smaller screens.
+
+### PageBody
+
+Contains the main content of the page.
+
+Props:
+- `className?: string`: Additional classes for the body container
+
+### PageHeader
+
+Displays the page title and description.
+
+Props:
+- `title?: string | React.ReactNode`: The page title
+- `description?: string | React.ReactNode`: The page description
+- `className?: string`: Additional classes for the header container
+
+### PageTitle
+
+Renders the main title of the page.
+
+### PageDescription
+
+Renders the description text below the page title.
+
+## Layout Styles
+
+### Sidebar Layout
+
+The default layout, featuring a sidebar navigation and main content area.
+
+### Header Layout
+
+A layout with a top navigation bar and content below.
+
+### Custom Layout
+
+Allows for complete custom layouts by directly rendering children.
+
+## Examples
+
+### Sidebar Layout
+
+```jsx
+<Page style="sidebar">
+  <PageNavigation>
+    <SidebarContent />
+  </PageNavigation>
+  <PageHeader title="Dashboard" description="Overview of your account">
+    <UserMenu />
+  </PageHeader>
+  <PageBody>
+    <DashboardContent />
+  </PageBody>
+</Page>
+```
+
+### Header Layout
+
+```jsx
+<Page style="header" sticky={true}>
+  <PageNavigation>
+    <HeaderNavLinks />
+  </PageNavigation>
+  <PageMobileNavigation>
+    <MobileMenu />
+  </PageMobileNavigation>
+  <PageBody>
+    <PageHeader title="Profile" description="Manage your account settings" />
+    <ProfileSettings />
+  </PageBody>
+</Page>
+```
+
+## Customization
+
+The Page component and its sub-components use Tailwind CSS classes for styling. You can further customize the appearance by passing additional classes through the `className` props or by modifying the default classes in the component implementation.
+
+## Best Practices
+
+1. Use consistent layout styles across similar pages for a cohesive user experience.
+2. Leverage the PageHeader component to provide clear page titles and descriptions.
+3. Utilize the PageNavigation and PageMobileNavigation components to create responsive navigation experiences.
+4. When using the 'custom' style, ensure you handle responsive behavior manually.
+
+The Page component and its related components provide a flexible system for creating structured, responsive layouts in your React application, promoting consistency and ease of maintenance across your project.

@@ -1,0 +1,155 @@
+---
+status: "published"
+title: "Sending emails with a Next.js Supabase SaaS application"
+label: Sending Emails
+order: 6
+---
+
+MakerKit uses the popular package `nodemailer` to allow you to send emails.
+
+Normally, **you would use a service for sending transactional emails** such as SendGrid, Mailjet, MailGun, Postmark, and so on.
+
+These are all valid, and it doesn't really matter what you use. In
+fact, as long as you provide the SMTP credentials for your service, you shouldn't be needing any other change.
+
+## Email Configuration
+
+To add your service's configuration, fill the environment variables in your production environment.
+
+This is best done from your Hosting provider's safe environment variables, or from your CI/CD pipeline.
+
+```tsx
+EMAIL_HOST=
+EMAIL_PORT=587
+EMAIL_USER=
+EMAIL_PASSWORD=
+EMAIL_SENDER='MakerKit Team <info@makerkit.dev>'
+```
+
+The details above are provided by the service you're using.
+
+**Note**: Some email providers don't like the `EMAIL_SENDER` format. If you're having issues, try using just the email address, such as `info@makerkit.dev`.
+
+{% alert type="warning" %}
+When running the emulators, by default, Makerkit uses InBucket for sending emails, and not your production service.
+  Read below for more info.
+{% /alert %}
+
+## Sending Emails
+
+To send emails, import and use the `sendEmail` function, such as below:
+
+```tsx
+interface SendEmailParams {
+  from: string;
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}
+
+import { sendEmail } from '~/core/email/send-email';
+
+function sendTransactionalEmail() {
+  const sender = configuration.email.senderAddress;
+
+  return sendEmail({
+    to: `youruser@email.com`,
+    from: sender,
+    subject: `Achievement Unlocked!`,
+    html: `Yay, you unlocked an achievement!`,
+  });
+}
+```
+
+## Using react.email to render emails
+
+Makerkit's newest versions use [react-email](https://react.email) to render emails: this is a great library that allows us to write emails using React components.
+
+By default, Makerkit's only email is the one sent when inviting members to a Makerkit application - but you can leverage this library to write your own emails for your application.
+
+For example, here's the code for the email sent when inviting members:
+
+ ```tsx {% title="src/lib/emails/invite.ts" %}
+interface Props {
+  organizationName: string;
+  organizationLogo?: string;
+  inviter: Maybe<string>;
+  invitedUserEmail: string;
+  link: string;
+  productName: string;
+}
+
+export default function renderInviteEmail(props: Props) {
+  const title = `You have been invited to join ${props.organizationName}`;
+
+  return render(
+    <Html>
+      <Head>
+        <title>{title}</title>
+      </Head>
+      <Preview>{title}</Preview>
+      <Body style={{ width: '500px', margin: '0 auto', font: 'helvetica' }}>
+        <EmailNavbar />
+        <Section style={{ width: '100%' }}>
+          <Column>
+            <Text>Hi,</Text>
+
+            <Text>
+              {props.inviter} with {props.organizationName} has invited you to
+              use {props.productName} to collaborate with them.
+            </Text>
+
+            <Text>
+              Use the button below to set up your account and get started:
+            </Text>
+          </Column>
+        </Section>
+
+        <Section>
+          <Column align="center">
+            <CallToActionButton href={props.link}>
+              Join {props.organizationName}
+            </CallToActionButton>
+          </Column>
+        </Section>
+
+        <Section>
+          <Column>
+            <Text>Welcome aboard,</Text>
+            <Text>The {props.productName} Team</Text>
+          </Column>
+        </Section>
+      </Body>
+    </Html>
+  );
+}
+```
+## Testing Emails locally
+
+Makerkit uses [InBucket](https://inbucket.org) - a platform to testing emails.
+
+InBucket saves time during development since we can test
+our emails without setting up a real SMTP service - and works locally and
+offline.
+
+InBucket runs automatically when starting the local Supabase environment.
+
+InBucket will now be running at [localhost:54324](http://localhost:54324). When we send an email using the
+`sendEmail` function in the kit, we can visualize it using the InBucket UI.
+
+InBucket is used by default during development. Instead, for production
+usage, you will need to set up a real SMTP service.
+
+#### Ethereal
+
+In previous versions Makerkit used Ethereal. If you are running an older version, please refer to the below.
+
+Makerkit used Ethereal to allow you testing your emails without using a real email account. To use Ethereal, you should add the following environment variables to your project, using a secure environment:
+
+```bash
+ETHEREAL_EMAIL=
+ETHEREAL_PASSWORD=
+```
+
+If not set, Makerkit will automatically create an account for you on-the-fly and print the credentials in the console. You can then use these credentials to log in to Ethereal and see your emails.

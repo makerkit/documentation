@@ -1,0 +1,394 @@
+---
+status: "published"
+
+title: "API Routes"
+label: "API Routes"
+order: 13
+description: "Learn how to create and manage API routes in your Next.js application."
+---
+
+Makerkit provides some utilities to reduce the boilerplate needed to write Next.js API functions. This section will teach you everything you need to know to write your API functions.
+
+As you may know, we write Next.js' API functions at `pages/api`. Therefore, every file listed in this folder becomes a callable HTTP function.
+
+For example, we can write the file `pages/api/hello-world.ts`:
+
+ ```tsx {% title="pages/api/hello-world.ts" %}
+export default function helloWorldHandler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  res.send(`Hello World`);
+}
+```
+
+This API endpoint will simply return `Hello World`.
+
+### Calling API functions from the client
+
+To make requests to the API functions in the `api` folder, we provide a
+custom hook `useApiRequest`, a wrapper around `fetch`.
+
+It has the following functionality:
+
+1. Uses an internal `state` to keep track of the state of the request, like
+`loading`, `error` and `success`. This helps you write fetch requests the
+"hooks way"
+2. Automatically adds a `Firebase AppCheck Token` to the request headers if you
+enabled Firebase AppCheck
+3. Automatically adds a `CSRF token` to the request headers
+
+Similarly to making Firestore Requests, it's a convention to create a custom
+hook for each request for readability/reusability reasons.
+
+ ```tsx {% title="src/core/hooks/use-create-session.ts" %}
+import useSWRMutation from "swr/mutation";
+import { useApiRequest } from '~/core/hooks/use-api';
+
+interface Body {
+  idToken: string;
+}
+
+export function useCreateSession() {
+  const endpoint = '/api/session/sign-in';
+  const fetcher = useApiRequest<void, Body>();
+
+  return useSWRMutation(endpoint, (path, { arg }: { arg: Body }) => {
+    return fetcher({
+      path,
+      body: arg,
+    });
+  });
+}
+```
+
+As you can see above, we're using SWR, a popular library for data fetching. We
+
+You can use this hook in your components:
+
+```tsx
+import { useCreateSession } from '~/core/hooks/use-create-session';
+
+function Component() {
+  const { trigger, error, isMutating, data } = useCreateSession();
+
+  return (
+    <>
+      { isMutating ? `Loading...` : null }
+      { error ? `Error :(` : null }
+      { data ? `Yay, success!` : null }
+
+      <SignInForm onSignIn={(idToken) => trigger({ idToken })} />
+    </>
+  );
+}
+```
+
+Similarly, you can also use it to fetch data. Below, is an example for fetching data using SWR:
+
+```tsx
+import type { User } from 'firebase/auth';
+import useSWR from 'swr';
+
+import { useApiRequest } from '~/core/hooks/use-api';
+
+/**
+ * @name useFetchOrganizationMembersMetadata
+ * @param organizationId
+ */
+export function useFetchOrganizationMembersMetadata(organizationId: string) {
+  const endpoint = getFetchMembersPath(organizationId);
+  const fetcher = useApiRequest<User[]>();
+
+  return useSWR(endpoint, (path) => {
+    return fetcher({ path, method: 'GET' });
+  });
+}
+
+function getFetchMembersPath(organizationId: string) {
+  return `/api/organizations/${organizationId}/members`;
+}
+```
+
+And below, we're using the hook in a component:
+
+```tsx
+import { Trans } from "next-i18next";
+import Alert from "~/core/ui/Alert";
+import LoadingMembersSpinner from "~/core/ui/LoadingMembersSpinner";
+
+function MembersListComponent() {
+  const {
+    data: members,
+    isLoading: loading,
+    error,
+  } = useFetchOrganizationMembersMetadata(organizationId);
+
+  if (loading) {
+    return (
+      <LoadingMembersSpinner>
+        <Trans i18nKey={'organization:loadingMembers'} />
+      </LoadingMembersSpinner>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert type={'error'}>
+        <Trans i18nKey={'organization:loadMembersError'} />
+      </Alert>
+    );
+  }
+
+  // display members using "members"
+  return <>...</>;
+}
+
+```
+
+#### Writing your own Fetch Hook
+
+You are free to use your own implementation for sending HTTP requests to your API or use a powerful third-party library.
+
+With that said, you need to ensure that you're sending the required headers:
+1. The AppCheck token (if you use Firebase AppCheck)
+2. The CSRF Token (for POST requests)
+
+##### Generating an App Check Token
+
+To generate an App Check token, you can use the `useGetAppCheckToken` hook:
+
+```tsx
+const getAppCheckToken = useGetAppCheckToken();
+const appCheckToken = await getAppCheckToken();
+
+console.log(appCheckToken) // token
+```
+
+You will need to send a header `X-Firebase-AppCheck` with the resolved value returned by the promise `getAppCheckToken()`.
+
+##### Sending the CSRF Token
+
+To retrieve the page's CSRF token, you can use the `useGetCsrfToken` hook:
+
+```tsx
+const getCsrfToken = useGetCsrfToken();
+const csrfToken = getCsrfToken();
+
+console.log(csrfToken) // token
+```
+
+You will need to send a header `x-csrf-token` with the value returned by `getCsrfToken()`.
+
+### Piping utilities
+
+Makerkit uses a dead-simple utility to pipe functions named `withPipe`. We can pass any `function` to this utility, which will iterate over its parameters and execute each.
+
+Each function must be a Next.js handler that accepts the `req` and `res` objects. Let's take a look at the below:
+
+```tsx
+import {NextApiRequest, NextApiResponse } from "next";
+
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withAppCheck } from '~/core/middleware/with-app-check';
+
+export default function members(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withMethodsGuard(['POST']),
+    withAuthedUser,
+    withAppCheck,
+    membersHandler
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+
+function membersHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // API logic
+}
+```
+
+What happens? We've passed 4 functions to the `withPipe` utility. The utility iterates over each of them. So it will execute `withMethodsGuard`, `withAuthedUser`, `withAppCheck`, and if everything went well during the checks, it will run the API logic we define in `membersHandler`.
+
+1. `withMethodsGuard` checks if the method passed is supported
+2. `withAuthedUser` checks if the user is authenticated
+3. `withAppCheck` executes a Firebase App Check validation to prevent abuse
+4. `membersHandler` is the actual logic of the API endpoint
+
+### API Authentication
+
+To validate that API functions are called by users authenticated with Firebase Auth, we use `withAuthedUser`.
+
+This function will:
+
+1. Initialize the Firebase Admin - this is always needed when using Firebase!
+2. Get the user using the `session` cookie
+3. Throw an error when not authenticated
+
+By using this function, **we ensure all the following functions will not be executed unless the user is authenticated**.
+
+```tsx
+import {NextApiRequest, NextApiResponse } from "next";
+import { withPipe } from "~/core/middleware/with-pipe";
+import { withAuthedUser } from "~/core/middleware/with-authed-user";
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function members(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    membersHandler
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+
+function membersHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // API logic
+}
+```
+
+### CSRF Token check
+
+We must pass a `CSRF token` when using POST requests to prevent malicious attacks. To do so, we use the pipe `withCsrfToken`.
+
+1. The CSRF token is generated when the page is server-rendered
+2. The CSRF token is stored in a `meta` tag
+3. The CSRF token is sent to an HTTP POST request automatically when using the `useApiRequest` hook
+4. This function will throw an error when the token is invalid
+
+By using this function, **we ensure all the following functions will not be executed unless the token is valid**.
+
+```tsx
+import { NextApiRequest, NextApiResponse } from "next";
+import { withPipe } from "~/core/middleware/with-pipe";
+import { withAuthedUser } from "~/core/middleware/with-authed-user";
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withCsrf } from '~/core/middleware/with-csrf';
+
+export default function members(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    withCsrf(),
+    membersHandler
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+
+function membersHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // API logic
+}
+```
+
+### Firebase App Check
+
+App Check is a Firebase service that helps you to protect your web app from
+bots, spammy users, and general abuse detected by Google's Recaptcha.
+
+[Check out the documentation to setup Firebase App Check](/docs/next-fire/app-check).
+
+Using the `withAppCheck` pipe, **we ensure all the following functions will not be executed unless the App Check token is valid**.
+
+```tsx
+import {NextApiRequest, NextApiResponse } from "next";
+import { withPipe } from "~/core/middleware/with-pipe";
+import { withAuthedUser } from "~/core/middleware/with-authed-user";
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withCsrf } from '~/core/middleware/with-csrf';
+
+export default function members(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    withCsrf(),
+    membersHandler
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+
+function membersHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // API logic
+}
+```
+
+### Catching and Handling Exceptions
+
+To catch and gracefully handle API exceptions, we use the function `withExceptionFilter`.
+
+As seen from its usage above, we wrap the API function within the utility. When errors are caught, this function will:
+
+1. Log and debug the error to the console
+2. Report the error to Sentry (if configured)
+3. Return an object stripping the error's data to avoid leaking information
+
+### API Logging
+
+The boilerplate uses `Pino` for API logging, a lightweight logging utility for Node.js.
+
+Logging is necessary to debug your applications and understand what happens when things don't behave as expected. You will find various instances of logging throughout the API, but we encourage you to log more if necessary.
+
+We import the logging utility from `~/core/logger`.
+
+Typically, you can log every time you perform an action, both before and after.
+
+For example:
+
+```tsx
+import logger from '~/core/logger';
+
+async function myFunction(params: {
+  organizationId: string;
+  userId: string;
+}) {
+  logger.info(
+    {
+      organizationId: params.organizationId,
+      userId: params.userId,
+    },
+    `Performing action...`
+  );
+
+  await performAction();
+
+  logger.info(
+    {
+      organizationId: params.organizationId,
+      userId: params.userId,
+    },
+    `Action successful`
+  );
+}
+
+async function performAction() {
+  // do something complex here
+}
+```
+
+It's always important to add context to your logs: as you can see, we use the first parameter to add important information.

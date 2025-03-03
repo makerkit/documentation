@@ -1,0 +1,919 @@
+---
+status: "published"
+title: 'Creating an Onboarding and Checkout flows'
+label: 'Onboarding Checkout'
+order: 2
+description: 'Learn how to create an onboarding and checkout flow in the Next.js Supabase Starter Kit.'
+---
+
+One popular request from customers is to have a way to onboard new users and guide them through the app, and have customers checkout before they can use the app.
+
+In this guide, we'll show you how to create an onboarding and checkout flow in the Next.js Supabase Starter Kit.
+
+In this guide, we will cover:
+
+1. Creating an onboarding flow when a user signs up.
+2. Creating a multi-step form to have customers create a new Team Account
+3. Creating a checkout flow to have customers pay before they can use the app.
+4. Use Webhooks to update the user's record after they have paid.
+
+Remember: you can customize the onboarding and checkout flow to fit your app's needs. This is a starting point, and you can build on top of it.
+
+NB: **please make sure you have pullest the latest changes from the main branch before you start this guide.**
+
+## Step 0: Adding an Onboarding Table
+
+Before we create the onboarding flow, let's add a new table to store the onboarding data.
+
+Create a new migration using the following command:
+
+```bash
+pnpm --filter web supabase migration new onboarding
+```
+
+This will create a new migration file at `apps/web/supabase/migrations/<timestamp>_onboarding.sql`. Open this file and add the following SQL code:
+
+ ```sql {% title="apps/web/supabase/migrations/<timestamp>_onboarding.sql" %}
+create table if not exists public.onboarding (
+  id uuid primary key default uuid_generate_v4(),
+  account_id uuid references public.accounts(id) not null unique,
+  data jsonb default '{}',
+  completed boolean default false,
+  created_at timestamp with time zone default current_timestamp,
+  updated_at timestamp with time zone default current_timestamp
+);
+
+revoke all on public.onboarding from public, service_role;
+
+grant select, update, insert on public.onboarding to authenticated;
+grant select, delete on public.onboarding to service_role;
+
+alter table onboarding enable row level security;
+
+create policy read_onboarding
+    on public.onboarding
+    for select
+    to authenticated
+    using (account_id = (select auth.uid()));
+
+create policy insert_onboarding
+    on public.onboarding
+    for insert
+    to authenticated
+    with check (account_id = (select auth.uid()));
+
+create policy update_onboarding
+    on public.onboarding
+    for update
+    to authenticated
+    using (account_id = (select auth.uid()))
+    with check (account_id = (select auth.uid()));
+```
+
+This migration creates a new `onboarding` table with the following columns:
+- `id`: A unique identifier for the onboarding record.
+- `account_id`: A foreign key reference to the `accounts` table.
+- `data`: A JSONB column to store the onboarding data.
+- `completed`: A boolean flag to indicate if the onboarding is completed.
+- `created_at` and `updated_at`: Timestamps for when the record was created and updated.
+
+The migration also sets up row-level security policies to ensure that users can only access their own onboarding records.
+
+Update your DB schema by running the following command:
+
+```bash
+pnpm run supabase:web:reset
+```
+
+And update your DB types by running the following command:
+
+```bash
+pnpm run supabase:web:typegen
+```
+
+Now that we have the `onboarding` table set up, let's create the onboarding flow.
+
+## Step 1: Create the Onboarding Page
+
+First, let's create the main onboarding page. This will be the entry point for our onboarding flow.
+
+Create a new file at `apps/web/app/onboarding/page.tsx`:
+
+ ```tsx {% title="apps/web/app/onboarding/page.tsx" %}
+import { AppLogo } from '~/components/app-logo';
+import { OnboardingForm } from './_components/onboarding-form';
+
+function OnboardingPage() {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center space-y-16">
+      <AppLogo />
+
+      <div>
+        <OnboardingForm />
+      </div>
+    </div>
+  );
+}
+
+export default OnboardingPage;
+```
+
+This page is simple. It displays your app logo and the `OnboardingForm` component, which we'll create next.
+
+## Step 2: Create the Onboarding Form Schema
+
+Before we create the form, let's define its schema. This will help us validate the form data.
+
+Create a new file at `apps/web/app/onboarding/_lib/onboarding-form.schema.ts`:
+
+ ```typescript {% title="apps/web/app/onboarding/_lib/onboarding-form.schema.ts" %}
+import { z } from 'zod';
+
+export const OnboardingFormSchema = z.object({
+  profile: z.object({
+    name: z.string().min(1).max(255),
+  }),
+  team: z.object({
+    name: z.string().min(1).max(255),
+  }),
+  checkout: z.object({
+    planId: z.string().min(1),
+    productId: z.string().min(1),
+  }),
+});
+```
+
+This schema defines the structure of our onboarding form. It has three main sections: profile, team, and checkout.
+
+## Step 3: Create the Onboarding Form Component
+
+Now, let's create the main `OnboardingForm` component. This is where the magic happens!
+
+Create a new file at `apps/web/app/onboarding/_components/onboarding-form.tsx`:
+
+ ```tsx {% title="apps/web/app/onboarding/_components/onboarding-form.tsx" %}
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
+
+import { createPortal } from 'react-dom';
+
+import dynamic from 'next/dynamic';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { PlanPicker } from '@kit/billing-gateway/components';
+import { Button } from '@kit/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@kit/ui/form';
+import { If } from '@kit/ui/if';
+import { Input } from '@kit/ui/input';
+import {
+  MultiStepForm,
+  MultiStepFormContextProvider,
+  MultiStepFormHeader,
+  MultiStepFormStep,
+  useMultiStepFormContext,
+} from '@kit/ui/multi-step-form';
+import { Stepper } from '@kit/ui/stepper';
+
+import billingConfig from '~/config/billing.config';
+import { OnboardingFormSchema } from '~/onboarding/_lib/onboarding-form.schema';
+import { submitOnboardingFormAction } from '~/onboarding/_lib/server/server-actions';
+
+const EmbeddedCheckout = dynamic(
+  async () => {
+    const { EmbeddedCheckout } = await import('@kit/billing-gateway/checkout');
+
+    return {
+      default: EmbeddedCheckout,
+    };
+  },
+  {
+    ssr: false,
+  },
+);
+
+export function OnboardingForm() {
+  const [checkoutToken, setCheckoutToken] = useState<string | undefined>(
+    undefined,
+  );
+
+  const form = useForm({
+    resolver: zodResolver(OnboardingFormSchema),
+    defaultValues: {
+      profile: {
+        name: '',
+      },
+      team: {
+        name: '',
+      },
+      checkout: {
+        planId: '',
+        productId: '',
+      },
+    },
+    mode: 'onBlur',
+  });
+
+  const onSubmit = useCallback(
+    async (data: z.infer<typeof OnboardingFormSchema>) => {
+      try {
+        const { checkoutToken } = await submitOnboardingFormAction(data);
+
+        setCheckoutToken(checkoutToken);
+      } catch (error) {
+        console.error('Failed to submit form:', error);
+      }
+    },
+    [],
+  );
+
+  const checkoutPortalRef = useRef<HTMLDivElement>(null);
+
+  if (checkoutToken) {
+    return (
+      <EmbeddedCheckout
+        checkoutToken={checkoutToken}
+        provider={billingConfig.provider}
+        onClose={() => setCheckoutToken(undefined)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={
+        'w-full rounded-lg p-8 shadow-sm duration-500 animate-in fade-in-90 zoom-in-95 slide-in-from-bottom-12 lg:border'
+      }
+    >
+      <MultiStepForm
+        className={'space-y-8 p-1'}
+        schema={OnboardingFormSchema}
+        form={form}
+        onSubmit={onSubmit}
+      >
+        <MultiStepFormHeader>
+          <MultiStepFormContextProvider>
+            {({ currentStepIndex }) => (
+              <Stepper
+                variant={'numbers'}
+                steps={['Profile', 'Team', 'Complete']}
+                currentStep={currentStepIndex}
+              />
+            )}
+          </MultiStepFormContextProvider>
+        </MultiStepFormHeader>
+
+        <MultiStepFormStep name={'profile'}>
+          <ProfileStep />
+        </MultiStepFormStep>
+
+        <MultiStepFormStep name={'team'}>
+          <TeamStep />
+        </MultiStepFormStep>
+
+        <MultiStepFormStep name={'checkout'}>
+          <If condition={checkoutPortalRef.current}>
+            {(portalRef) => createPortal(<CheckoutStep />, portalRef)}
+          </If>
+        </MultiStepFormStep>
+      </MultiStepForm>
+
+      <div className={'p-1'} ref={checkoutPortalRef}></div>
+    </div>
+  );
+}
+
+function ProfileStep() {
+  const { nextStep, form } = useMultiStepFormContext();
+
+  return (
+    <Form {...form}>
+      <div className={'flex flex-col space-y-6'}>
+        <div className={'flex flex-col space-y-2'}>
+          <h1 className={'text-xl font-semibold'}>Welcome to Makerkit</h1>
+
+          <p className={'text-sm text-muted-foreground'}>
+            Welcome to the onboarding process! Let&apos;s get started by
+            entering your name.
+          </p>
+        </div>
+
+        <FormField
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <FormLabel>Your Name</FormLabel>
+
+                <FormControl>
+                  <Input {...field} placeholder={'Name'} />
+                </FormControl>
+
+                <FormDescription>Enter your full name here</FormDescription>
+              </FormItem>
+            );
+          }}
+          name={'profile.name'}
+        />
+
+        <div className={'flex justify-end'}>
+          <Button onClick={nextStep}>Continue</Button>
+        </div>
+      </div>
+    </Form>
+  );
+}
+
+function TeamStep() {
+  const { nextStep, prevStep, form } = useMultiStepFormContext();
+
+  return (
+    <Form {...form}>
+      <div className={'flex w-full flex-col space-y-6'}>
+        <div className={'flex flex-col space-y-2'}>
+          <h1 className={'text-xl font-semibold'}>Create Your Team</h1>
+
+          <p className={'text-sm text-muted-foreground'}>
+            Let&apos;s create your team. Enter your team name below.
+          </p>
+        </div>
+
+        <FormField
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <FormLabel>Your Team Name</FormLabel>
+
+                <FormControl>
+                  <Input {...field} placeholder={'Name'} />
+                </FormControl>
+
+                <FormDescription>
+                  This is the name of your team.
+                </FormDescription>
+              </FormItem>
+            );
+          }}
+          name={'team.name'}
+        />
+
+        <div className={'flex justify-end space-x-2'}>
+          <Button variant={'ghost'} onClick={prevStep}>
+            Go Back
+          </Button>
+
+          <Button onClick={nextStep}>Continue</Button>
+        </div>
+      </div>
+    </Form>
+  );
+}
+
+function CheckoutStep() {
+  const { form, mutation } = useMultiStepFormContext();
+
+  return (
+    <Form {...form}>
+      <div className={'flex w-full flex-col space-y-6 lg:min-w-[55rem]'}>
+        <div className={'flex flex-col space-y-2'}>
+          <PlanPicker
+            pending={mutation.isPending}
+            config={billingConfig}
+            onSubmit={({ planId, productId }) => {
+              form.setValue('checkout.planId', planId);
+              form.setValue('checkout.productId', productId);
+
+              mutation.mutate();
+            }}
+          />
+        </div>
+      </div>
+    </Form>
+  );
+}
+```
+
+This component creates a multi-step form for the onboarding process. It includes steps for profile information, team creation, and plan selection.
+
+## Step 4: Create the Server Action
+
+Now, let's create the server action that will handle the form submission.
+
+Create a new file at `apps/web/app/onboarding/_lib/server/server-actions.ts`:
+
+ ```typescript {% title="apps/web/app/onboarding/_lib/server/server-actions.ts" %}
+'use server';
+
+import { redirect } from 'next/navigation';
+
+import { createBillingGatewayService } from '@kit/billing-gateway';
+import { enhanceAction } from '@kit/next/actions';
+import { getLogger } from '@kit/shared/logger';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+import appConfig from '~/config/app.config';
+import billingConfig from '~/config/billing.config';
+import pathsConfig from '~/config/paths.config';
+import { OnboardingFormSchema } from '~/onboarding/_lib/onboarding-form.schema';
+
+export const submitOnboardingFormAction = enhanceAction(
+  async (data, user) => {
+    const logger = await getLogger();
+
+    logger.info({ userId: user.id }, `Submitting onboarding form...`);
+
+    const isOnboarded = user.app_metadata.onboarded === true;
+
+    if (isOnboarded) {
+      logger.info(
+        { userId: user.id },
+        `User is already onboarded. Redirecting...`,
+      );
+
+      redirect(pathsConfig.app.home);
+    }
+
+    const client = getSupabaseServerClient();
+
+    const createTeamResponse = await client
+      .from('accounts')
+      .insert({
+        name: data.team.name,
+        primary_owner_user_id: user.id,
+        is_personal_account: false,
+      })
+      .select('id')
+      .single();
+
+    if (createTeamResponse.error) {
+      logger.error(
+        {
+          error: createTeamResponse.error,
+        },
+        `Failed to create team`,
+      );
+
+      throw createTeamResponse.error;
+    } else {
+        logger.info(
+            { userId: user.id, teamId: createTeamResponse.data.id },
+            `Team created. Creating onboarding data...`,
+        );
+    }
+
+    const response = await client.from('onboarding').upsert(
+      {
+        account_id: user.id,
+        data: {
+          userName: data.profile.name,
+          teamAccountId: createTeamResponse.data.id,
+        },
+        completed: true,
+      },
+      {
+        onConflict: 'account_id',
+      },
+    );
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    logger.info(
+      { userId: user.id, teamId: createTeamResponse.data.id },
+      `Onboarding data created. Creating checkout session...`,
+    );
+
+    const billingService = createBillingGatewayService(billingConfig.provider);
+
+    const { plan } = getPlanDetails(
+      data.checkout.productId,
+      data.checkout.planId,
+    );
+
+    const returnUrl = new URL('/onboarding/complete', appConfig.url).href;
+
+    const checkoutSession = await billingService.createCheckoutSession({
+      returnUrl,
+      customerEmail: user.email,
+      accountId: createTeamResponse.data.id,
+      plan,
+      variantQuantities: [],
+      metadata: {
+        source: 'onboarding',
+        userId: user.id,
+      },
+    });
+
+    return {
+      checkoutToken: checkoutSession.checkoutToken,
+    };
+  },
+  {
+    auth: true,
+    schema: OnboardingFormSchema,
+  },
+);
+
+function getPlanDetails(productId: string, planId: string) {
+  const product = billingConfig.products.find(
+    (product) => product.id === productId,
+  );
+
+  if (!product) {
+    throw new Error('Product not found');
+  }
+
+  const plan = product?.plans.find((plan) => plan.id === planId);
+
+  if (!plan) {
+    throw new Error('Plan not found');
+  }
+
+  return { plan, product };
+}
+```
+
+This server action handles the form submission, inserts the onboarding data into Supabase, create a team (so we can assign it a subscription), and creates a checkout session for the selected plan.
+
+Once the checkout is completed, the user will be redirected to the `/onboarding/complete` page. This page will be created in the next step.
+
+## Step 6: Enhancing the Stripe Webhook Handler
+
+This change extends the functionality of the Stripe webhook handler to complete the onboarding process after a successful checkout. Here's what's happening:
+
+In the `handleCheckoutSessionCompleted` method, we add new logic to handle onboarding-specific actions.
+
+First, define the `completeOnboarding` function to process the onboarding data and create a team based on the user's input.
+
+NB: this is valid for Stripe, but you can adapt it to any other payment provider.
+
+ ```typescript {% title="packages/billing/stripe/src/services/stripe-webhook-handler.service.ts" %}
+async function completeOnboarding(accountId: string) {
+  const logger = await getLogger();
+  const adminClient = getSupabaseServerAdminClient();
+
+  logger.info(
+    { accountId },
+    `Checkout comes from onboarding. Processing onboarding data...`,
+  );
+
+  const onboarding = await adminClient
+    .from('onboarding')
+    .select('*')
+    .eq('account_id', accountId)
+    .single();
+
+  if (onboarding.error) {
+    logger.error(
+      { error: onboarding.error, accountId },
+      `Failed to retrieve onboarding data`,
+    );
+
+    // if there's an error, we can't continue
+    return;
+  } else {
+    logger.info({ accountId }, `Onboarding data retrieved. Processing...`);
+
+    const data = onboarding.data.data as {
+      userName: string;
+      teamAccountId: string;
+    };
+
+    const teamAccountId = data.teamAccountId;
+
+    logger.info(
+      { userId: accountId, teamAccountId },
+      `Assigning membership...`,
+    );
+
+    const assignMembershipResponse = await adminClient
+      .from('accounts_memberships')
+      .insert({
+        account_id: teamAccountId,
+        user_id: accountId,
+        account_role: 'owner',
+      });
+
+    if (assignMembershipResponse.error) {
+      logger.error(
+        {
+          error: assignMembershipResponse.error,
+        },
+        `Failed to assign membership`,
+      );
+    } else {
+      logger.info({ accountId }, `Membership assigned. Updating account...`);
+    }
+
+    const accountResponse = await adminClient
+      .from('accounts')
+      .update({
+        name: data.userName,
+      })
+      .eq('id', accountId);
+
+    if (accountResponse.error) {
+      logger.error(
+        {
+          error: accountResponse.error,
+        },
+        `Failed to update account`,
+      );
+    } else {
+      logger.info(
+        { accountId },
+        `Account updated. Cleaning up onboarding data...`,
+      );
+    }
+
+    // set onboarded flag on user account
+    const updateUserResponse = await adminClient.auth.admin.updateUserById(
+      accountId,
+      {
+        app_metadata: {
+          onboarded: true,
+        },
+      },
+    );
+
+    if (updateUserResponse.error) {
+      logger.error(
+        {
+          error: updateUserResponse.error,
+        },
+        `Failed to update user`,
+      );
+    } else {
+      logger.info({ accountId }, `User updated. Cleaning up...`);
+    }
+
+    // clean up onboarding data
+    const deleteOnboardingResponse = await adminClient
+      .from('onboarding')
+      .delete()
+      .eq('account_id', accountId);
+
+    if (deleteOnboardingResponse.error) {
+      logger.error(
+        {
+          error: deleteOnboardingResponse.error,
+        },
+        `Failed to delete onboarding data`,
+      );
+    } else {
+      logger.info(
+        { accountId },
+        `Onboarding data cleaned up. Completed webhook handler.`,
+      );
+    }
+  }
+}
+```
+
+Now, we handle this function in the `handleCheckoutSessionCompleted` method, right before the `onCheckoutCompletedCallback` is called.
+
+ ```typescript {% title="packages/billing/stripe/src/services/stripe-webhook-handler.service.ts" %}
+// ...
+
+const subscriptionData =
+  await stripe.subscriptions.retrieve(subscriptionId);
+
+const metadata = subscriptionData.metadata as {
+  source: string;
+  userId: string;
+} | undefined;
+
+// if the checkout comes from onboarding
+// we need to complete the onboarding process
+if (metadata?.source === 'onboarding') {
+  const userId = metadata.userId;
+
+  await completeOnboarding(userId);
+}
+
+return onCheckoutCompletedCallback(payload);
+```
+
+This enhanced webhook handler completes the onboarding process by creating a team account, updating the user's personal account, and marking the user as "onboarded" in their Supabase user metadata.
+
+## Step 7: Handling the Onboarding Completion Page
+
+The checkout will rediret to the `/onboarding/complete` page after the onboarding process is completed. This is because there is no telling when the webhook will be triggered.
+
+In this page, we will start fetching the user data and verify if the user has been onboarded.
+
+If the user has been onboarded correctly, we will redirect the user to the `/home` page. If not, we will show a loading spinner and keep checking the user's onboarded status until it is true.
+
+ ```tsx {% title="/apps/web/app/onboarding/complete/page.tsx" %}
+'use client';
+
+import { useRef } from 'react';
+
+import { useQuery } from '@tanstack/react-query';
+
+import { useSupabase } from '@kit/supabase/hooks/use-supabase';
+import { LoadingOverlay } from '@kit/ui/loading-overlay';
+
+import pathsConfig from '~/config/paths.config';
+
+export default function OnboardingCompletePage() {
+  const { error } = useCheckUserOnboarded();
+
+  if (error) {
+    return (
+      <div className={'flex flex-col items-center justify-center'}>
+        <p>Something went wrong...</p>
+      </div>
+    );
+  }
+
+  return <LoadingOverlay>Setting up your account...</LoadingOverlay>;
+}
+
+/**
+ * @description
+ * This function checks if the user is onboarded
+ * If the user is onboarded, it redirects them to the home page
+ * it retries every second until the user is onboarded
+ */
+function useCheckUserOnboarded() {
+  const client = useSupabase();
+  const countRef = useRef(0);
+  const maxCount = 10;
+  const error = countRef.current >= maxCount;
+
+  useQuery({
+    queryKey: ['onboarding-complete'],
+    refetchInterval: () => (error ? false : 1000),
+    queryFn: async () => {
+      if (error) {
+        return false;
+      }
+
+      countRef.current++;
+
+      const response = await client.auth.getUser();
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      const onboarded = response.data.user.app_metadata.onboarded;
+
+      // if the user is onboarded, redirect them to the home page
+      if (onboarded) {
+        return window.location.assign(pathsConfig.app.home);
+      }
+
+      return false;
+    },
+  });
+
+  return {
+    error,
+  };
+}
+```
+
+This page
+
+## What This Means for Your Onboarding Flow
+
+With these changes, your onboarding process now includes these additional steps:
+
+1. When a user completes the checkout during onboarding, it triggers this enhanced webhook handler.
+2. The handler retrieves the onboarding data that was saved earlier in the process.
+3. It creates a new team account with the name provided during onboarding.
+4. It updates the user's personal account with their name.
+5. Finally, it marks the user as "onboarded" in their Supabase user metadata.
+
+This completes the onboarding process, ensuring that all the information collected during onboarding is properly saved and the user's account is fully set up.
+
+## Step 8: Update Your App's Routing
+
+To integrate this onboarding flow into your app, you'll need to update your routing logic.
+
+We can do this in the middleware, in the logic branch that handles the `/home` route. If the user is not logged in, we'll redirect them to the sign-in page. If the user is logged in but has not completed onboarding, we'll redirect them to the onboarding flow.
+
+Update the `apps/web/app/middleware.ts` file:
+
+ ```typescript {% title="apps/web/app/middleware.ts" %}
+{
+  pattern: new URLPattern({ pathname: '/home/*?' }),
+  handler: async (req: NextRequest, res: NextResponse) => {
+    const {
+      data: { user },
+    } = await getUser(req, res);
+
+    const origin = req.nextUrl.origin;
+    const next = req.nextUrl.pathname;
+
+    // If user is not logged in, redirect to sign in page.
+    if (!user) {
+      const signIn = pathsConfig.auth.signIn;
+      const redirectPath = `${signIn}?next=${next}`;
+
+      return NextResponse.redirect(new URL(redirectPath, origin).href);
+    }
+
+    // verify if user has completed onboarding
+    const isOnboarded = user?.app_metadata.onboarded;
+
+    // If user is logged in but has not completed onboarding,
+    if (!isOnboarded) {
+      return NextResponse.redirect(new URL('/onboarding', origin).href);
+    }
+
+    const supabase = createMiddlewareClient(req, res);
+
+    const requiresMultiFactorAuthentication =
+      await checkRequiresMultiFactorAuthentication(supabase);
+
+    // If user requires multi-factor authentication, redirect to MFA page.
+    if (requiresMultiFactorAuthentication) {
+      return NextResponse.redirect(
+        new URL(pathsConfig.auth.verifyMfa, origin).href,
+      );
+    }
+  },
+}
+```
+
+This code checks if the user is logged in and has completed onboarding. If the user has not completed onboarding, they are redirected to the onboarding flow.
+
+Also add the following pattern to make sure the user is authenticated when visiting the `/onboarding` route:
+
+```typescript {% title="apps/web/app/middleware.ts" %}
+{
+  pattern: new URLPattern({ pathname: '/onboarding/*?' }),
+  handler: async (req: NextRequest, res: NextResponse) => {
+    const {
+      data: { user },
+    } = await getUser(req, res);
+
+    // If user is not logged in, redirect to sign in page.
+    if (!user) {
+      const signIn = pathsConfig.auth.signIn;
+      const redirectPath = `${signIn}?next=${next}`;
+
+      return NextResponse.redirect(new URL(redirectPath, origin).href);
+    }
+
+    const supabase = createMiddlewareClient(req, res);
+
+    const requiresMultiFactorAuthentication =
+      await checkRequiresMultiFactorAuthentication(supabase);
+
+    // If user requires multi-factor authentication, redirect to MFA page.
+    if (requiresMultiFactorAuthentication) {
+      return NextResponse.redirect(
+        new URL(pathsConfig.auth.verifyMfa, origin).href,
+      );
+    }
+  },
+}
+```
+
+### Marking invited users as onboarded
+
+When a user gets invited to a team account, you don't want to show them the onboarding flow again. You can use the `onboarded` property to mark the user as onboarded.
+
+Update the `packages/features/team-accounts/src/server/actions/team-invitations-server-actions.ts` server action `acceptInvitationAction` at line 125 (eg. before increasing seats):
+
+```tsx
+// mark user as onboarded
+await adminClient.auth.admin.updateUserById(user.id, {
+  app_metadata: {
+    onboarded: true,
+  },
+});
+```
+
+In this way, the user will be redirected to the `/home` page after accepting the invite.
+
+### Considerations
+
+Remember, the user can always unsubscribe from the plan they selected during onboarding. You should handle this case in your billing system if your app always requires a plan to be active.
+
+## Conclusion
+
+That's it! You've now added an onboarding flow to your Makerkit Next.js Supabase Turbo project.
+
+This flow includes:
+
+1. A profile information step
+2. A team creation step
+3. A plan selection step
+4. Integration with your billing system
+
+Remember to style your components, handle errors gracefully, and test thoroughly. Happy coding! 🚀

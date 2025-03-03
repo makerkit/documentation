@@ -1,0 +1,101 @@
+---
+status: "published"
+label: "Adding a Turborepo package"
+title: "Add a new Turborepo package to your Makerkit application"
+description: "Learn how to add a new Turborepo package to your Makerkit application"
+order: 11
+---
+
+This is an **advanced topic** - you should only follow these instructions if you are sure you want to add a new package to your Makerkit application instead of adding a folder to your application in `apps/web`. You don't need to do this to add a new page or component to your application.
+
+---
+
+To add a new package to your Makerkit application, you need to follow these steps.
+
+First, enter the command below to create a new package in your Makerkit application:
+
+```bash
+turbo gen
+```
+
+Turborepo will ask you to enter the name of the package you want to create. Enter the name of the package you want to create and press enter.
+
+If you don't want to add dependencies to your package, you can skip this step by pressing enter.
+
+The command will have generated a new package under `packages` named `@kit/<package-name>`. If you named it `my-package`, the package will be named `@kit/my-package`.
+
+Finally, to make fast refresh work when you make changes to the package, you need to add the package to the `next.config.mjs` file in the root of your Makerkit application `apps/web`.
+
+```tsx
+const INTERNAL_PACKAGES = [
+  // all internal packages,
+  '@kit/my-package',
+];
+```
+
+## Exporting a module from a package
+
+By default, the package exports a single module using the `index.ts` file. You can add more exports by creating new files in the package directory and exporting them from the `index.ts` file or creating export files in the package directory and adding them to the `exports` field in the `package.json` file.
+
+### Exporting a module from index.ts
+
+The easiest way to export a module from a package is to create a new file in the package directory and export it from the `index.ts` file.
+
+```tsx
+// packages/@kit/my-package/src/my-module.ts
+
+export function myModule() {
+  return 'Hello from my module';
+}
+```
+
+Then, export the module from the `index.ts` file.
+
+```tsx
+// packages/@kit/my-package/src/index.ts
+export * from './my-module';
+```
+
+### Exporting using the exports field in package.json
+
+This can be very useful for tree-shaking. Assuming you have a file named `my-module.ts` in the package directory, you can export it by adding it to the `exports` field in the `package.json` file.
+
+```json
+{
+  "exports": {
+    ".": "./src/index.ts",
+    "./my-module": "./src/my-module.ts"
+  }
+}
+```
+
+When to do this?
+
+1. when exporting two modules that don't share dependencies to ensure better tree-shaking. For example, if your exports contains both client and server modules.
+2. for better organization of your package
+
+
+For example, create two exports `client` and `server` in the package directory and add them to the `exports` field in the `package.json` file.
+
+```json
+{
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
+  }
+}
+```
+
+1. The `client` module can be imported using `import { client } from '@kit/my-package/client'`
+2. The `server` module can be imported using `import { server } from '@kit/my-package/server'`
+
+You can now use the package in your application by importing it using the package name.
+
+```tsx
+import { myModule } from '@kit/my-package';
+
+console.log(myModule());
+```
+
+Et voilà! You have successfully added a new package to your Makerkit application. 🎉

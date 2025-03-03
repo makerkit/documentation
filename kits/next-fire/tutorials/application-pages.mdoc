@@ -1,0 +1,115 @@
+---
+status: "published"
+
+title: "Application Pages"
+label: "Application Pages"
+order: 12
+description: "Learn how to create and manage application pages in your Makerkit app"
+---
+
+Now that we have some components to display, we need to add them to the actual Next.js pages.
+
+If you have not created the files in the `Routing` section above, it's time to do it.
+
+#### Using the RouteShell component
+
+The RouteShell component is a wrapper around your internal application pages. This component will:
+
+1. Automatically protect pages when the user is not authenticated
+2. Initializes the Firestore provider on the page
+3. Wraps the page with one of the two layouts available: `Sidebar` or `Top Header`
+
+```tsx {9,15}
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import Heading from "~/core/ui/Heading";
+import Button from "~/core/ui/Button";
+import ErrorBoundary from "~/core/ui/ErrorBoundary";
+import Alert from "~/core/ui/Alert";
+
+const TaskPage: React.FC<{ taskId: string }> = ({ taskId }) => {
+  return (
+    <RouteShell title={<TaskPageHeading />}>
+      <ErrorBoundary
+        fallback={<Alert type={'error'}>Ops, an error occurred :</Alert>}
+      >
+        <TaskItemContainer taskId={taskId} />
+      </ErrorBoundary>
+    </RouteShell>
+  );
+};
+
+function TaskPageHeading() {
+  return (
+    <div className={'flex items-center space-x-6'}>
+      <Heading type={4}>
+        <span>Task</span>
+      </Heading>
+
+      <Button size={'small'} color={'transparent'} href={'/tasks'}>
+        <ArrowLeftIcon className={'mr-2 h-4'} />
+        Back to Tasks
+      </Button>
+    </div>
+  );
+}
+
+export default TaskPage;
+```
+
+#### Protecting Internal Pages with Route Guards
+
+When we create an internal page that should be protected using authentication, we need to use a Makerkit function named `withAppProps`.
+
+This function is a `server-side props function` that takes the context `ctx` as a parameter:
+
+```tsx {20-24}
+import { GetServerSidePropsContext } from "next";
+
+import RouteShell from `~/components/RouteShell`;
+import { withAppProps } from '~/lib/props/with-app-props';
+import ErrorBoundary from "~/core/ui/ErrorBoundary";
+import Alert from "~/core/ui/Alert";
+
+const TaskPage: React.FC<{ taskId: string }> = ({ taskId }) => {
+  return (
+    <RouteShell title={<TaskPageHeading />}>
+      <ErrorBoundary
+        fallback={<Alert type={'error'}>Ops, an error occurred :</Alert>}
+      >
+        <TaskItemContainer taskId={taskId} />
+      </ErrorBoundary>
+    </RouteShell>
+  );
+};
+
+export function getServerSideProps(
+  ctx: GetServerSidePropsContext
+) {
+  return withAppProps(ctx);
+}
+```
+
+The `withAppProps` function will:
+
+1. return the current user data (both Auth and Firestore)
+2. return the selected user's authentication
+3. return the page's translations
+4. return a CSRF token
+
+```tsx
+interface PageProps {
+  session?: Maybe<AuthUser>;
+  user?: Maybe<UserData>;
+  organization?: Maybe<WithId<Organization>>;
+  csrfToken?: string;
+  ui?: UIState;
+}
+```
+
+Additionally, it will validate the current session:
+
+1. Is the user onboarded? Otherwise, redirect to the onboarding flow
+2. Does the user exist? Otherwise, redirect the user back to the login page
+3. Is the session cookie valid? Otherwise, redirect the user back to the login page
+
+You can extend this function and add any additional validation you deem needed.

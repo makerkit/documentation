@@ -1,0 +1,67 @@
+---
+status: "published"
+
+title: "Environment Variables"
+label: Environment Variables
+order: 5
+description: "Learn how to use environment variables in your Remix project."
+---
+
+
+The starter project comes with two different environment variables files:
+1. **.env**: the main environment file
+2. **.env.test**: this environment file is loaded when running the Cypress
+E2E tests. You would rarely need to use this.
+
+NB: the `.env` file is never committed to the repository. This is because it
+contains sensitive information, such as API keys. Instead, we use a `.env.
+template` file to show what the `.env` file should look like.
+
+The environment variables in your project will look like the below:
+
+```bash
+DEFAULT_LOCALE=en
+EMULATOR=true
+SITE_URL=http://localhost:3000
+REQUIRE_EMAIL_VERIFICATION=false
+
+# FIREBASE
+GCLOUD_PROJECT=demo-makerkit
+FIREBASE_PROJECT_ID=demo-makerkit
+FIREBASE_STORAGE_BUCKET=demo-makerkit.appspot.com
+FIREBASE_AUTH_DOMAIN=localhost
+SERVICE_ACCOUNT_CLIENT_EMAIL=
+SERVICE_ACCOUNT_PRIVATE_KEY=
+
+# Change this with your project's APP ID
+FIREBASE_APP_ID=1:981813564016:web:f13148231721fcd0ee5ab5
+# Change this with your project's API KEY
+FIREBASE_API_KEY=AIzaSyAAqU_euGAMtJoXp0sECblAIndifCp0pmE
+
+# FIREBASE EMULATOR
+FIRESTORE_EMULATOR_HOST=localhost:8080
+FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+FIREBASE_STORAGE_EMULATOR_HOST=localhost:9199
+FIREBASE_PUBSUB_EMULATOR_HOST=localhost:8085
+FIREBASE_EMULATOR_HOST=localhost
+FIRESTORE_EMULATOR_PORT=8080
+FIREBASE_AUTH_EMULATOR_PORT=9099
+FIREBASE_STORAGE_EMULATOR_PORT=9199
+
+# SERCET KEY TO SIGN SECRETS. REPLACE THE BELOW WITH A RANDOM AND COMPLEX STRING. KEEPT IT SAFE.
+SECRET_KEY=123456789
+
+# STRIPE
+STRIPE_WEBHOOK_SECRET=
+STRIPE_SECRET_KEY=
+
+# APPCHECK
+APPCHECK_KEY=
+APPCHECK_DEBUG_TOKEN=
+```
+
+### Define your environment variables in your hosting provider
+
+**NB**: Remix will not bundle environment variables when building your app, but only during development mode.
+
+Instead, you will need to define them in your hosting provider (such as your Vercel project settings).

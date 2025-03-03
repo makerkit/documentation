@@ -1,0 +1,82 @@
+---
+status: "published"
+title: The MakerKit Data Model for your SaaS project built with Next.js and Supabase Lite Kit
+label: Data Model
+order: 8
+description: 'Learn how MakerKit defines the model of your SaaS application with Next.js and Supabase'
+---
+
+MakerKit's data model is voluntarily as simple as possible, with a limited set of assumptions.
+
+MakerKit is not supposed to be a finite product but a solid foundation on which it is quick to get started and build your SaaS product.
+
+To summarize, the Postgres Database model contains the following tables: `users`, `subscriptions` and `users_subscriptions`.
+
+## Users
+
+Users are, of course, foundational to any application.
+
+If a user signed in using Supabase Authentication, it merely means we have
+verified their credentials, not that they have an account.
+
+We have to create an additional collection to store a user's data, such as:
+- names (first name, last name)
+- profile photo
+- settings
+- any other information which is not possible to update using their Authentication record (email, and sign-in providers)
+
+Below is the `users` table:
+
+```sql
+create table users (
+  id uuid references auth.users not null primary key,
+  photo_url text,
+  display_name text
+);
+```
+
+## Subscriptions
+
+When users complete the Stripe checkout, the application will store some information from the subscription object sent by Stripe. 
+
+Below is the schema of the information stored in the Database:
+
+```sql
+create table subscriptions (
+  id text not null primary key,
+  price_id text not null,
+  status subscription_status not null,
+  currency text,
+  interval text,
+  interval_count int,
+  created_at timestamptz,
+  period_starts_at timestamptz,
+  period_ends_at timestamptz,
+  trial_starts_at timestamptz,
+  trial_ends_at timestamptz
+);
+```
+
+To link a `customer_id` from Stripe with an organization, we use a join table `organizations_subscriptions`:
+
+```sql
+create table users_subscriptions (
+  user_id uuid not null references public.users (id) on delete cascade,
+  subscription_id text unique references public.subscriptions (id) on delete set null,
+  customer_id text not null unique,
+  primary key (user_id)
+);
+```
+
+We store the `customer_id` property so that, when a user is first linked to a Stripe customer, can access their Stripe data using the Billing Portal.
+
+When a subscription is active, the `subscription_id` field will be populated with the subscription ID. Otherwise, the field will be `null`.
+
+## Storage
+
+By default, the kit also creates one Storage bucket: the user's `avatars`:
+
+```sql
+insert into storage.buckets (id, name, PUBLIC)
+  values ('avatars', 'avatars', true);
+```

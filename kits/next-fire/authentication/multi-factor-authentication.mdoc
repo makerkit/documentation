@@ -1,0 +1,30 @@
+---
+status: "published"
+
+title: Set up Multi-Factor Authentication
+label: Multi-Factor Authentication
+order: 5
+description: 'Learn how to setup Multi Factor Authentication with Firebase Auth in your MakerKit application'
+---
+
+Multi-Factor Authentication allows users to add an additional layer of protection when logging in to a website, which is ideal for services that tend to be more sensitive or where privacy is paramount. 
+
+At the time of writing, Firebase Auth supports only SMS MFA.
+
+## Enabling Multi-Factor Authentication
+
+Enabling MFA in your Makerkit application requires two steps:
+
+1. You need to upgrade to [Google Cloud Identity Platform](https://cloud.google.com/identity-platform/docs/product-comparison) from the Firebase Console, as it is needed to support MFA
+2. Flipping the variable `auth.enableMultiFactorAuth` to `true` in the configuration file, as it is disabled by default
+
+ ```tsx {% title="configuration.ts" %}
+auth: {
+  // flip this to "true"
+  enableMultiFactorAuth: true,
+}
+```
+
+After enabling MFA, users can set it up from the `Authentication` page at `/settings/authentication`.
+
+{% video src="/assets/images/posts/enabling-multi-factor-authentication.mp4" /%}

@@ -1,0 +1,151 @@
+---
+status: "published"
+label: "Billing API"
+title: "The Billing service API allows you to communicate with the billing service in Makerkit"
+order: 10
+description: "Learn how to use the Billing service API in Makerkit to manage billing for your preferred payment gateway"
+---
+
+The Billing service API allows you to communicate with the billing service in Makerkit. You can use the API to manage billing for your preferred payment gateway.
+
+To instantiate the billing service, you need to import the `createBillingGatewayService` function from the `@kit/billing-gateway` package. You can then use this service to manage subscriptions, one-off payments, and more.
+
+```tsx
+import { createBillingGatewayService } from '@kit/billing-gateway';
+
+const service = createBillingGatewayService('stripe');
+```
+
+Of course - it's best to get the billing provider from the `subscriptions` record. This way, you can switch between providers without changing the code.
+
+The `createBillingGatewayService` instantiates a class that provides a set of methods for managing billing operations. The provider is determined by the `BillingProviderSchema` passed to the constructor. The `BillingGatewayService` class is a TypeScript class that provides a set of methods for managing billing operations. It uses the Strategy design pattern to delegate the actual implementation of these operations to a provider-specific strategy. The provider is determined by the BillingProviderSchema passed to the constructor.
+
+The class provides methods for creating and retrieving checkout sessions, creating a billing portal session, cancelling a subscription, reporting and querying usage, and updating a subscription. Each of these methods accepts a parameter object that is validated and parsed using the corresponding Zod schema.
+
+## Methods
+
+### Creating a checkout session
+
+The `createCheckoutSession` method creates a checkout session for billing. It takes an object of type CreateBillingCheckoutSchema as a parameter, which contains the necessary information for creating a checkout session.
+
+Below is the Zod schema accepted by the `createCheckoutSession` method:
+
+```tsx
+returnUrl: z.string().url(),
+accountId: z.string().uuid(),
+plan: PlanSchema,
+customerId: z.string().optional(),
+customerEmail: z.string().email().optional(),
+enableDiscountField: z.boolean().optional(),
+variantQuantities: z.array(
+  z.object({
+    variantId: z.string().min(1),
+    quantity: z.number(),
+  }),
+)
+```
+
+### Retrieving a checkout session
+
+The `retrieveCheckoutSession` method retrieves the checkout session from the specified provider. It takes an object of type RetrieveCheckoutSessionSchema as a parameter, which contains the necessary information to retrieve the checkout session.
+
+The method accepts the following Zod schema:
+
+```tsx
+sessionId: z.string(),
+```
+
+### Creating a billing portal session
+
+The `createBillingPortalSession` method creates a billing portal session. It takes an object of type CreateBillingPortalSessionSchema as a parameter, which contains the necessary information to create a billing portal session.
+
+```tsx
+returnUrl: z.string().url(),
+customerId: z.string().min(1),
+```
+
+### Cancelling a subscription
+
+The `cancelSubscription` method cancels a subscription. It takes an object of type CancelSubscriptionParamsSchema as a parameter, which contains the necessary information to cancel a subscription.
+
+The method accepts the Zod schema:
+
+```tsx
+subscriptionId: z.string(),
+invoiceNow: z.boolean().optional(),
+```
+
+### Reporting metered usage
+
+The `reportUsage` method reports the usage of the billing to the provider. It takes an object of type ReportBillingUsageSchema as a parameter, which contains the necessary information to report the usage.
+
+The method accepts the following Zod schema:
+
+```tsx
+id: z.string({
+  description:
+    'The id of the usage record. For Stripe a customer ID, for LS a subscription item ID.',
+}),
+eventName: z
+  .string({
+    description: 'The name of the event that triggered the usage',
+  })
+  .optional(),
+usage: z.object({
+  quantity: z.number(),
+  action: z.enum(['increment', 'set']).optional(),
+}),
+```
+
+### Querying metered usage
+
+The `queryUsage` method queries the usage of the metered billing. It takes an object of type QueryBillingUsageSchema as a parameter, which contains the necessary information to query the usage.
+
+To query usage, please provide the following Zod schema:
+
+```tsx
+
+const TimeFilter = z.object(
+  {
+    startTime: z.number(),
+    endTime: z.number(),
+  },
+  {
+    description: `The time range to filter the usage records. Used for Stripe`,
+  },
+);
+
+const PageFilter = z.object(
+  {
+    page: z.number(),
+    size: z.number(),
+  },
+  {
+    description: `The page and size to filter the usage records. Used for LS`,
+  },
+);
+
+export const QueryBillingUsageSchema = z.object({
+  id: z.string({
+    description:
+      'The id of the usage record. For Stripe a meter ID, for LS a subscription item ID.',
+  }),
+  customerId: z.string({
+    description: 'The id of the customer in the billing system',
+  }),
+  filter: z.union([TimeFilter, PageFilter]),
+});
+
+```
+
+### Updating a subscription
+
+The `updateSubscriptionItem` method updates a subscription with the specified parameters. It takes an object of type UpdateSubscriptionParamsSchema as a parameter, which contains the necessary information to update a subscription.
+
+The method acceps the following Zod schema:
+
+```tsx
+subscriptionId: z.string().min(1),
+subscriptionItemId: z.string().min(1),
+quantity: z.number().min(1),
+```

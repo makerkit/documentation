@@ -1,0 +1,134 @@
+---
+status: "published"
+
+title: "Guidelines for updating Makerkit to Next.js 15"
+label: "Updating to Next.js 15"
+order: 9
+description: "A guide to updating Makerkit to Next.js 15. All you need to know to migrate your codebase to the latest Next.js version."
+---
+
+
+Makerkit was originally built on top of Next.js 14. However, with Next.js 15 being released, we've updated the boilerplate to align with the latest version.
+
+This means there will be a few changes to your codebase that you may need to apply or merge from the latest version of the boilerplate.
+
+Fortunately, the API hasn't had large break changes, so the migration should be relatively straightforward. However, there are some changes that you may need to make, and you'll need to do them manually.
+
+This documentation will only guide through what we need in Makerkit. However, for a more comprehensive guide, you can refer to the [Next.js documentation](https://nextjs.org/docs/canary/app/building-your-application/upgrading/version-15) and [Makerkit's own guide to updating to Next.js 15](/blog/changelog/upgrade-nextjs-15).
+
+### The changes in Next.js 15
+
+Here's a broad overview of the changes:
+
+1. **Update Next.js version**: Update the Next.js version in the various packages
+2. **Update Next.js configuration**: If you've modified the Next.js configuration, you'll need to update it to align with the latest version
+3. **Dynamic Params are now Promise-based**: Probably the most significant change is the introduction of dynamic params. This means that you'll need to update your code to use promises instead of syncronous functions when accessing cookies, headers, and query params and segments.
+
+The kit also added some other general improvements that regard linting and formatting, therefore some merge conflicts may arise. However, these are less important and you can simply resolve them manually by accepting your own changes.
+
+The migration make take anything between 5 minutes to an hour depending on your codebase. Believe me, it's still a lot less than the changes and research I did on my side! 😅
+
+## Update Makerkit to the latest version
+
+To update Makerkit to the latest version, you can run the following command:
+
+```bash
+git pull upstream main
+```
+
+This will update all the packages in your project to the latest version. You may need to merge conflicts manually.
+
+Then, install the packages again:
+
+```bash
+pnpm i
+```
+
+## Updated Promise-based dynamic APIs
+
+The large majority of the changes in the Makerkit's Next.js 15 update are related to the change of dynamic APIs into Promise-based APIs.
+
+This means that you'll need to update your code to use promises instead of syncronous functions when accessing cookies, headers, and query params and segments.
+
+For example, where you before had the following code:
+
+```tsx
+const cookie = cookies().get('session');
+```
+
+You will now need to use the following code:
+
+```tsx
+const cookieStore = await cookies();
+const cookie = cookieStore.get('session');
+```
+
+The same applies to headers, query params, and segments.
+
+### Using the Next.js 15 Codemod
+
+Next.js ships a codemod that will automatically update your codebase to use promises instead of syncronous functions. You can use it by running the following command:
+
+```bash
+npx @next/codemod@canary upgrade latest
+```
+
+If you want to run this command, please do it within the apps/web directory, because this command does not support monorepos.
+
+Please note this command may not be perfect - so please double check the changes it makes. Please refer to Next.js Github issues if you encounter any problems caused by this command, not Makerkit's support.
+
+### React Compiler
+
+The React Compiler is set to be **off** by default. It is still experimental, and it is not recommended to enable it in production.
+
+However, you can enable it by setting the `experimental.reactCompiler` flag to `true` in your `next.config.mjs` file.
+
+You can do so by enabling the environment variable `ENABLE_REACT_COMPILER` in your `.env` file.
+
+```tsx
+ENABLE_REACT_COMPILER=true
+```
+
+### Speeding up Local Development with mock modules
+
+Since we don't need to compile all the packages during development, we make sure to alias them to the mock modules, therefore speeding up the development compilation (eg., page transitions, hot reload, etc.).
+
+We use Turbopack's alias feature to achieve this, in the `next.config.mjs` file.
+
+There's not too much to it, but if you're curious, this is why we have added the code loading the mock modules.
+
+### Dependencies Updates
+
+All the dependencies have been updated to the latest version. This includes notable changes such as Radix UI, Stripe
+
+## Granular TailwindCSS Paths
+
+Tailwind's generation has slowed down considerably (for some reason), and the fix was to transform the path ` '../../packages/**/src/**/*.tsx'` into granular paths.
+
+ ```tsx {% title="tooling/tailwind/index.ts" %}
+'../../packages/ui/src/**/*.tsx',
+   '../../packages/billing/gateway/src/**/*.tsx',
+   '../../packages/features/auth/src/**/*.tsx',
+   '../../packages/features/notifications/src/**/*.tsx',
+   '../../packages/features/admin/src/**/*.tsx',
+   '../../packages/features/accounts/src/**/*.tsx',
+   '../../packages/features/team-accounts/src/**/*.tsx',
+   '!**/node_modules',
+ ],
+```
+
+If you have created your own library, please make sure to add it to the list.
+
+For example, you've created a feature named `projects` and you want to use Tailwind in it. You can add the following path to the list:
+
+ ```tsx {% title="tooling/tailwind/index.ts" %}
+'../../packages/features/projects/src/**/*.tsx',
+```
+
+## Conclusion
+
+Updating Makerkit to Next.js 15 is a relatively straightforward process. However, you may encounter merge conflicts, and you'll need to resolve them manually.
+
+In addition, you will need to update your code to use promises instead of synchronous functions when accessing cookies, headers, and query params and segments.
+
+Please head to our Discord server if you have any questions or need help with the update process.

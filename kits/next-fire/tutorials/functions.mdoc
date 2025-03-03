@@ -1,0 +1,328 @@
+---
+status: "published"
+
+title: "Functions you need to know"
+label: "Functions you need to know"
+order: 15
+description: "Learn the most important functions you need to know to use the Next.js Firebase kit effectively."
+---
+
+This is an extremely important section of the documentation: it will teach you the most important functions you need to know to use the Next.js Firebase kit effectively.
+
+We will cover both client-side and server-side functions.
+
+## Client-Side Functions
+
+### ReactFire Hooks
+
+The Next.js Firebase kit uses [ReactFire](https://github.com/firebaseextended/reactfire) extensively throughout the kit. ReactFire is a library that allows you to bind Firebase data to React components. This allows you to easily display data from Firebase in your React components.
+
+For the majority of use cases, you will be using Reactfire's React hooks to interact with your Firebase data, as we've seen in the previous sections.
+
+These include:
+- `useFirestore`: this will allow you to interact with your Firestore database
+- `useAuth`: this will allow you to interact with your Firebase authentication
+- `useStorage`: this will allow you to interact with your Firebase storage (you are required to add the FirebaseStorageProvider above your component tree for this to work)
+
+### Makerkit Hooks
+
+#### 1. `useCurrentOrganization`: getting the current user organization
+
+This hook will allow you to get the current user organization. It is populated with the data fetched server-side in the `getServerSideProps` function, and is injected using the Context API.
+
+For example, let's see how we can use this hook to get the current user organization name:
+
+```ts
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+export function useCurrentOrganizationName() {
+  const organization = useCurrentOrganization();
+
+  return organization?.name;
+}
+```
+
+There are a variety of other hooks that you can use to get the current user organization data. You can find them in the `~/lib/organizations/hooks` folder.
+
+#### 2. `useCurrentUserRole`: getting the current user role within the current organization
+
+In case you need to access the current user role within the current organization, you can use the `useCurrentUserRole` hook.
+
+For example, let's see how we can use this hook to get the current user role within the current organization:
+
+```tsx
+import { useCurrentUserRole } from '~/lib/organizations/hooks/use-current-user-role';
+
+function MyComponent() {
+  const role = useCurrentUserRole();
+
+  return (
+    <div>
+      <p>Current user role: {role}</p>
+    </div>
+  );
+}
+```
+
+#### 3. `useUserSession`: getting the current user session information
+
+In case you need to access the current user session data, you can use the `useUserSession` hook.
+
+This hook will return the current user session data, which includes the following information:
+- `auth`: the data that comes from Firebase Authentication
+- `data`: the data that comes from the user's Firestore document
+
+```tsx
+export interface UserSession {
+  auth: AuthUser | undefined;
+  data: UserData | undefined;
+}
+```
+
+For example, let's see how we can use this hook to get the current user ID:
+
+```tsx
+import { useUserSession } from '~/core/hooks/use-user-session';
+
+function MyComponent() {
+  const userSession = useUserSession();
+  const userId = userSession?.auth?.uid;
+
+  return (
+    <div>
+      <p>Current user ID: {userId}</p>
+    </div>
+  );
+}
+```
+
+#### 4. `useIsSubscriptionActive`: getting the current organization subscription status and checking if it's active
+
+A subscription is considered active if it's either `active` or `trialing`. The `useIsSubscriptionActive` hook will return `true` if the current organization is on any paid subscription, regardless of plan.
+
+This can be useful if you want to display a message to the user if they are on a paid subscription, or if you want to restrict access to certain pages.
+
+You can customize this hook to fit your needs.
+
+```tsx
+import type { Stripe } from 'stripe';
+import { useCurrentOrganization } from '~/lib/organizations/hooks/use-current-organization';
+
+const ACTIVE_STATUSES: Stripe.Subscription.Status[] = ['active', 'trialing'];
+
+/**
+ * @name useIsSubscriptionActive
+ * @description Returns whether the organization is on any paid
+ * subscription, regardless of plan.
+ */
+function useIsSubscriptionActive() {
+  const organization = useCurrentOrganization();
+  const status = organization?.subscription?.status;
+
+  if (!status) {
+    return false;
+  }
+
+  return ACTIVE_STATUSES.includes(status);
+}
+
+export default useIsSubscriptionActive;
+```
+
+## Server-Side Functions
+
+### Props Functions
+
+Props functions are functions that are executed server-side and are used to populate the props of a page. They are executed before the page is rendered, and are used to fetch data that is required for the page to render.
+
+#### 1. `withAppProps`: populating the application pages data
+
+The `withAppProps` function is used to populate the props of the application pages. It is used in the `getServerSideProps` function of the pages you want to gate.
+
+If you take a look at the previous sections, we used this function to protect the `tasks` application so that only authenticated users can access it.
+
+```tsx
+import { withAppProps } from "~/lib/props/with-app-props";
+import { GetServerSidePropsContext } from "next";
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  return await withAppProps(ctx);
+}
+```
+
+#### 2. `withTranslationsProps`: populating the application translations
+
+This function is used to populate the translations of the application. All the other props functions include this by default, so you don't need to use it directly unless it's on a page that does not use any of the other ones.
+
+You will be using this for the majority of your marketing pages.
+
+```tsx
+import { withTranslationProps } from "~/lib/props/with-translation-props";
+import { GetStaticPropsContext } from "next";
+
+export async function getStaticProps(
+  context: GetStaticPropsContext
+) {
+  const { props } = await withTranslationProps(context);
+
+  return {
+    props,
+  };
+}
+```
+
+#### 3. `withAuthProps`: populating the authentication pages data
+
+The `withAuthProps` function is used to populate the props of the authentication pages. You may never need to use it unless you introduce new authentication pages.
+
+This function is used in the `getServerSideProps` function of the authentication pages.
+
+```tsx
+import { withAuthProps } from "~/lib/props/with-auth-props";
+import { GetServerSidePropsContext } from "next";
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  return await withAuthProps(ctx);
+}
+```
+
+This function ensures **authenticated users won't be able to access the authentication pages**.
+
+### API Functions
+
+API Routes have several utilities that help you build your API endpoints, and save you from writing boilerplate code.
+
+#### 1. `withPipe`: piping functions when handling API requests
+
+The `withPipe` function is used to pipe functions when handling API requests.
+
+```ts {12}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withMethodsGuard(['GET']),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```
+
+This helps you write the utility functions we will see next in a more readable way.
+
+#### 2. `withMethodsGuard`: guarding API endpoints by HTTP methods
+
+The `withMethodsGuard` function is used to guard API endpoints by HTTP methods. For example, in the example below, we only allow `GET` and `POST` requests to the `/api/hello-world` endpoint.
+
+```ts {13}
+import { NextApiRequest, NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withMethodsGuard } from '~/core/middleware/with-methods-guard';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withMethodsGuard(['GET', 'POST']),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```
+
+#### 3. `withAuthedUser`: require authentication to access an API endpoint
+
+The `withAuthedUser` function is used to require authentication to access an API endpoint. It will return a `401` error if the user is not authenticated.
+
+```ts {12}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```
+
+#### 4. `withExceptionFilter`: handle exceptions in API endpoints
+
+The `withExceptionFilter` function is used to handle exceptions in API endpoints. It will log errors and report to Sentry when errors are encountered.
+
+```ts {18}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+
+export default function helloWorld(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const handler = withPipe(
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```
+
+#### 5. `withCsrf`:  protect API endpoints from CSRF attacks
+
+The `withCsrf` function is used to protect API endpoints from CSRF attacks. It will return a `403` error if the CSRF token is invalid.
+
+```ts {10}
+import { NextApiRequest,NextApiResponse } from "next";
+
+import { withAuthedUser } from '~/core/middleware/with-authed-user';
+import { withPipe } from '~/core/middleware/with-pipe';
+import { withExceptionFilter } from '~/core/middleware/with-exception-filter';
+import { withCsrf } from '~/core/middleware/with-csrf';
+
+export default function owner(req: NextApiRequest, res: NextApiResponse) {
+  const handler = withPipe(
+    withCsrf(),
+    withAuthedUser,
+    (req, res) => {
+      res.status(200).json({ message: 'Hello World!' });
+    }
+  );
+
+  return withExceptionFilter(req, res)(handler);
+}
+```

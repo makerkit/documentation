@@ -1,0 +1,33 @@
+---
+status: "published"
+
+title: MakerKit's Organizations
+label: Overview
+order: 0
+---
+
+
+The Makerkit boilerplate's data model is modeled around *Organizations*. 
+
+Organizations are groups of users, which can also be named Projects, Teams, and so on: it really depends on your application's domain.
+
+The data model of an organization looks like the following:
+
+```sql
+create table organizations (
+  id bigint generated always as identity primary key,
+  name text not null,
+  logo_url text,
+  created_at timestamptz not null default now()
+);
+```
+
+As you can see it's a very simple data model, with just a name and a logo, but you can extend it as you wish.
+
+### Renaming "Organizations" to another entity
+
+Makerkit uses "organizations" to refer to a group of users. However, the name "organizations" may not make sense to your application's domain, even with a similar technical data model. 
+
+For example, you may want to call them "Teams", or "Workspaces". In this case, we suggest you keep using "organization" as a technical concept (otherwise, you'd have to rename every instance) within the codebase while changing the labels in the UI using the i18n files at `public/locales`. 
+
+To do so, simply rename all "Organization" instances according to your preferred choice.

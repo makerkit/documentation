@@ -1,0 +1,130 @@
+---
+status: "published"
+
+title: "Fetching data from Supabase"
+label: "Fetching data from Supabase"
+order: 1
+description: "Learn how fetch data from your Supabase database in Makerkit"
+---
+
+
+When fetching data from the Supabase Postgres Database, we use the Supabase
+JS client.
+
+To make data-fetching from Supabase more reusable, our convention is to
+create a custom React hook for each query we make.
+
+For example, let's take a look at the hook to fetch an organization from
+Supabase.
+
+First, we want to write a query that receives two parameters:
+1. a Supabase client interface
+2. an organization ID
+
+ ```tsx {% title="organizations/queries.ts" %}
+export function getOrganizationById(
+  client: Client,
+  organizationId: number
+) {
+  return client
+    .from('organizations')
+    .select(`
+      id,
+      name,
+      logoURL: logo_url
+    `)
+    .eq('id', organizationId)
+    .throwOnError()
+    .single();
+}
+```
+
+It's important that we pass the client as a parameter so that we can use the
+function in both the browser and the server.
+
+Now, if we want to use a React Hook to fetch the organization from one of
+our components, we can use the `useQuery` hook from `react-query`:
+
+```tsx
+import useSupabase from '~/core/hooks/use-supabase';
+import { getOrganizationById } from '~/lib/organizations/database/queries';
+import { useQuery } from '@tanstack/react-query';
+
+function useOrganizationQuery(
+  organizationId: number
+) {
+  const client = useSupabase();
+  const key = ['organization', organizationId];
+
+  return useQuery(key, async () => {
+    return getOrganizationById(client, organizationId).then(
+      (result) => result.data
+    );
+  });
+}
+
+export default useOrganizationQuery;
+```
+
+### Retrieving data using a React hook
+
+Now that we have a hook to fetch an organization, we can use it in our
+components to retrieve the data.
+
+```tsx
+import { useOrganizationQuery } from './use-organization-query';
+
+function OrganizationCard({ organizationId }) {
+  const {
+    data: organization,
+    isLoading,
+    error
+  } = useOrganizationQuery(organizationId);
+
+  /* data is loading */
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  /* request errored */
+  if (error) {
+    return <div>Error!</div>
+  }
+
+  /* request successful, we can access "organization" */
+  return <div>{organization.name}</div>;
+}
+```
+
+### Retrieving data from the server
+
+When we want to fetch data from the server, we can import a server Supabase
+client and use it to fetch data.
+
+```tsx
+import {
+  throwInternalServerErrorException,
+} from '~/core/http-exceptions';
+
+import { json } from '@remix-run/node';
+import getSupabaseServerClient from '~/core/supabase/server-client';
+import { parseOrganizationIdCookie } from '~/lib/server/cookies/organization.cookie';
+import { getOrganizationById } from "~/lib/tasks/queries";
+
+export async function loader({ request }: LoaderArgs) {
+  const client = getSupabaseServerClient(request);
+  const organizationId = Number(await parseOrganizationIdCookie(request));
+
+  try {
+    const { data } = await getOrganizationById(client, organizationId);
+
+    return json(data);
+  } catch (error) {
+    return throwInternalServerErrorException();
+  }
+}
+```
+
+When you want to ensure your data is rendered on the server, you should ensure you're loading the data using the `loader` function. Then, you can co-ordinate data re-fetching on the client when the data changes using `useSubmit` or `useFetcher`.
+
+When the data is only fetched on the client, you can use `useQuery` to fetch the data and re-fetch the stale queries.

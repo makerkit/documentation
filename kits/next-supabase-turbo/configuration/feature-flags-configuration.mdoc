@@ -1,0 +1,97 @@
+---
+status: "published"
+label: "Feature Flags"
+title: "Setting your feature flags configuration | Next.js Supabase SaaS Kit"
+description: "Learn how to setup the feature flags configuration of your Next.js Supabase application"
+order: 4
+---
+
+The features flags configuration is set at `apps/web/config/feature-flags.config.ts`. We use this configuration to store feature flags, i.e. to enable or disable certain features in the app.
+
+This configuration is set at application level. The configuration gets propagated to the packages that the app imports, so you can control the behavior and logic of the package. This also allows you to host multiple apps in the same monorepo, as every application defines its own configuration.
+
+The recommendation is **to not update this directly** - instead, please define the environment variables below and override the default behavior. The configuration is validated using the Zod schema `FeatureFlagsSchema`, so if something is off, you'll see the errors.
+
+```tsx
+
+const featuresFlagConfig = FeatureFlagsSchema.parse({
+  enableThemeToggle: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_THEME_TOGGLE,
+    true,
+  ),
+  enableAccountDeletion: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION,
+    false,
+  ),
+  enableTeamDeletion: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION,
+    false,
+  ),
+  enableTeamAccounts: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS,
+    true,
+  ),
+  enableTeamCreation: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION,
+    true,
+  ),
+  enablePersonalAccountBilling: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING,
+    false,
+  ),
+  enableTeamAccountBilling: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING,
+    false,
+  ),
+  languagePriority: process.env
+    .NEXT_PUBLIC_LANGUAGE_PRIORITY as LanguagePriority,
+  enableNotifications: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_NOTIFICATIONS,
+    true,
+  ),
+  realtimeNotifications: getBoolean(
+    process.env.NEXT_PUBLIC_REALTIME_NOTIFICATIONS,
+    false,
+  ),
+  enableVersionUpdater: getBoolean(
+    process.env.NEXT_PUBLIC_ENABLE_VERSION_UPDATER,
+    false,
+  ),
+} satisfies z.infer<typeof FeatureFlagsSchema>);
+
+export default featuresFlagConfig;
+```
+
+You can update the following environment variables to override the default behavior:
+
+```bash
+NEXT_PUBLIC_ENABLE_THEME_TOGGLE=
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION=
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS=
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION=
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION=
+NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING=
+NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING=
+NEXT_PUBLIC_LANGUAGE_PRIORITY=
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=
+NEXT_PUBLIC_ENABLE_VERSION_UPDATER=
+```
+
+### Explanation
+
+1. **NEXT_PUBLIC_ENABLE_THEME_TOGGLE**: use this feature if you want to set a specific theme mode (dark or light) and disallow switching to another mode
+2. **NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION**: use this feature flag if you don't want users to self-delete their accounts
+3. **NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS**: use this feature flag to enable or disable team accounts. For B2C apps, disabling may be your preference.
+4. **NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_DELETION**: use this feature flag if you don't want users to self-delete their team accounts
+5. **NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION**: use this feature flag to prevent users from creating a team account. This can be useful if you wish to manage the onboarding yourself.
+6. **NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING**: use this feature to enable or disable the ability of personal accounts to subscribe to a plan.
+7. **NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING**: use this feature to enable or disable the ability of team accounts to subscribe to a plan.
+8. **NEXT_PUBLIC_LANGUAGE_PRIORITY**: use this feature to set the language priority. If set to `user`, the user's preferred language will be used. If set to `application`, the application's default language will be used.
+9. **NEXT_PUBLIC_ENABLE_NOTIFICATIONS**: use this feature to enable or disable notifications in the app.
+10. **NEXT_PUBLIC_REALTIME_NOTIFICATIONS**: use this feature to enable or disable real-time notifications in the app.
+11. **NEXT_PUBLIC_ENABLE_VERSION_UPDATER**: use this feature to enable or disable the version updater in the app.
+
+### Note
+
+It is unlikely that both `NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING` and `NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_BILLING` would both be enabled at once. In most cases, you want to enable it for users or team accounts.

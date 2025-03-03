@@ -1,0 +1,59 @@
+---
+status: "published"
+
+title: "API requests"
+label: "API requests"
+order: 2
+description: "Learn how to make requests to your Next.js Firebase API in Makerkit"
+---
+
+To make requests to the API functions in the `api` folder, we provide a
+custom hook `useApiRequest`, a wrapper around `fetch`.
+
+It has the following functionality:
+
+1. Automatically adds a `Firebase AppCheck Token` to the request headers if you
+enabled Firebase AppCheck
+2. Automatically adds a `CSRF token` to the request headers
+
+We use this in conjunction with the [swr](https://swr.vercel.app/) to simplify its usage using React components.
+
+ ```tsx {% title="src/core/hooks/use-create-session.ts" %}
+import useApiRequest from '~/core/hooks/use-api';
+
+interface Body {
+  idToken: string;
+}
+
+export function useCreateSession() {
+  const endpoint = '/api/session/sign-in';
+  const fetcher = useApiRequest<void, Body>();
+
+  return useSWRMutation(endpoint, (path, { arg }) => {
+    return fetcher({
+      path,
+      body: arg,
+    });
+  });
+}
+```
+
+You can use this hook in your components:
+
+```tsx
+import { useCreateSession } from '~/core/hooks/use-create-session';
+
+function Component() {
+  const { trigger, ...mutationState } = useCreateSession();
+
+  return (
+    <>
+      { mutationState.isMutating ? `Mutating...` : null }
+      { mutationState.error ? `Error :(` : null }
+      { mutationState.data ? `Yay, success!` : null }
+
+      <SignInForm onSignIn={(idToken) => trigger({ idToken })} />
+    </>
+  );
+}
+```

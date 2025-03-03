@@ -1,0 +1,35 @@
+---
+status: "published"
+title: "Data Fetching in Next.js Supabase Turbo"
+label: "Data Fetching"
+order: 5
+description: "Data Fetching in Next.js Supabase Turbo"
+collapsible: true
+collapsed: true
+---
+
+Here's a draft of the Data Fetching pillar page for Makerkit:
+
+# Data Fetching in Makerkit
+
+Makerkit provides a robust approach to fetching and managing data in your Next.js Supabase application. Whether you're building server components, handling real-time updates, or managing client-side state, Makerkit offers patterns and utilities to make data fetching clean and efficient.
+
+## Data Loading Patterns
+
+Common patterns for loading data include:
+
+- Server Component data fetching for initial page loads
+- React Query for client-side data management
+- Server Actions for mutations
+- CSRF and Captcha protection for API Routes
+
+## Navigation
+
+In the section below, you'll find detailed information on each of these patterns:
+
+- [Supabase Clients](data-fetching/supabase-clients)
+- [Server Components](data-fetching/server-components)
+- [Server Actions](data-fetching/server-actions)
+- [Route Handlers](data-fetching/route-handlers)
+- [CSRF Protection](data-fetching/csrf-protection)
+- [Captcha Protection](data-fetching/captcha-protection)

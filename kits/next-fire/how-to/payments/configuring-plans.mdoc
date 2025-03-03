@@ -1,0 +1,126 @@
+---
+status: "published"
+title: "Configuring your SaaS Stripe Plans in your Makerkit Next.js Firebase App"
+label: Configuring Plans
+order: 0
+description: "Learn how to configure the Stripe plans in your SaaS application with Makerkit"
+---
+
+When taking payments from Stripe, you're required to configure your subscription's plans.
+
+Your plans need to be configured in two places:
+
+1. **Stripe** - first, you need to define your **products** and **plans** in Stripe itself. This requires you to have an account in Stripe.
+2. **Configuration**: - then, you will copy your plans data in the Makerkit configuration, which is used to render the Pricing table and display the prices metadata
+
+### Pricing Table Configuration
+
+Below is the default Pricing Table configuration of the kits. The `PricingTable` component will automatically generate the pricing table based on the Stripe plans you have created and added to the configuration (see below).
+
+We have 3 products (Basic, Pro and Premium), each with 2 plans (monthly, yearly). By default, the Pro plan is set as the recommended plan.
+
+Of course, the below is simply an example. You will need to customize this according to your application's plans.
+
+```tsx
+stripe: {
+  products: [
+    {
+      name: 'Basic',
+      description: 'Description of your Basic plan',
+      badge: `Up to 20 users`,
+      features: [
+        'Basic Reporting',
+        'Up to 20 users',
+        '1GB for each user',
+        'Chat Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$9',
+          stripePriceId: '<price_id>',
+          trialPeriodDays: 7,
+        },
+        {
+          name: 'Yearly',
+          price: '$90',
+          stripePriceId: '<price_id>',
+          trialPeriodDays: 7,
+        },
+      ],
+    },
+    {
+      name: 'Pro',
+      badge: `Most Popular`,
+      recommended: true,
+      description: 'Description of your Pro plan',
+      features: [
+        'Advanced Reporting',
+        'Up to 50 users',
+        '5GB for each user',
+        'Chat and Phone Support',
+      ],
+      plans: [
+        {
+          name: 'Monthly',
+          price: '$29',
+          stripePriceId: 'pro-plan-mth',
+          trialPeriodDays: 7,
+        },
+        {
+          name: 'Yearly',
+          price: '$200',
+          stripePriceId: 'pro-plan-yr'
+        },
+      ],
+    },
+    {
+      name: 'Premium',
+      description: 'Description of your Premium plan',
+      badge: ``,
+      features: [
+        'Advanced Reporting',
+        'Unlimited users',
+        '50GB for each user',
+        'Account Manager',
+      ],
+      plans: [
+        {
+          name: '',
+          price: 'Contact us',
+          stripePriceId: '',
+          label: `Contact us`,
+          href: `/contact`,
+        },
+      ],
+    },
+  ],
+}
+```
+
+#### Update the Stripe Price IDs values!
+
+Please replace the property `stripePriceId` with the real price ID from the
+Stripe Dashboard.
+
+<div>
+  {% alert type="warning" title="Update your real Stripe Price IDs" %}
+
+         The properties "stripePriceId" are placeholders. You will need to replace them with the IDs of your plans.
+
+{% /alert %}
+</div>
+
+### Additional Configuration
+
+You can also configure the following properties on each `product`:
+
+- `recommended` - set to `true` if you want to highlight a plan as recommended
+- `badge` - set to a string if you want to display a badge next to the plan name
+
+You can also configure the following properties on each `plan`:
+
+- `price` - any string that you want to display as the price (e.g. `$9.99` or `Free`)
+- `label` - set to a custom string if you want to display a button label
+- `href` - set to a custom URL if you want to link to a custom page (for example, a contact page)
+- `trialPeriodDays` - set to the number of days you want to offer a free trial for

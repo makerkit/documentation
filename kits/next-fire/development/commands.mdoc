@@ -1,0 +1,166 @@
+---
+status: "published"
+title: "All the commands to use for your Makerkit app | Next.js Firebase"
+description: "Use these commands to run the development server, build the application, and more in your Next.js Firebase application"
+label: Commands
+order: 0
+---
+
+Here are all the commands defined in the MakerKit's template:
+
+### Analyzing the Next.js bundle
+
+Run the command:
+
+```
+npm run analyze
+```
+
+The command will automatically bundle your clients and open a page with an analysis of your bundles. This will allow you to understand which libraries are taking the most space.
+
+### Run the development server
+
+Run the command:
+
+```
+npm run dev
+```
+
+### Run the E2E testing server
+
+This command is needed for running the E2E tests. Run the command:
+
+```
+npm run dev:test
+```
+
+### Build a production bundle
+
+Run the command:
+
+```
+npm build
+```
+
+
+### Start a production server
+
+Run the command after building the application with the `build` command:
+
+```
+npm start
+```
+
+### Build RSS feeds
+
+Run the command:
+
+```
+npm run rss
+```
+
+This is optional as it is automatically called after the `build` command.
+
+### Build Sitemap
+
+Run the command:
+
+```
+npm run sitemap
+```
+
+This is optional as it is automatically called after the `build` command.
+
+### Format all the files
+
+Run the command:
+
+```
+npm run format
+```
+
+### Healthcheck: Lint code and check types
+
+Run the command:
+
+```
+npm run healthcheck
+```
+
+### Start the Firebase Emulator
+
+Run the command:
+
+```
+npm run firebase:emulators:start
+```
+
+This is needed during development.
+
+### Export data from the Firebase Emulator
+
+Run the command:
+
+```
+npm run firebase:emulators:export
+```
+
+### Run Cypress for E2E Tests (with UI)
+
+Run the command:
+
+```
+npm run cypress
+```
+
+### Run Cypress for E2E Tests (Headless)
+
+Run the command:
+
+```
+npm run cypress:headless
+```
+
+### Run Tests and Exit
+
+Run the command:
+
+```
+npm test
+```
+
+### Run the Local Stripe Webhooks Server
+
+This is needed if you are testing Stripe. This command requires Docker, but you can alternatively install Stripe on your OS and change the command to use `stripe` directly.
+
+Run the command:
+
+```
+npm run stripe:listen
+```
+
+### Run the Mock Stripe Server
+
+Run the command:
+
+```
+npm run stripe:mock-server
+```
+
+### Index blog and documentation pages for making the documents available for searching
+
+Run the command:
+
+```
+npm run blog-docs-indexer
+```
+
+### Kill Ports
+
+The following commands kills all the ports that need to be free to run the Makerkit stack. This can be necessary after running the tests, for example when the emulators don't free up the ports after shutting down.
+
+Run the command:
+
+```
+npm run killports
+```

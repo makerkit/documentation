@@ -1,0 +1,66 @@
+---
+status: "published"
+title: "Uploading data to Storage | Next.js Supabase"
+description: "Learn how to upload your data to Supabase Storage in your Next.js application"
+label: "Uploading data to Storage"
+order: 4
+---
+
+To upload data to Supabase Storage, we can use the Supabase JavaScript client. 
+
+## Uploading a file
+
+To upload a file, we can use the `upload` method.
+
+For example, the code below is the code that uploads a user's profile image to the `avatars` bucket:
+
+```ts
+async function uploadUserProfilePhoto(
+  client: SupabaseClient,
+  photoFile: File,
+  userId: string
+) {
+  const bytes = await photoFile.arrayBuffer();
+  const bucket = client.storage.from('avatars');
+  const extension = photoFile.name.split('.').pop();
+  const fileName = `${userId}.${extension}`;
+
+  const result = await bucket.upload(fileName, bytes, {
+    upsert: true,
+  });
+
+  if (!result.error) {
+    return bucket.getPublicUrl(fileName).data.publicUrl;
+  }
+
+  throw result.error;
+}
+```
+
+You can also combine the above with `useSWRMutation` from `SWR` when you use the code above from a React component:
+
+```ts
+import useSWRMutation from 'swr/mutation';
+
+function useUpdateProfile() {
+  const client = useSupabase();
+  const key = 'useUpdateProfile';
+
+  return useSWRMutation(key, async (_, { arg: data }: { arg: {
+    file: File;
+    userId: string;
+  } }) => {
+    return updateUserData(client, data);
+  });
+}
+```
+
+And then, you can use it like this:
+
+```tsx
+const updateProfile = useUpdateProfile();
+
+<Form onUpload={(file: File, userId: string) => {
+  return updateProfile.trigger({ file, userId })
+} />
+```

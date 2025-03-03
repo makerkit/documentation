@@ -1,0 +1,41 @@
+---
+status: "published"
+title: useUserSession
+label: useUserSession
+order: 3
+description: 'The "useUserSession" custom hook allows you to get the user session data provided by the SSR props'
+---
+
+The `useUserSession` hook is a custom hook that allows you to access the current user session data. This data includes information from both Firebase Authentication and the user's Firestore document.
+
+This hook will return the current user session data, which includes the following information:
+- `auth`: the data that comes from Firebase Authentication
+- `data`: the data that comes from the user's Firestore document
+
+```tsx
+export interface UserSession {
+  auth: AuthUser | undefined;
+  data: UserData | undefined;
+}
+```
+
+To use this hook, simply import it from the `~/core/hooks/use-user-session` module, and then call it from your component.
+
+For example, let's see how we can use this hook to get the current user ID:
+
+```tsx
+import { useUserSession } from '~/core/hooks/use-user-session';
+
+function MyComponent() {
+  const userSession = useUserSession();
+  const userId = userSession?.auth?.uid;
+
+  return (
+    <div>
+      <p>Current user ID: {userId}</p>
+    </div>
+  );
+}
+```
+
+In this example, the useUserSession hook is used to retrieve the current user session data. The resulting userSession object is then used to extract the user ID, which is displayed to the user.

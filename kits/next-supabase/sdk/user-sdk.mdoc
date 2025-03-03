@@ -1,0 +1,99 @@
+---
+status: "published"
+title: "User SDK - Fetch the current User | Next.js Supabase SaaS Starter Kit"
+label: "User SDK"
+order: 1
+description: "Learn how to use the User SDK to interact with the current user"
+---
+
+
+The User SDK allows you to interact with the current user. Here we list the methods available in the User SDK.
+
+The example below work within a Server Components: by using the required client, you can easily adapt the code examples below to both Server Actions and Route Handlers.
+
+The User SDK is namespaced under `sdk.user` - so all the methods below are available under `sdk.user`.
+
+## Get the current user
+
+To get the current user, use the `sdk.user.getCurrent()` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+  const user = await sdk.user.getCurrent();
+
+  // ...
+}
+```
+
+This method wraps the Supabase `auth.getUser()` function.
+
+## Get the current user's session
+
+To get the current session, use the `sdk.user.getCurrentSession()` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+  const session = await sdk.user.getCurrentSession();
+
+  // ...
+}
+```
+
+This method wraps the Supabase `auth.getSession()` function.
+
+## Get the current user's ID
+
+To get the current user's ID, use the `sdk.user.getCurrentId()` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+  const userId = await sdk.user.getCurrentId();
+
+  // ...
+}
+```
+
+## Get the current user's Database profile
+
+We store the user's record data in the database table `users`. To get the current user's profile data, use the `sdk.user.getData()` method:
+
+```tsx
+import getSdk from '~/lib/sdk';
+import getSupabaseServerComponentClient from '~/core/supabase/server-component-client';
+
+async function PageServerComponent() {
+  const client = getSupabaseServerComponentClient();
+  const sdk = getSdk(client);
+  const data = await sdk.user.getData();
+
+  // ...
+}
+```
+
+The `data` object will contain the user's profile data.
+
+```tsx
+interface UserData {
+  displayName: string | null;
+  photoUrl: string | null;
+
+  // your custom fields...
+}
+```
+
+It's very likely that you'll be adding more fields, so this interface may change.

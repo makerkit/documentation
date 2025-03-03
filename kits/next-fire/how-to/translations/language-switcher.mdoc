@@ -1,0 +1,27 @@
+---
+status: "published"
+title: "Using the Language Switcher | Next.js Firebase SaaS Kit"
+label: "Using the Language Switcher"
+order: 4
+description: "Import and use the LanguageSwitcher component in your Next.js Firebase application."
+---
+
+
+By default, the language switcher is not used within the Next.js Firebase starter. To use it, you will need to import it into your application and add it to your layout.
+
+To do so, import the `LanguageSwitcher` component from the `components` directory and add it to any component you want to display it in.
+
+```tsx
+import { LanguageSwitcher } from '~/components/LanguageSwitcher';
+
+export const YourComponent = ({ children }) => {
+  return (
+    <div>
+      <LanguageSwitcher />
+      {children}
+    </div>
+  );
+};
+```
+
+The language switcher will automatically display the current language and a list of available languages. When a user clicks on a language, the language will be updated in the user's profile and the page will be reloaded.

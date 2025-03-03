@@ -1,0 +1,100 @@
+---
+status: "published"
+title: "How to handle errors in Server Actions | Next.js Supabase SaaS Kit (Lite)"
+label: "Server Actions Error Handling"
+order: 2
+description: "Learn how to handle errors in Server Actions in the Next.js Supabase SaaS Kit (Lite)"
+---
+
+Generally speaking, you can handle Server Action in three ways:
+
+1. You can use the `try/catch` block to catch errors and handle them in the `catch` block.
+2. You can use a React `ErrorBoundary` component to catch errors
+3. You can also use the special `error.tsx` file to handle errors at layout level.
+
+### Handling errors from a Server Action invoked by a Form
+
+Let's assume we have a Form using a server action that throws an error:
+
+```tsx title='Form.tsx'
+async function serverActionWithError() {
+  'use server';
+
+  throw new Error(`This is error is in the Server Action`);
+}
+
+function FormWithServerAction() {
+  return (
+    <form action={serverActionWithError}>
+      <button>Submit Form</button>
+    </form>
+  );
+}
+
+export default FormWithServerAction;
+```
+
+We can wrap our form using the `ErrorBoundary` component we have at `~/core/ui/ErrorBoundary`, and handle the error from there:
+
+```tsx title='FormWithErrorBoundary.tsx'
+import ErrorBoundary from '~/core/ui/ErrorBoundary';
+import FormWithServerAction from './Form';
+
+function FormWithErrorBoundary() {
+  return (
+    <ErrorBoundary fallback={<p>Something went wrong</p>}>
+      <FormWithServerAction />
+    </ErrorBoundary>
+  );
+}
+```
+
+If you click on the button, you'll see the error message rendered.
+
+### Handling errors from an imperatively invoked Server Action
+
+If you are invoking a Server Action imperatively, we can wrap the `useTransition` hook in a `try/catch` block, and handle the error from there.
+
+Let's assume we have a Server Action that throws an error:
+
+```tsx title='actions.tsx'
+'use server';
+
+export async function serverActionWithError() {
+  throw new Error(`This is error is in the Server Action`);
+}
+```
+
+We can invoke it imperatively from a client component, and handle the error from there:
+
+```tsx title='ImperativeServerAction.tsx'
+'use client';
+
+import { useTransition } from 'react';
+import { serverActionWithError } from './actions';
+
+function ImperativeServerAction() {
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <button
+      disabled={pending}
+      onClick={() => {
+        startTransition(async () => {
+          try {
+            await serverActionWithError()
+          } catch (e) {
+            alert('error');
+          }
+        });
+      }}
+    >
+      Click Button
+    </button>
+  );
+}
+
+export default ImperativeServerAction;
+```
+
+If you click on the button, you'll see the `alert` popup with the error message.

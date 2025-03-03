@@ -1,0 +1,57 @@
+---
+status: "published"
+title: "Updating the favicons of your Makerkit site | Next.js Firebase SaaS Kit"
+label: Updating the Favicons
+order: 4
+description: "Learn how to update the favicons of your Next.js Firebase SaaS Kit landing pages"
+---
+
+If you have a logo for your company, you can easily update the favicons of your Makerkit applications. Favicons are the small icons that appear in the browser tab of your website.
+
+### Where to find the favicons
+
+Favicons are stored at `public/assets/images/favicon`. You can replace the existing files with your own images. If you keep the same names and sizes, then you don't need to update the code.
+
+### How to generate favicons
+
+If you do, I suggest to generate them using any o the online favicon generator, and then dropping the resulting images in the `public/assets/images/favicon` folder.
+
+If you have different sizes and names, then you need to update the code to reflect these changes.
+
+## How to update the favicons in Makerkit
+
+This code is stored in `Layout` component at `src/core/ui/Layout.tsx`. This component has many default settings that includes the favicons.
+
+```tsx
+<link rel="shortcut icon" href="/assets/images/favicon/favicon.ico" />
+
+<link
+  rel="apple-touch-icon"
+  sizes="144x144"
+  href="/assets/images/favicon/apple-touch-icon.png"
+/>
+
+<link
+  rel="icon"
+  type="image/png"
+  sizes="16x16"
+  href="/assets/images/favicon/favicon-16x16.png"
+/>
+
+<link
+  rel="icon"
+  type="image/png"
+  sizes="32x32"
+  href="/assets/images/favicon/favicon-32x32.png"
+/>
+
+<link rel="manifest" href="/assets/images/favicon/site.webmanifest" />
+
+<link
+  rel="mask-icon"
+  href="/assets/images/favicon/safari-pinned-tab.svg"
+  color="#000000"
+/>
+```
+
+Update the code above to match your new favicons.

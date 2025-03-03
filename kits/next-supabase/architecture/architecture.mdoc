@@ -1,0 +1,102 @@
+---
+status: "published"
+
+title: Architecture and Folder Structure for your Next.js SaaS application
+label: Architecture and Folder Structure
+order: 6
+description: 'Learn how MakerKit allows you to build a Next.js application
+with a scalable and production-grade architecture and folder structure'
+---
+
+
+MakerKit's primary goals are:
+
+- **Solid Foundations** - providing you with the necessary code to get up and
+running
+with a Saas with minimal configuration
+- **Extendable and Adaptable** - the ability to change and extend the codebase as efficiently as possible
+
+While it's relatively simple to provide a functioning codebase, it's not always easy to make it:
+- **Simple** - a clean codebase quickly understandable by anyone
+- **Easy to change** - a codebase that can be easily changed to a
+particular domain
+
+Once you start your project, you can begin unpicking and replacing the existing code to adapt it to your application's domain. At the same time, MakerKit may have pushed an update that fixed a bug or added a new cool feature.
+
+The two projects will diverge and inevitably end up in a conflicting state.
+
+Thankfully, Git makes it easy to merge conflicts. But it's still a hassle.
+
+### Framework Architecture
+
+To reduce the number of possible conflicts, MakerKit ships with a particular folder structure:
+
+```
+- app
+  - (site)
+  - (app)
+    - dashboard
+      - [organization]
+  - auth
+  - invite
+- lib
+- components
+```
+
+These folders represent four separate layers. MakerKit is an Onion:
+
+{% img width="2103" height="1221" src="/assets/images/docs/architecture.png" alt="MakerKit's Next.js Architecture" /%}
+
+### Core
+Let's talk about the lower level: the `core`. This layer is a collection of building blocks, utilities, and APIs that make up MakerKit.
+
+This part of the boilerplate is configurable and makes no assumptions about your domain.
+
+You are still welcome to change this code to suit your needs, but you can expect most updates from upstream to change the code in this directory.
+
+### Lib and Shared Components
+
+The mid-level is in two separate folders (to avoid excessive nesting):
+
+- `lib`: here is where we write most domain-related business logic (hooks, contexts, queries, mutations, etc.)
+- `components`: here is where we write components shared across the application
+
+This layer can still be updated by the `upstream` repository, but you should not expect too many changes unless it's additions for new features or bug fixes.
+
+### Routes
+
+Finally, the `app` layer is the outer layer of the application.
+
+It's entirely dependent on your application, and you should not expect updates from upstream unless for fixing blatantly buggy code.
+
+The kit splits the routes into three separate layouts:
+- `(site)`: the routes that are accessible to everyone, even if they are not logged in
+- `(app)/dashboard`: the routes that are only accessible to authenticated users
+- `(app)/dashboard/[organization]`: routes that are organization-specific and accessible only to authenticated users that are part of that organization
+- `auth`: they auth routes, only accessible to unauthenticated users
+
+Assuming you wanted to add user-specific routes (and not org-specific), my recommendation would be to place them under `dashboard/`.
+
+#### Websites routes - (site)
+
+If you are building a SaaS, you will probably have a marketing website. This is the place where you can put your landing page, pricing, and other marketing-related pages.
+
+#### Auth routes - auth
+
+The auth routes are the routes that are accessible to unauthenticated users. This is where your users can sign up, log in, and reset their password.
+
+If a user is already logged in, they will be redirected to the dashboard.
+
+#### Dashboard routes
+
+The dashboard is the place where your users will spend most of their time. It's the place where they can manage their account, invite new users, and perform other actions.
+
+The `dashboard` index page is a page where a user can select an organization if they have not selected one yet.
+
+All the other routes under `dashboard/[organization]` organization-specific. This means that they are only accessible to users that are part of that organization.
+
+#### Domain Components
+
+Domain components are co-located together with their routes. This means that you can easily find the components that are used in a particular route.
+
+For example, you find the authentication components at `/app/auth/components`.

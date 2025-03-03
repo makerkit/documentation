@@ -1,0 +1,65 @@
+---
+status: "published"
+title: "Enable CORS | Next.js Firebase SaaS Kit"
+label: Enable CORS
+order: 9
+---
+
+Enabling CORS is required if you want to allow serving HTTP request to
+external clients. For example, if you want to expose an API to some
+consumers: JS libraries, headless clients, and so on.
+
+To enable CORS, you can use the `with-cors` middleware in two different ways.
+
+You can simply call it in your handler:
+
+```tsx
+import withCors from '~/core/middleware/with-cors';
+
+function apiHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+    withCors(res);
+
+    // your logic
+}
+
+export default apiHandler;
+```
+
+Alternatively, you can use it with `withPipe`:
+
+```tsx
+import withCors from '~/core/middleware/with-cors';
+
+function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+   // your logic
+}
+
+export default withPipe(
+  withCors,
+  apiHandler
+);
+```
+
+Additionally, you need to respond to `OPTIONS` request appropriately.
+
+```tsx
+export function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  withCors(res);
+
+  if (req.method === `OPTIONS`) {
+     // add the method you want to allow
+     res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+     return res.end();
+  }
+}
+```

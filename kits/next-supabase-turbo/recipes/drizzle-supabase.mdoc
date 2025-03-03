@@ -1,0 +1,326 @@
+---
+status: "published"
+title: "Using Drizzle as a client for interacting with Supabase"
+label: "Drizzle"
+order: 6
+description: "Learn how to add Drizzle to your Next.js Supabase Turbo project and use it to interact with Supabase"
+---
+
+By default, the kit interacts with Supabase using the plain Supabase client. 
+
+This guide will walk you through adding [Drizzle ORM](https://orm.drizzle.team/) support to your Makerkit project. Drizzle is a TypeScript ORM that provides type-safe database queries with great developer experience.
+
+This guide is an adaptation of the Drizzle guide for Next.js applications. [The original guide can be found here](https://orm.drizzle.team/docs/tutorials/drizzle-with-supabase).
+
+Please refer to the [Drizzle documentation](https://orm.drizzle.team/docs/overview) for more advanced usage and configuration options.
+
+## Prerequisites
+- A working Makerkit project
+- Basic understanding of TypeScript and SQL
+- Supabase project set up
+
+## Step 1: Install Dependencies
+
+First, let's add the required dependencies to the `@kit/supabase` package:
+
+```bash
+pnpm --filter "@kit/supabase" add jwt-decode postgres
+pnpm --filter "@kit/supabase"add -D drizzle-orm drizzle-kit
+```
+
+We added the required dependencies to the `@kit/supabase` package.
+
+## Step 2: Create Drizzle Configuration
+
+Create a new file `packages/supabase/drizzle.config.js`:
+
+```javascript {% title="packages/supabase/drizzle.config.js" %}
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  schema: './src/schema.ts',
+  out: './src/drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    // This will use local development DB by default
+    url: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+  },
+  schemaFilter: ['public'],
+  verbose: true,
+  strict: true,
+});
+```
+
+We will use the Drizzle Kit CLI to generate a schema out of the Supabase database. This will in turn create the `schema.ts` file in the `out` directory.
+
+The `schema.ts` file will contain the TypeScript types matching your database schema that Drizzle uses to infer the TS types for your database queries.
+
+## Step 3: Add Scripts to package.json
+
+Update `packages/supabase/package.json`:
+
+```json {% title="packages/supabase/package.json" %}
+{
+  "scripts": {
+    // ... existing scripts
+    "drizzle": "drizzle-kit",
+    "pull": "drizzle-kit pull --config drizzle.config.js"
+  },
+  "exports": {
+    // Add these new exports
+    "./drizzle-client": "./src/clients/drizzle-client.ts",
+    "./drizzle-schema": "./src/drizzle/schema.ts"
+  }
+}
+```
+
+These commands will help us pull the schema from the Supabase database and generate the `schema.ts` file.
+
+## Step 4: Create Drizzle Client
+
+Create a new file `packages/supabase/src/clients/drizzle-client.ts`:
+
+```typescript {% title="packages/supabase/src/clients/drizzle-client.ts" %}
+import 'server-only';
+
+import { DrizzleConfig, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { JwtPayload, jwtDecode } from 'jwt-decode';
+import postgres from 'postgres';
+import { z } from 'zod';
+
+import * as schema from '../drizzle/schema';
+
+// Config validation
+const SUPABASE_DATABASE_URL = z
+  .string({
+    description: `The URL of the Supabase database. Please provide the variable SUPABASE_DATABASE_URL.`,
+    required_error: 'The environment variable SUPABASE_DATABASE_URL is required',
+  })
+  .url()
+  .parse(process.env.SUPABASE_DATABASE_URL!);
+
+const config = {
+  casing: 'snake_case',
+  schema,
+} satisfies DrizzleConfig<typeof schema>;
+
+// Admin client bypasses RLS
+const adminClient = drizzle({
+  client: postgres(SUPABASE_DATABASE_URL, { prepare: false }),
+  ...config,
+});
+
+// RLS protected client
+const rlsClient = drizzle({
+  client: postgres(SUPABASE_DATABASE_URL, { prepare: false }),
+  ...config,
+});
+
+export function getDrizzleSupabaseAdminClient() {
+  return adminClient;
+}
+
+export async function getDrizzleSupabaseClient() {
+  const client = getSupabaseServerClient();
+  const { data } = await client.auth.getSession();
+  const accessToken = data.session?.access_token ?? '';
+  const token = decode(accessToken);
+
+  const runTransaction = ((transaction, config) => {
+    return rlsClient.transaction(async (tx) => {
+      try {
+        // Set up Supabase auth context
+        await tx.execute(sql`
+          select set_config('request.jwt.claims', '${sql.raw(
+            JSON.stringify(token),
+          )}', TRUE);
+          select set_config('request.jwt.claim.sub', '${sql.raw(
+            token.sub ?? '',
+          )}', TRUE);
+          set local role ${sql.raw(token.role ?? 'anon')};
+        `);
+
+        return await transaction(tx);
+      } finally {
+        // Clean up
+        await tx.execute(sql`
+          select set_config('request.jwt.claims', NULL, TRUE);
+          select set_config('request.jwt.claim.sub', NULL, TRUE);
+          reset role;
+        `);
+      }
+    }, config);
+  }) as typeof rlsClient.transaction;
+
+  return {
+    runTransaction,
+  };
+}
+
+function decode(accessToken: string) {
+  try {
+    return jwtDecode<JwtPayload & { role: string }>(accessToken);
+  } catch {
+    return { role: 'anon' } as JwtPayload & { role: string };
+  }
+}
+```
+
+## Step 5: Generate the Schema
+
+Now we'll generate the Drizzle schema from your existing Supabase database:
+
+```bash
+pnpm --filter "@kit/supabase" drizzle pull
+```
+
+This will create a `schema.ts` file in your `out` directory with the TypeScript types matching your database schema.
+
+You should see the following output:
+
+```
+Pulling from ['public'] list of schemas
+
+Using 'postgres' driver for database querying
+[✓] 14  tables fetched
+[✓] 104 columns fetched
+[✓] 9   enums fetched
+[✓] 18  indexes fetched
+[✓] 23  foreign keys fetched
+[✓] 28  policies fetched
+[✓] 3   check constraints fetched
+[✓] 2   views fetched
+
+[✓] Your SQL migration file ➜ src/drizzle/0000_easy_black_panther.sql 🚀
+[✓] Your schema file is ready ➜ src/drizzle/schema.ts 🚀
+[✓] Your relations file is ready ➜ src/drizzle/relations.ts 🚀
+```
+
+### Adding the auth schema to the schema
+
+After generating the schema, please add the following code at the top of your `schema.ts` file:
+
+1. Import the `pgSchema` function from Drizzle
+2. Add the `auth` schema to the schema, which we need to reference the `auth.users` table in Supabase. This is required because we only pull the public schema by default, however some tables reference the `auth` schema.
+
+```ts {% title="packages/supabase/src/drizzle/schema.ts" %}
+const authSchema = pgSchema('auth');
+
+const usersInAuth = authSchema.table('users', {
+  id: uuid('id').primaryKey(),
+});
+```
+
+### Disable linting on schema.ts
+
+Since this is a generated file, we want to disable linting on it. To do so, add this line to the top of the file:
+
+```ts {% title="packages/supabase/src/drizzle/schema.ts" %}
+/* eslint-disable */
+```
+
+## Step 6: Using the Drizzle Client
+
+Here's an example of how to use the Drizzle client in a Next.js page:
+
+```typescript
+import { use } from 'react';
+import { getDrizzleSupabaseClient } from '@kit/supabase/drizzle-client';
+import { accounts } from '@kit/supabase/drizzle-schema';
+
+function MyComponent() {
+  const client = use(getDrizzleSupabaseClient());
+
+  // Example query using transactions
+  const data = use(client.runTransaction((tx) => {
+    return tx.select().from(accounts);
+  }));
+
+  // Rest of your component code
+}
+```
+
+Alternatively, in a Server Action:
+
+```typescript
+'use server';
+
+import { getDrizzleSupabaseClient } from '@kit/supabase/drizzle-client';
+import { accounts } from '@kit/supabase/drizzle-schema';
+
+export const getAccountsAction = enhanceAction(async (data) => {
+  const client = await getDrizzleSupabaseClient();
+
+  // Fetch accounts
+  const data = await client.runTransaction((tx) => {
+    return tx.select().from(accounts);
+  });
+
+  // Return the data
+  return data;
+},
+{
+  auth: true
+});
+```
+
+### Using the Admin Client
+
+If you need elevated permissions, you can use the `getDrizzleSupabaseAdminClient()` function:
+
+```typescript
+import { use } from 'react';
+import { getDrizzleSupabaseAdminClient } from '@kit/supabase/drizzle-client';
+import { accounts } from '@kit/supabase/drizzle-schema';
+
+function MyComponent() {
+  const client = getDrizzleSupabaseAdminClient();
+
+  // Example query using transactions
+  const data = await client.select().from(accounts);
+
+  // Rest of your component code
+}
+```
+
+## Important Notes
+
+1. **RLS Support**: The Drizzle client respects Supabase Row Level Security (RLS) by passing the user's JWT token and role in transactions.
+2. **Client Types**: There are two client types:
+   - `getDrizzleSupabaseAdminClient()` - bypasses RLS (use with caution)
+   - `getDrizzleSupabaseClient()` - respects RLS (use for regular user operations)
+3. **Environment Variables**: Make sure to set `SUPABASE_DATABASE_URL` in your environment variables:
+   ```bash
+   SUPABASE_DATABASE_URL=postgres://user:pass@host:port/database
+   ```
+
+You can only use the Drizzle client in a Server environment - therefore in Server Components, Server Actions and API Routes. It will fail if you bundle it within a client-side component.
+
+### Keep the SUPABASE_DATABASE_URL variable confidential
+
+The variable `SUPABASE_DATABASE_URL` is required for the Drizzle client to work correctly. You will find this in the Supabase dashboard under the project settings.
+
+{% alert type="warning" title="Do not commit the SUPABASE_DATABASE_URL variable to the repository" %}
+Please keep the variable `SUPABASE_DATABASE_URL` confidential. It contains the DB credentials and should not be committed to the repository. Therefore, only add it to the `.env.development` file for development purposes containing the local DB credentials.
+{% /alert %}
+
+When in production, please only add the `SUPABASE_DATABASE_URL` variable using your hosting provider's environment variables.
+
+## Next Steps
+
+While the core kit will keep using the plain Supabase client, from here on you can use the Drizzle client in your application.
+
+If you want to use the Drizzle utilities for migrations, you may need to place the `src/drizzle` folder in the root of your project and replace the path in the `drizzle.config.js` file pointing to the `apps/web` folder.data
+
+However, please remember to keep up to date the `drizzle-schema` export in the `@kit/supabase` package, since you want to be able to use the Drizzle schema throughout the packages.
+
+## Benefits of Using Drizzle
+
+- Type-safe database queries
+- Better developer experience with autocomplete
+- SQL-like query builder
+- Transaction support
+- Automatic schema generation from your existing database
+
+Please refer to the [Drizzle documentation](https://orm.drizzle.team/docs/overview) for more advanced usage and configuration options.

@@ -1,0 +1,71 @@
+---
+status: "published"
+label: "Adding a Turborepo app"
+title: "Add a new Turborepo application to your Makerkit application | Next.js Supabase"
+description: "Learn how to add a new Turborepo application to your Makerkit application"
+order: 12
+---
+
+This is an **advanced topic** - you should only follow these instructions if you are placing a new app within your monorepo and want to keep pulling updates from the Makerkit repository.
+
+In some ways - creating a new repository may be the easiest way to manage your application. However, if you want to keep your application within the monorepo and pull updates from the Makerkit repository, you can follow these instructions.
+
+---
+
+To pull updates into a separate application outside of `web` - we can use `git subtree`.
+
+Basically, we will create a subtree at `apps/web` and create a new remote branch for the subtree. When we create a new application, we will pull the subtree into the new application. This allows us to keep it in sync with the `apps/web` folder.
+
+### 1. Create a subtree
+
+First, we need to create a subtree for the `apps/web` folder. We will create a new branch called `web` and create a subtree for the `apps/web` folder. We will create a branch named `web-branch` and create a subtree for the `apps/web` folder.
+
+```bash
+git subtree split --prefix=apps/web --branch web-branch
+```
+
+### 2. Create a new application
+
+Now, we can create a new application in the `apps` folder. For example, let's create a new application called `api`.
+
+Let's say we want to create a new app `pdf-chat` at `apps/pdf-chat` with the same structure as the `apps/web` folder (which acts as the template for all new apps).
+
+```bash
+git subtree add --prefix=apps/pdf-chat origin web-branch --squash
+```
+
+You should now be able to see the `apps/pdf-chat` folder with the contents of the `apps/web` folder.
+
+### 3. Update the new application
+
+When you want to update the new application, follow these steps:
+
+#### Pull updates from the Makerkit repository
+
+The command below will update all the changes from the Makerkit repository:
+
+```bash
+git pull upstream main
+```
+
+#### Push the web-branch updates
+
+After you have pulled the updates from the Makerkit repository, you can split the branch again and push the updates to the `web-branch`:
+
+```bash
+git subtree split --prefix=apps/web --branch web-branch
+```
+
+Now, you can push the updates to the `web-branch`:
+
+```bash
+git push origin web-branch
+```
+
+#### Pull the updates to the new application
+
+Now, you can pull the updates to the new application:
+
+```bash
+git subtree pull --prefix=apps/pdf-chat origin web-branch --squash
+```

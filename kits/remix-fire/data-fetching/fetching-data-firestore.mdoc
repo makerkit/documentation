@@ -1,0 +1,223 @@
+---
+status: "published"
+
+title: "Fetching data from Firestore"
+label: "Fetching data from Firestore"
+order: 1
+description: "Learn how fetch data from your Firestore database in Makerkit"
+---
+
+
+When fetching data from Firestore, we use the hooks provided by `reactfire`,
+although you could also use plain functions from the Firebase SDK if you
+preferred.
+
+To make data-fetching from Firestore more reusable, our convention is to
+create a custom React hook for each query we make.
+
+For example, let's take a look at the hook to fetch an organization from
+Firestore:
+
+ ```tsx {% title="use-fetch-organization.ts" %}
+import { useFirestore, useFirestoreDocData } from 'reactfire';
+import { doc, DocumentReference } from 'firebase/firestore';
+import { Organization } from '~/lib/organizations/types/organization';
+import { ORGANIZATIONS_COLLECTION } from '~/lib/firestore-collections';
+
+type Response = WithId<Organization>;
+
+export function useFetchOrganization(
+  organizationId: string
+) {
+  const firestore = useFirestore();
+
+  const ref = doc(
+    firestore,
+    ORGANIZATIONS_COLLECTION,
+    organizationId
+  ) as DocumentReference<Response>;
+
+  return useFirestoreDocData(ref, { idField: 'id' });
+}
+
+export default useFetchOrganization;
+```
+
+Let's explain the above:
+
+1. First, we get the Firestore instance using `useFirestore`
+2. We create a Firestore reference to the path of the organization collection
+3. Strong-type the document reference `as DocumentReference<Response>` so
+that Typescript will correctly infer the following usages of the reference
+4. Finally, we request the data using the hook `useFirestoreDocData,` which will
+ return the record's data.
+
+NB: Additionally, we tell Firestore to
+add the `id` of the field to the object's dat using `{ idField: 'id' }`.
+This is why the interface returned is `WithId<Organization>`. We're
+basically telling Typescript that the data returned is the combination of
+the following interfaces:
+
+```tsx
+interface WithId {
+  id: string;
+}
+
+interface Organization {
+  // ...
+}
+```
+
+This is very useful, as often times you will need the IDs of your Firestore
+documents on the client-side.
+
+When you create a new Firestore collection, remember to:
+1. Add the required Firestore rules
+2. Store and read the name of the collection from
+`~/lib/firestore-collections`:
+this helps you avoid magic strings when typing your collection names
+3. Create hooks to fetch data. Usually, we store these in `lib/<entity>/hooks`
+
+### Consuming data from the Firestore hooks
+
+Reactfire's custom hooks help us fetch data from Firestore effortlessly, but
+we need to pay attention when using them due to their asynchronous nature.
+
+For example, let's see how we can use the hook above correctly by displaying
+a different UI based on the status of the hook:
+
+```tsx
+import { useFetchOrganization } from './use-fetch-organization';
+
+function OrganizationCard({ organizationId }) {
+  const {
+    data: organization,
+    status,
+  } = useFetchOrganization(organizationId);
+
+  /* data is loading */
+  if (status === `loading`) {
+    return <div>Loading...</div>
+  }
+
+  /* request errored */
+  if (status === `error`) {
+    return <div>Error!</div>
+  }
+
+  /* request successful, we can access "organization" */
+  return <div>{organization.name}</div>;
+}
+```
+
+### Fetching data from a collection using a Firestore query
+
+Fetching data from a collection using a query is a common scenario.
+
+For example, we assume you have a collection named `tasks`, with a foreign key
+`organizationId` represents the ID of the organization to which it belongs.
+
+Of course, you will want to write a query to fetch a list of tasks for your
+organization.
+
+When we define our entity, we will need to add a key `organizationId` so we
+can match it against the ID of the organization it belongs to. For example,
+take a look at the `Task` interface below:
+
+```tsx
+export interface Task {
+  name: string;
+  description: string;
+  dueDate: string;
+  done: boolean;
+
+  // here we use organizationId as a foreign key
+  organizationId: string;
+}
+```
+
+Now, we can write a hook that gets a list of `tasks` that have
+`organizationId` equal to the one we pass:
+
+```tsx
+import { useFirestore, useFirestoreCollectionData } from 'reactfire';
+
+import {
+  collection,
+  CollectionReference,
+  query,
+  where,
+} from 'firebase/firestore';
+
+import { Task } from '~/lib/tasks/types/task';
+
+function useFetchTasks(organizationId: string) {
+  const firestore = useFirestore();
+  const tasksCollection = 'tasks';
+
+  const collectionRef = collection(
+    firestore,
+    tasksCollection
+  ) as CollectionReference<WithId<Task>>;
+
+  const path = `organizationId`;
+  const operator = '==';
+  const constraint = where(path, operator, organizationId);
+  const organizationsQuery = query(collectionRef, constraint);
+
+  return useFirestoreCollectionData(organizationsQuery, {
+    idField: 'id',
+  });
+}
+
+export default useFetchTasks;
+```
+
+### Security Rules
+
+What about securing our Firestore database? We will use Firestore's security
+rules. During development, you can update the `firestore.rules` file in your
+root folder, but remember that you need to propagate these to your Firebase
+instance using the console.
+
+The functions `userIsMemberByOrganizationId` and `isSignedIn` are added by
+default to the Makerkit's starter:
+
+ ```js {% title="firestore.rules" %}
+match /tasks/{taskId} {
+  allow create: if isSignedIn();
+  allow read, update, delete: if userIsMemberByOrganizationId(existingData().organizationId);
+}
+```
+
+## Strong Typing
+
+When reading data, it's necessary to strong-type your queries. While the
+Firebase SDK isn't exactly type-friendly in some situations; we can make it
+work by casting references to the correct type.
+
+### Casting Documents References
+
+When casting Firestore documents, you can use `as DocumentReference<T>`:
+
+```tsx
+const organizationRef = doc(
+  firestore,
+  ORGANIZATIONS_COLLECTION,
+  organizationId
+) as DocumentReference<WithId<Organization>>;
+```
+
+When getting the response from Firestore, the type will be correctly
+inferred as `WithId<Organization>`.
+
+### Casting Collections References
+
+When casting Firestore collections, you can use `as CollectionReference<T>`:
+
+```tsx
+const collectionRef = collection(
+  firestore,
+  tasksCollection
+) as CollectionReference<WithId<Task>>;
+```

@@ -1,0 +1,83 @@
+---
+status: "published"
+
+title: "Deleting a Document"
+label: "Deleting a Document"
+order: 2
+description: "Learn how to delete a document in Firestore in your Next.js Firebase app"
+---
+
+
+Deleting a document in Firestore can be achieved using both the Web (Client) and the Admin SDK (Server). Depending on the use-case, you will use one or the other.
+
+1. **Client SDK**: When you want to update a document from the browser, you will use the Client SDK. This is the most common use-case, and can be done when the user has the permissions required to delete a document based on their security rules.
+2. **Admin SDK**: When you want to update a document from a server, you will use the Admin SDK. This is useful when you want to delete a document from a server, or when you want to delete a document that the user does not have permission to delete.
+
+## Client SDK
+
+To delete a document, we will use the `deleteDoc` function from the Web Firebase SDK.
+
+We can use hooks to make sure we have access to the Firestore instance, and the collection we want to delete the document from.
+
+```tsx
+import { useFirestore } from 'reactfire';
+import { useCallback } from 'react';
+import { deleteDoc, doc } from "firebase/firestore";
+
+function useDeleteTask() {
+  const firestore = useFirestore();
+
+  return useCallback(
+    (taskId: string) => {
+      const tasksDoc = doc(firestore, `/tasks`, taskId);
+
+      return deleteDoc(tasksDoc);
+    },
+    [firestore]
+  );
+}
+```
+
+We can then use this hook in our component to create a new task.
+
+```tsx
+import { useCallback } from "react";
+
+const DeleteTask = ({ id }: { id: string }) => {
+  const deleteTask = useDeleteTask(id);
+
+  // ... other code
+
+  const onSubmit = useCallback(async (taskId: string) => {
+    await deleteTask(taskId);
+  }, [deleteTask]);
+
+  // ... other code
+};
+```
+
+## Admin SDK
+
+To delete a Firestore document, we will use the `delete` function from the Admin Firebase SDK.
+
+We can use the Admin SDK only in API Route handlers and the `getServerSideProps` function. For two reasons:
+
+1. The Admin SDK is for Node.js environments, and cannot be used in the browser.
+2. The Admin SDK requires a service account, which should not be exposed to the browser.
+
+```tsx
+import getRestFirestore from '~/core/firebase/admin/get-rest-firestore';
+
+async function deleteTaskFromServer(task: {
+  id: string;
+}) {
+  const firestore = getRestFirestore();
+  const taskRef = firestore.collection(firestore, `tasks`).doc(task.id);
+
+  await taskRef.delete();
+
+  return task;
+}
+```
+
+You can now use the function `deleteTaskFromServer` in your API Route handlers and `getServerSideProps` functions.

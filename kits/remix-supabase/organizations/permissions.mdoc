@@ -1,0 +1,50 @@
+---
+status: "published"
+title: Managing User Permissions in Remix Supabase
+label: User Permissions
+description: "Learn how to write a simple permissions system based on the
+users' role in your Makerkit applications using Remix Supabase"
+order: 2
+---
+
+Most permissions are written in a single file at `src/lib/organizations/permissions.ts`.
+
+Here, you can find some of the examples used in the boilerplate so that you can start writing your own.
+
+Why are permissions written in a single file? Because it's easy to write inline logic and lose track of it. Therefore, we will write all the business logic within the same file and encapsulated as simple functions.
+
+Let's take a look at a simple permission function in the boilerplate:
+
+ ```tsx {% title="src/lib/organizations/permissions.ts" %}
+/**
+ *
+ * @param currentUserRole The current logged-in user
+ * @param targetUser The role of the target of the action
+ * @description Checks if a user can perform actions (such as update a role) of another user
+ * @name canUpdateUser
+ */
+export function canUpdateUser(
+  currentUserRole: MembershipRole,
+  targetUser: MembershipRole
+) {
+  return currentUserRole > targetUser;
+}
+```
+
+The function takes two parameters: the current user's role and the target user's role, and checks if the current user can update the target user's role (or anything).
+
+Now, we can use the function above with the `IfHasPermissions` component to display or hide some parts of the application. This component automatically injects the current user's role, such as below:
+
+```tsx
+<IfHasPermissions
+  condition={(currentUserRole) =>
+    canInviteUser(currentUserRole, targetUserRole)
+  }
+>
+  <InviteUserComponent />
+</IfHasPermissions>
+```
+
+The `InviteUserComponent` component will be displayed if the condition is truthy.
+
+Otherwise, you can use these functions throughout the application on both the client and the server.

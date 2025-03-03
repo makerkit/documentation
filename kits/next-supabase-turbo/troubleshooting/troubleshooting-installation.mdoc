@@ -1,0 +1,37 @@
+---
+status: "published"
+
+title: 'Troubleshooting installation issues in the Next.js Supabase SaaS kit'
+label: 'Installation'
+order: 1
+description: 'Troubleshoot issues related to installing the Next.js Supabase SaaS kit'
+---
+
+
+## Cannot clone the repository
+
+Issues related to cloning the repository are usually related to a Git misconfiguration in your local machine. The commands displayed in this guide using SSH: these will work only if you have setup your SSH keys in Github.
+
+If you run into issues, [please make sure you follow this guide to set up your SSH key in Github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh).
+
+If this also fails, please use HTTPS instead. You will be able to see the commands in the repository's Github page under the "Clone" dropdown.
+
+Please also make sure that the account that accepted the invite to Makerkit, and the locally connected account are the same.
+
+## The Next.js dev server does not start
+
+This may happen due to some issues in the packages. Try to clean the workspace and reinstall everything again:
+
+```bash
+pnpm run clean:workspace
+pnpm run clean
+pnpm i
+```
+
+You can now retry running the dev server.
+
+## Supabase does not start
+
+If you cannot run the Supabase local development environment, it's likely you have not started Docker locally. Supabase requires Docker to be installed and running.
+
+Please make sure you have installed Docker (or compatible software such as Colima, Orbstack) and that is running on your local machine.

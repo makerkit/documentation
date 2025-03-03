@@ -1,0 +1,108 @@
+---
+status: "published"
+title: "Adding Admin users | Next.js Firebase SaaS Kit"
+label: Adding Admins
+order: 2
+description: "A quick guide to set the correct permissions to add new admin users"
+---
+
+To access the Super Admin, your users need to be updated with the correct Custom Claims. We use custom claims to verify they can access the super admin.
+
+We do so by setting the `role` property to `super-admin`.
+
+```json
+{
+  "role": "super-admin"
+}
+```
+
+You can provide more roles for your super admin users - but we only use `super-admin` by default, which is equipped with all permissions.
+
+If you're using the emulator, the user `test@makerkit.dev` is set up with super admin permissions by default.
+
+## Updating Custom claims to set User as Super Admin
+
+To set a user's custom claims against a production environment, we need to write a script that can update the user's custom claims
+using the Firebase Admin package.
+
+Below is a script that allows you to set a user's custom claims.
+
+Before proceeding, make sure to:
+
+1. Install "dotenv" using `npm i dotenv` if not installed yet
+2. Add your environment variables to `.env.local`, where we can store secret keys without them being committed to the Git repository
+3. Grab the ID of the user (from the Firebase console) you want to set as super-admin and place it in the variable `userId` at the bottom of the script.
+
+ ```tsx {% title="assign-super-admin.ts" %}
+import { config } from 'dotenv';
+
+config({
+  path: '.env.local'
+});
+
+import * as admin from 'firebase-admin';
+
+const privateKey = process.env.SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n');
+
+export const app = admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    privateKey,
+    clientEmail: process.env.SERVICE_ACCOUNT_CLIENT_EMAIL,
+  }),
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+});
+
+const auth = app.auth();
+
+async function writeClaims(userId: string, claims: object, merge = true) {
+  console.log(`Setting claims for user with ID ${userId}`);
+
+  try {
+    const user = await auth.getUser(userId);
+    const currentClaims = user.customClaims || {};
+
+    await auth.setCustomUserClaims(
+      userId,
+      merge
+        ? {
+            ...currentClaims,
+            ...claims,
+          }
+        : claims,
+    );
+
+    console.log(`Claims set successfully`);
+  } catch (e) {
+    console.error(e);
+  }
+
+  process.exit();
+}
+
+const userId = '<user_id>';
+
+const claims = {
+  role: 'super-admin'
+};
+
+void writeClaims(userId, claims);
+```
+
+**NB: Update the "userId" variable with the ID of your user**.
+
+To run the script, we can run the following command:
+
+```bash
+npx tsx ./assign-super-admin.ts
+```
+
+This command assumes you're running it from the root folder of your project.
+
+---
+
+
+After running the script, you user is a super admin. You may now need to sign out and then sign in again to see the changes if not working.
+
+You can now navigate to the Admin at the path `/admin` of your application!
