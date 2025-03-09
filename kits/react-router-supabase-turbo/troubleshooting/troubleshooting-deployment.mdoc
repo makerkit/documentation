@@ -1,0 +1,17 @@
+---
+status: "published"
+
+title: 'Troubleshooting deployment issues in the React Router Supabase kit'
+label: 'Deployment'
+order: 4
+description: 'Troubleshoot issues related to deploying the application in the React Router Supabase SaaS kit'
+---
+
+
+## The deployment build fails
+
+This is most likely an issue related to the environment variables not being set correctly in the deployment environment. Please analyse the logs of the deployment provider to see what is the issue.
+
+The kit is very defensive about incorrect environment variables, and will throw an error if any of the required environment variables are not set. In this way - the build will fail if the environment variables are not set correctly - instead of deploying a broken application.
+
+If you are deploying to Vercel, [please follow this guide](going-to-production/vercel).

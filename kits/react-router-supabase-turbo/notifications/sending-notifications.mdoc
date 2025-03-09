@@ -1,0 +1,135 @@
+---
+status: "published"
+
+title: "Sending a notification in the React Router Supabase Starter Kit"
+description: "Learn how to send a notification in the React Router Supabase Starter Kit."
+label: "Sending Notifications"
+order: 1
+---
+
+
+Makerkit allows you to send notifications using the `@kit/notifications` package. The package provides a simple API to send notifications.
+
+The `createNotificationsApi` provides an easy to use API to send notifications. You can send notifications to users after they sign up, create a task, or perform any other action.
+
+The service is a server-side service, so you can use it in your server actions or route handlers. This service **cannot be used from the client-side** since the only role who can insert notifications is the `service_role` role.
+
+Here is a super simple example of how you can send a notification after a user signs up.
+
+```tsx
+import { createNotificationsApi } from '@kit/notifications/api';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+
+async function sendNotificationAfterSignup(
+  accountId: string,
+) {
+  const client = getSupabaseServerAdminClient();
+  const api = createNotificationsApi(client);
+
+  await api.createNotification({
+    account_id: accountId,
+    body: 'You have successfully signed up!',
+  });
+}
+```
+
+In this example, we are sending a notification to the user after they sign up. The `account_id` is the ID of the user who signed up, and the `body` is the message that will be displayed in the notification.
+
+Users will see the notifications if:
+1. they're sent to their own account
+2. they're sent to a team they're a member of
+
+### Notification channels
+
+You can send notifications to different channels using the `channel` field. For example, you can send a notification to the `email` or `in_app`. In-app notifications will be displayed in the app, while email notifications will be sent to the user's email. By default, notifications are sent to the `in_app` channel.
+
+The `createNotificationsApi` function takes the `client` parameter - eg. the Supabase client.
+
+```tsx
+import { createNotificationsApi } from '@kit/notifications/api';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+
+async function sendNotificationAfterSignup(
+  accountId: string,
+) {
+  const client = getSupabaseServerAdminClient();
+  const api = createNotificationsApi(client);
+
+  await api.createNotification({
+    account_id: accountId,
+    body: 'You have successfully signed up!',
+    channel: 'email',
+  });
+}
+```
+
+The example above sends an email notification to the user after they sign up.
+
+NB: this require a Database trigger to send the email notification! Please dont't forget to add the trigger in your database.
+
+---
+
+
+NB: at the time of writing, this is not yet implemented in the React Router Supabase Starter Kit. It is a feature that is planned for the future.
+
+### Notification types
+
+You can send different types of notifications using the `type` field. For example, you can send a `info`, `warning`, or `error` notification.
+
+By default, notifications are sent as `info`.
+
+```tsx
+import { createNotificationsApi } from '@kit/notifications/api';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+
+async function sendNotificationAfterSignup(
+  accountId: string,
+) {
+  const client = getSupabaseServerAdminClient();
+  const api = createNotificationsApi(client);
+
+  await api.createNotification({
+    account_id: accountId,
+    body: 'You have successfully signed up!',
+    type: 'info', // this is the default type, no need to specify it
+  });
+}
+```
+
+#### Warning notifications
+
+To send a warning notification, you can use the `warning` type.
+
+```tsx
+api.createNotification({
+  account_id: accountId,
+  body: 'Your credit card is about to expire!',
+  type: 'warning',
+});
+```
+
+#### Error notifications
+
+To send an error notification, you can use the `error` type.
+
+```tsx
+api.createNotification({
+  account_id: accountId,
+  body: 'There was an error processing your payment.',
+  type: 'error',
+});
+```
+
+### Notification Links
+
+You can also include a link in the notification using the `link` field. This will create a clickable link in the notification.
+
+```tsx
+api.createNotification({
+  account_id: accountId,
+  body: 'You have created a task!',
+  link: '/tasks/123',
+});
+```
+
+The example above sends a notification to the user after they create a task. The notification will include a link to the task.

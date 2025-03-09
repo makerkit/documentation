@@ -1,0 +1,59 @@
+---
+status: "published"
+
+title: 'Using the Google Analytics Provider in React Router Supabase Turbo'
+label: 'Google Analytics'
+description: 'Learn how to use the Google Analytics provider in React Router Supabase Turbo'
+order: 2
+---
+
+
+The [Google Analytics](https://marketingplatform.google.com/about/analytics/) provider in React Router Supabase Turbo is a simple way to integrate Google Analytics into your React Router application using the Makerkit's Analytics package.
+
+## Installation
+
+First, you need to pull the `@kit/analytics` package into your project using the CLI
+
+```bash
+npx @makerkit/cli@latest plugins install
+```
+
+When prompted, select the `Google Analytics` package from the list of available packages. Once the command completes, you should see the `packages/plugins/google-analytics` directory in your project.
+
+You can now import this package into your project:
+
+```bash
+pnpm add "@kit/google-analytics@workspace:*" --filter "@kit/analytics" -D
+```
+
+You can now use the Google Analytics plugin in the Analytics package. Update the `packages/analytics/src/index.ts` file as follows:
+
+ ```tsx {% title="packages/analytics/src/index.ts" %}
+import { createGoogleAnalyticsService } from '@kit/google-analytics';
+
+import { createAnalyticsManager } from './analytics-manager';
+import type { AnalyticsManager } from './types';
+
+export const analytics: AnalyticsManager = createAnalyticsManager({
+    providers: {
+        'google-analytics': createGoogleAnalyticsService,
+    },
+});
+```
+
+## Configuration
+
+Please add the following environment variables to your `.env` file:
+
+```bash
+VITE_GA_MEASUREMENT_ID=your-measurement-id
+```
+
+This is the Measurement ID of your Google Analytics property. You can find it in the Google Analytics dashboard.
+
+Additionally, you can add the following environment variable to your `.env` file:
+
+```bash
+VITE_GA_DISABLE_PAGE_VIEWS_TRACKING=true
+VITE_GA_DISABLE_LOCALHOST_TRACKING=true
+```

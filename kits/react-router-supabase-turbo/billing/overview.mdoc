@@ -1,0 +1,61 @@
+---
+status: "published"
+label: "How Billing Works"
+title: "How Billing works in the React Router Supabase SaaS kit"
+description: "A quick introduction to billing in Makerkit and how to set it up in the React Router Supabase SaaS kit"
+order: 0
+---
+
+The billing package is used to manage subscriptions, one-off payments, and more.
+
+The billing package is abstracted from the billing gateway package, which is used to manage the payment gateway (e.g., Stripe, Lemon Squeezy, etc.).
+
+To set up the billing package, you need to set the following environment variables:
+
+```bash
+VITE_BILLING_PROVIDER=stripe # or lemon-squeezy
+```
+
+## Billing in Makerkit
+
+Makerkit implements two packages for managing billing:
+
+1. `core`: this package is responsible for exporting the billing service and the schema getFontDefinitionFromNetwork
+2. `gateway`: the gateway is a router that handles the billing service and the billing provider (e.g., Stripe, Lemon Squeezy, etc.)
+
+Then, we define a package for each provider:
+
+1. `stripe`: this package is responsible for handling the Stripe API
+2. `lemon-squeezy`: this package is responsible for handling the Lemon Squeezy API
+3. `paddle`: this package is responsible for handling the Paddle API (Coming soon)
+
+To summarize:
+
+1. core defines the service and the schema
+2. the provider's packages define the API calls based on the provider's API
+3. the gateway package is responsible for routing the requests to the correct provider
+
+Whatever provider you choose, you need to set the environment variable `VITE_BILLING_PROVIDER` to the provider you want to use. The Gateway Service will then route the requests to the correct provider. This means you can switch between providers without changing the code. The schema is the same for all providers - but the details of the API calls are different - so some details apply.
+
+## Subscriptions vs. One-off payments
+
+Makerkit supports both one-off payments and subscriptions. You have the choice to use one or both. What Makerkit cannot assume with certainty is the billing mode you want to use. By default, we assume you want to use subscriptions, as this is the most common billing mode for SaaS applications.
+
+This means that - by default - Makerkit will be looking for a subscription plan when visiting the billing section of the personal or team account. This means we fetch data from the tables `subscriptions` and `subscription_items`.
+
+If you want to use one-off payments, you need to set the billing mode to `one-time`:
+
+```bash
+BILLING_MODE=one-time
+```
+
+By doing so, Makerkit will be looking for one-off payments when visiting the billing section of the personal or team account. This means we fetch data from the tables `orders` and `order_items`.
+
+### But - I want to use both
+
+Perfect - you can, but you need to customize the pages to display the correct data.
+
+---
+
+
+Depending on the service you use, you will need to set the environment variables accordingly. By default - the billing package uses Stripe. Alternatively, you can use Lemon Squeezy. In the future, we will also add Paddle.
