@@ -12,6 +12,10 @@ To run the project - there are some commands you need to run.
 2. Start Supabase (ensure Docker is running)
 3. Start Stripe (optional, if you want to test the billing system)
 
+## 0. Environment variables
+
+Please create a copy of the `.env.template` file and rename it `.env`.
+
 ## 1. Start the development server
 
 ```bash
@@ -54,13 +58,20 @@ The flow above is for testing purposes only. For production, you must use an aut
 
 ## 2. Start Supabase
 
-Run the following command to start Supabase (or use your IDE to run the command in the package.json)
+{% alert type="warning" title="Have Docker running" %}
+We need to have Docker running so that we can start the Supabase Docker container. If you don't have Docker running, please start it now.
+{% /alert %}
+
+Ensure Docker is running, the run the following command to start Supabase (or use your IDE to run the command in the package.json).
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) is the best way to get started with Docker.
 
 ```bash
 pnpm run supabase:web:start
 ```
 
 This command will start the Supabase web server.
+
+Please read the [Supabase documentation](https://supabase.com/docs/guides/local-development/cli/getting-started#running-supabase-locally) for more information about starting Supabase locally.
 
 ## 3. Start Stripe
 

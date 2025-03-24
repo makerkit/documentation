@@ -10,7 +10,23 @@ Let's walk through common "Module not found" errors and how to fix them in your 
 
 This issue is mostly related to either dependency installed in the wrong package or issues with the file system.
 
-### 1. Dependency Installation Issues
+### 1. Windows Paths issues
+
+Windows has a limitation for the maximum path length. If you're running into issues with paths, you can try the following:
+
+1. Move the project closer to the root of your drive
+2. Use a shorter name for the project's folder name
+3. Please Please Please use WSL2 instead of Windows
+
+### 2. Windows OneDrive Conflicts
+
+OneDrive can cause file system issues with Node.js projects. If you're using Windows with OneDrive:
+
+1. Move your project outside of OneDrive-synced folders
+2. Or disable OneDrive sync for your development folder
+
+
+### 3. Dependency Installation Issues
 
 The most common cause is incorrect dependency installation. Here's how to fix it:
 
@@ -44,10 +60,3 @@ If it's in the main app, you should install it in the main app:
 ```bash
 pnpm add my-package --filter web
 ```
-
-### 2. Windows OneDrive Conflicts
-
-OneDrive can cause file system issues with Node.js projects. If you're using Windows with OneDrive:
-
-1. Move your project outside of OneDrive-synced folders
-2. Or disable OneDrive sync for your development folder

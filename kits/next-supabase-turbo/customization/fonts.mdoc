@@ -1,12 +1,10 @@
 ---
 status: "published"
-
 label: "Updating Fonts"
 title: "Update the default fonts of your SaaS"
 order: 3
 description: "Learn how to update the fonts of your Makerkit application"
 ---
-
 
 By default, Makerkit uses two fonts:
 
@@ -52,16 +50,6 @@ To display a different font, please replace the imports from `next/font/google` 
 
 ## Removing Apple's system as default font on Apple Devices
 
-To set another font instead of Apple's system font, update the Tailwind configuration.
+To set another font instead of Apple's system font, update the Tailwind variables.
 
-Open `tooling/tailwind/index.ts` and replace the line:
-
-```
-sans: ['-apple-system', 'var(--font-sans)', ...fontFamily.sans],
-```
-
-to
-
-```
-sans: ['var(--font-sans)', ...fontFamily.sans],
-```
+Open `apps/web/styles/shadcn-ui.css.css` and replace `-apple-system` with the font you want to use.

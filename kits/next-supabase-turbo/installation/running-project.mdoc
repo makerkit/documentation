@@ -8,7 +8,27 @@ description: "Learn how to run the Next.js Supabase Turbo project on your local 
 
 To run the project, follow these steps to start the development server, Supabase, and Stripe (optional for billing system testing).
 
-## 1. Start the Development Server
+## 1. Start Supabase
+
+{% alert type="warning" title="Have Docker running" %}
+We need to have Docker running so that we can start the Supabase Docker container. If you don't have Docker running, please start it now.
+{% /alert %}
+
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) is the best way to get started with Docker.
+
+Ensure Docker is installed and running, then start Supabase with:
+
+```bash
+pnpm run supabase:web:start
+```
+
+This command initiates the local Supabase web server. This allows us to develop locally without having to deploy to Supabase.
+
+When you're ready to deploy the project to production, follow the [checklist](../going-to-production/checklist) to ensure everything is properly configured.
+
+Please read the [Supabase documentation](https://supabase.com/docs/guides/local-development/cli/getting-started#running-supabase-locally) for more information about starting Supabase locally.
+
+## 2. Start the Development Server
 
 To start the web application development server, run:
 
@@ -28,9 +48,17 @@ Makerkit seeds the DB with a few users by default. To login as a test user, you 
 - **Email**: `test@makerkit.dev`
 - **Password**: `testingpassword`
 
-To confirm email addresses, visit [Inbucket](http://localhost:54324/status). Supabase uses Inbucket to capture emails sent during the authentication process.
+To confirm email addresses, visit [Inbucket](http://localhost:54324). Supabase uses Inbucket/Mailpit to capture emails sent during the authentication process.
 
-Bookmark the Inbucket URL, as you will need it quite often.
+Bookmark the Inbucket/Mailpit URL, as you will need it quite often.
+
+#### Troubleshooting
+
+If you're hitting issues with loading modules (such as `Module not found:
+Can't resolve 'react-dom/client'`), you're likely running into Windows-related
+issues with Node.js.
+
+Please see the [the Troubleshooting section](../troubleshooting/troubleshooting-module-not-found) for more information.
 
 #### Super Admin Credentials
 
@@ -50,22 +78,6 @@ Since you require MFA for the Super Admin user, please use the following steps t
 3. **Verify**: Use the TOTP code and the secret key to verify the MFA code.
 Make sure the TOTP code is not expired when you verify the MFA code.
 
-## 2. Start Supabase
-
-{% alert type="warning" title="Have Docker running" %}
-We need to have Docker running so that we can start the Supabase Docker container. If you don't have Docker running, please start it now.
-{% /alert %}
-
-Ensure Docker is running, then start Supabase with:
-
-```bash
-pnpm run supabase:web:start
-```
-
-This command initiates the local Supabase web server. This allows us to develop locally without having to deploy to Supabase.
-
-When you're ready to deploy the project to production, follow the [checklist](../going-to-production/checklist) to ensure everything is properly configured.
-
 ## 3. Start Stripe (Optional)
 
 To test the billing system, start Stripe by running:
@@ -80,9 +92,9 @@ You now have the Next.js Supabase Turbo project running on your local machine. ð
 
 ## 4. Email Server for local development
 
-To receive emails during local development, Supabase uses [InBucket](http://localhost:54324/status). It's from here that you will be receving emails from both Supabase Auth and transactional emails during local development.
+To receive emails during local development, Supabase uses [InBucket/Mailpit](http://localhost:54324). It's from here that you will be receving emails from both Supabase Auth and transactional emails during local development.
 
-You can bookmark the InBucket URL, as you will need it quite often.
+You can bookmark the InBucket/Mailpit URL, as you will need it quite often.
 
 ## Deploying to Production
 

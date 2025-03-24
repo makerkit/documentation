@@ -958,11 +958,9 @@ Finally, we need the functions to embed the widget on any website by rendering t
 Let's create the `index.css` style that will be used to style the widget.
 
 ```css {% title="packages/ticket-widget/src/index.css" %}
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "../../../apps/web/styles/globals.css";
 
-#makerdesk-widget-container {
+:host {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Helvetica Neue', Arial;
     --background: 0 0% 100%;
@@ -988,16 +986,69 @@ Let's create the `index.css` style that will be used to style the widget.
 }
 ```
 
+NB: you can change the variables above with any other value you want.
+
+Let's add a new file to create an Iframe component that will be used to render the widget.
+
+```tsx {% title="packages/ticket-widget/src/components/iframe.tsx" %}
+'use client';
+
+import { useState } from 'react';
+
+import { createPortal } from 'react-dom';
+
+import { cn } from '@kit/ui/utils';
+
+export const IFrame: React.FC<
+  React.IframeHTMLAttributes<unknown> & {
+    setInnerRef?: (ref: HTMLIFrameElement | undefined) => void;
+    style?: React.CSSProperties;
+    className?: string;
+  }
+> = ({ children, setInnerRef, style = {}, className }) => {
+  const [ref, setRef] = useState<HTMLIFrameElement | null>();
+  const doc = ref?.contentWindow?.document as Document;
+  const mountNode = doc?.body;
+
+  return (
+    <iframe
+      className={cn(className)}
+      style={{
+        all: 'initial',
+        position: 'fixed',
+        width: '100%',
+        height: '100%',
+        border: 0,
+        zIndex: 1000,
+        ...(style ?? {}),
+      }}
+      ref={(ref) => {
+        if (ref) {
+          setRef(ref);
+
+          if (setInnerRef) {
+            setInnerRef(ref);
+          }
+        }
+      }}
+    >
+      {mountNode ? createPortal(children, mountNode) : null}
+    </iframe>
+  );
+};
+```
+
 Finally, we create the `index.tsx` file that will render the `WidgetContainer` component and inject the CSS styles.
 
 ```tsx {% title="packages/ticket-widget/src/index.tsx" %}
+import { Suspense } from 'react';
+
 import { hydrateRoot } from 'react-dom/client';
 
 import Widget from './components';
+import { IFrame } from './components/iframe';
+import styles from './index.css';
 
-import './index.css';
-
-const WIDGET_CSS_URL = process.env.WIDGET_CSS_URL;
 const WIDGET_NAME = process.env.WIDGET_NAME;
 
 // initialize the widget
@@ -1014,41 +1065,24 @@ function initializeWidget() {
 function onReady() {
   try {
     const element = document.createElement('div');
-    const shadow = element.attachShadow({ mode: 'open' });
-    const shadowRoot = document.createElement('div');
     const accountId = getAccountId();
 
-    shadowRoot.id = 'makerdesk-widget-container';
-
     const component = (
-      <>
-        <Widget accountId={accountId} />
-      </>
+      <IFrame>
+        <Suspense fallback={null}>
+          <style suppressHydrationWarning>{styles}</style>
+          <Widget accountId={accountId} />
+        </Suspense>
+      </IFrame>
     );
 
-    shadow.appendChild(shadowRoot);
-    injectStyle(shadowRoot);
-    hydrateRoot(shadowRoot, component);
+    hydrateRoot(element, component);
 
     document.body.appendChild(element);
   } catch (error) {
     console.warn(`Could not initialize Widget`);
     console.warn(error);
   }
-}
-
-function injectStyle(shadowRoot: HTMLElement) {
-  const link = document.createElement('link');
-  const href = WIDGET_CSS_URL;
-
-  if (!href) {
-    throw new Error('Missing WIDGET_CSS_URL environment variable');
-  }
-
-  link.rel = 'stylesheet';
-  link.href = href;
-
-  shadowRoot.appendChild(link);
 }
 
 function getAccountId() {
@@ -1163,12 +1197,8 @@ For simplicity, here is the `package.json` file that you can replace:
     "rollup-plugin-visualizer": "latest",
     "tailwindcss": "3.4.4",
     "tailwindcss-animate": "^1.0.7",
+    "tslib": "^2.8.1",
     "typescript": "^5.5.2"
-  },
-  "eslintConfig": {
-    "extends": [
-      "@kit/eslint-config/base"
-    ]
   },
   "prettier": "@kit/prettier-config"
 }
@@ -1263,11 +1293,9 @@ export default {
     }),
     postcss({
       extensions: ['.css'],
-      minimize: true,
-      extract: true,
-      inject: {
-        insertAt: 'top',
-      },
+      minimize: false,
+      extract: false,
+      inject: false
     }),
     commonjs(),
     nodePolyfills({
@@ -1301,7 +1329,6 @@ In the case of the production environment, we will use the `.env.production` fil
 
 ```bash {% title=".env.production" %}
 WIDGET_NAME=makerdesk-widget.js
-WIDGET_CSS_URL=https://widget-url.com/widget.css
 API_URL=https://api-url.com/api/ticket
 ```
 
@@ -1309,7 +1336,6 @@ In the development environment, we will use the `.env` file to load the environm
 
 ```bash {% title=".env" %}
 WIDGET_NAME=makerdesk-widget.js
-WIDGET_CSS_URL=https://widget-url.com/widget.css
 API_URL=http://localhost:3000/api/ticket
 ```
 
