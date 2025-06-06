@@ -206,6 +206,10 @@ If you use an OpenAI-compatible model, you can set the `LLM_BASE_URL` to the URL
 
 In addition, we need to provide the following environment variables for the chatbot indexer:
 
+{% alert type="info" %}
+The chatbot indexer is a separate service that indexes your app's content and provides answers to user queries. As such, the `.env.local` file is located in the `packages/plugins/chatbot` directory, not in `apps/web`.
+{% /alert %}
+
 ``` bash {% title="packages/plugins/chatbot/.env.local" %}
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SUPABASE_URL=

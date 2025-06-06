@@ -6,13 +6,25 @@ description: "Learn how to use InBucket/Mailpit for local development in the Nex
 order: 4
 ---
 
+{% sequence title="Steps to use InBucket/Mailpit" description="Learn how to use InBucket/Mailpit for local development in the Next.js Supabase Starter Kit." %}
+
+[What is Mailpit?](#what-is-mailpit)
+
+[Accessing Mailpit](#accessing-mailpit)
+
+[Common Use Cases](#common-use-cases)
+
+[Production Emails](#mailpit-vs-production-emails)
+
+{% /sequence %}
+
 When developing locally, Supabase uses [InBucket](https://www.inbucket.org/) and [Mailpit](https://mailpit.axllent.org) (depending on which version you're running) to capture emails sent during development. This allows you to test email functionality without actually sending emails to real addresses.
 
 Makerkit also uses InBucket/Mailpit for sending non-authentication emails, such as team invitations and account deletion confirmations.
 
-## What is InBucket/Mailpit?
+## What is Mailpit?
 
-InBucket/Mailpit are disposable email services that capture all emails sent during local development. It's particularly useful for testing:
+Mailpit is a disposable email service that captures all emails sent during local development. It's particularly useful for testing:
 
 - Email verification flows
 - Password reset emails
@@ -20,9 +32,9 @@ InBucket/Mailpit are disposable email services that capture all emails sent duri
 - Notification emails
 - Any other transactional emails
 
-## Accessing InBucket/Mailpit
+## Accessing Mailpit
 
-When running Supabase locally, InBucket/Mailpit are automatically available at:
+When running Supabase locally, Mailpit is automatically available at:
 
 ```bash
 http://localhost:54324
@@ -54,12 +66,12 @@ To test password reset flows:
 
 When testing team invites:
 1. Send an invitation to any email address
-2. Check InBucket/Mailpit for the invitation email
+2. Check Mailpit for the invitation email
 3. Use the invitation link to accept
 
-## InBucket/Mailpit vs Production Emails
+## Mailpit vs Production Emails
 
-Remember that InBucket/Mailpit is for development only. In production:
+Remember that Mailpit is for development only. In production:
 
 1. Configure a proper email service provider (Resend, SendGrid, etc.)
 2. Set up proper email authentication (SPF, DKIM)

@@ -6,8 +6,17 @@ description: "Makerkit uses i18next to translate your project into multiple lang
 order: 0
 ---
 
-
 Makerkit uses the library `i18next` for translations, but it's abstracted behind the `@kit/i18n` package. This abstraction ensures that any future changes to the translation library won't impact your code.
+
+{% sequence title="Steps to use translations" description="Learn how to use translations in your Next.js Supabase project." %}
+
+[Using Translations in your Next.js Supabase Project](#using-translations-in-your-nextjs-supabase-project)
+
+[Initializing i18n in Server Components](#initializing-i18n-in-server-components)
+
+[Using Translations in Client Components](#using-translations-in-client-components)
+
+{% /sequence %}
 
 The translation system in Makerkit is versatile and can be used in:
 
@@ -15,7 +24,7 @@ The translation system in Makerkit is versatile and can be used in:
 2. Client components
 3. Server-side rendering
 
-## Utilizing Translations in your Next.js Supabase Project
+## Using Translations in your Next.js Supabase Project
 
 The guide below will show you how to use translations in your Next.js Supabase project in all the scenarios mentioned above.
 
@@ -54,6 +63,10 @@ export default withI18n(Page);
 ```
 
 Ensure to import the `Trans` component from `@kit/ui` and not directly from `react-i18next`.
+
+## Using Translations in Client Components
+
+Besides simply using the `Trans` component, you can also use the `useTranslation` hook to translate strings in your client components.
 
 ### Using the useTranslation Hook
 

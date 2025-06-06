@@ -1,0 +1,146 @@
+---
+status: "published"
+title: 'Deploy React Router to Cloudflare'
+label: 'Deploy to Cloudflare'
+order: 6
+description: 'This guide will help you deploy the React Router SaaS boilerplate to Cloudflare Pages using the Edge runtime.'
+---
+
+{% sequence title="How to deploy the React Router SaaS boilerplate to Cloudflare" description="To deploy the application to Cloudflare, you need to do the following:" %}
+
+[0. Before you start: update to the paid Cloudflare tier](#before-you-start-update-to-the-paid-cloudflare-tier)
+
+[1. Run the Turbo command to scaffold the project for Cloudflare](#1-run-the-turbo-command-to-scaffold-the-project-for-cloudflare)
+
+[2. Use Console logger](#2-use-console-logger)
+
+[3. Update Stripe Client](#up)
+
+[4. Using the Resend Mailer or create a custom mailer](#3-using-the-resend-mailer-or-create-a-custom-mailer)
+
+[5. Switching CMS](#4-switching-cms)
+
+[6. Environment variables](#5-environment-variables)
+
+[7. Deploy the application](#6-deploy-the-application)
+
+[8. Other useful commands](#7-other-useful-commands)
+
+{% /sequence %}
+
+### 0. Before you start: update to the paid Cloudflare tier
+
+Deploying to Cloudflare requires a subscription to the Cloudflare Workers paid service due to the size limitations of the free tier. It starts at $5.
+
+### 1. Run the Turbo command to scaffold the project for Cloudflare
+
+Run the following command to scaffold the project for Cloudflare:
+
+```bash
+pnpm run turbo gen cloudflare
+```
+
+This command will add some configuration files and install the necessary dependencies for Cloudflare.
+
+### 2. Use Console logger
+
+Cloudflare doesn't support the `pino` logger, so you will need to use the `console` logger:
+
+```bash
+LOGGER=console
+```
+
+
+### 3. Update Stripe Client
+
+The Stripe client is not compatible with Cloudflare by default, so we must add `Stripe.createFetchHttpClient()` as property to the Stripe SDK:
+
+```tsx {% title="packages/billing/stripe/src/services/stripe-sdk.ts" %}
+import 'server-only';
+
+import { StripeServerEnvSchema } from '../schema/stripe-server-env.schema';
+
+const STRIPE_API_VERSION = '2025-03-31.basil';
+
+/**
+ * @description returns a Stripe instance
+ */
+export async function createStripeClient() {
+  const { default: Stripe } = await import('stripe');
+
+  // Parse the environment variables and validate them
+  const stripeServerEnv = StripeServerEnvSchema.parse({
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhooksSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  });
+
+  return new Stripe(stripeServerEnv.secretKey, {
+    apiVersion: STRIPE_API_VERSION,
+    httpClient: Stripe.createFetchHttpClient()
+  });
+}
+```
+
+### 4. Using the Resend Mailer or create a custom mailer
+
+Since the default library `nodemailer` relies on Node.js, we cannot use it in the Edge runtime. Instead, we will use the Resend Mailer.
+
+```bash
+MAILER_PROVIDER=resend
+```
+
+And provide the Resend API key:
+
+```bash
+RESEND_API_KEY=your-api-key
+```
+
+Alternatively, **implement your own mailer** using the abstract class we provide in the `packages/mailers` package.
+
+This is very simple, but you need to ensure that the mailer is compatible with the Cloudflare runtime.
+
+### 5. Switching CMS
+
+By default, Makerkit uses Keystatic as a CMS. Keystatic's local mode (which relies on the file system) is not supported in Cloudflare's runtime.
+
+Therefore, you will need to switch to another CMS or use Keystatic's Github mode - which uses Github as data provider.
+
+At this time, the other CMS supported is WordPress. If you want to use WordPress, set `CMS_CLIENT` to `wordpress` in the `apps/web/.env` file:
+
+```bash
+CMS_CLIENT=wordpress
+```
+
+Alternatively, use the Keystatic remote mode through Github.
+
+Please check the CMS documentation for more information.
+
+### 6. Environment variables
+
+Open the `.env` file in the `apps/web` directory and make sure to add the required environment variables.
+
+### 7. Deploy the application
+
+At this time, you can deploy the application using the following command:
+
+```bash
+pnpm --filter web run deploy
+```
+
+At the time of writing, the Cloudflare Dashboard does not support deploying the application since OpenNext is not supported yet in Cloudflare.
+
+### 8. Other useful commands
+
+You can also use the following commands to deploy the application:
+
+```bash
+pnpm --filter web run preview
+```
+
+This command will preview the application in a Cloudflare-like environment before deploying it. It is highly recommended to run this command before deploying the application to understand if there are any issues.
+
+```bash
+pnpm --filter web run cf-typegen
+```
+
+This command will generate the TypeScript types for the Cloudflare environment.

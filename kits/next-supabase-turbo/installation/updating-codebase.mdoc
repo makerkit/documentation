@@ -1,14 +1,10 @@
 ---
 status: "published"
-
 title: "Updating your Next.js Supabase Turbo Starter Kit"
 label: "Updating the Codebase"
 order: 6
 description: "Learn how to update your Next.js Supabase Turbo Starter Kit to the latest version."
 ---
-
-
-🚀 Ready to keep your project at the cutting edge? 
 
 This guide will walk you through the process of updating your codebase by pulling the latest changes from the GitHub repository and merging them into your project. This ensures you're always equipped with the latest features and bug fixes.
 
@@ -16,7 +12,19 @@ If you've been following along with our previous guides, you should already have
 
 Updating your project involves fetching the latest changes from the `upstream` remote and merging them into your project. Let's dive into the steps!
 
-## 0. Stashing your changes
+{% sequence title="Steps to update your codebase" description="Learn how to update your Next.js Supabase Turbo Starter Kit to the latest version." %}
+[Stashing your changes (if any)](#0.-stashing-your-changes-(if-any))
+
+[Refresh the `upstream` remote](#1.-refresh-the-remote)
+
+[Resolve any conflicts](#2.-resolve-any-conflicts)
+
+[Run a health check on your project](#run-a-health-check-on-your-project-after-resolving-conflicts)
+
+[Merge the changes](#3.-merge-the-changes)
+{% /sequence %}
+
+## 0. Stashing your changes (if any)
 
 If you have uncommited changes, before updating your project, it's a good idea to stash your changes to avoid any conflicts during the update process. You can stash your changes by running:
 
@@ -36,15 +44,27 @@ Alternatively, you can commit your changes.
 
 ## 1. Refresh the `upstream` remote
 
-The first step is to fetch the latest changes from the `upstream` remote. You can do this by running the following command:
+Create a new branch for your updates from the `main` branch:
+
+```bash
+git checkout -b update-codebase-<date>
+```
+
+In this way, you can keep track of your updates and visualize the changes in the branch before merging them into your main branch.
+
+Now, fetch the latest changes from the `upstream` remote. You can do this by running the following command:
 
 ```bash
 git pull upstream main
 ```
 
-When prompted the first time, please opt for merging instead of rebasing.
+When prompted the first time, please opt for **merging instead of rebasing**.
 
-Don't forget to run `pnpm i` in case there are any updates in the dependencies. 🔄
+Now, run `pnpm i` to update the dependencies:
+
+```bash
+pnpm i
+```
 
 ## 2. Resolve any conflicts
 
@@ -62,7 +82,9 @@ Your lock file will now reflect both your changes and the updates from the `upst
 
 ### 2.2 Conflicts in the DB types "database.types.ts"
 
-Your types might differ from those in the `upstream` repository, so you'll need to rebuild them. To do this, reset the DB:
+Your types might differ from those in the `upstream` repository, so you'll need to rebuild them and accept the latest state of the DB.
+
+To do this, first you want to reset the DB to apply the latest changes from the `upstream` repository:
 
 ```bash
 npm run supabase:web:reset
@@ -92,10 +114,15 @@ And lint your code with:
 pnpm run lint
 ```
 
-If everything looks good, you're all set! Your project is now up to date with the latest changes from the `upstream` repository. 🎉
+## 3. Merge the changes
 
-## Commit and push changes
+If everything looks good, commit the changes and push them to your remote repository:
 
-Once everything is working fine, don't forget to commit your changes with git commit -m "COMMIT_MESSAGE" and push them to your remote repository with git push origin BRANCH_NAME.
+```bash
+git commit -m "COMMIT_MESSAGE"
+git push origin update-codebase-<date>
+```
 
-Of course - please make sure to replace COMMIT_MESSAGE and BRANCH_NAME with your actual commit message and branch name. 🚀
+Once the changes are pushed, you can create a pull request to merge the changes into the `main` branch, assuming all is working fine.
+
+Your project is now up to date with the latest changes from the `upstream` repository. 🎉

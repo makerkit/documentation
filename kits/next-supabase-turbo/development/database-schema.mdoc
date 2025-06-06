@@ -6,6 +6,20 @@ title: "How to create new migrations and update the database schema in your Next
 description: "Learn how to create new migrations and update the database schema in your Next.js Supabase application"
 ---
 
+{% sequence title="Steps to create a new migration" description="Learn how to create new migrations and update the database schema in your Next.js Supabase application" %}
+
+[Permissions](#permissions)
+
+[RLS Policies](#rls-policies)
+
+[Enabling MFA compliance](#enable-mfa-compliance)
+
+[Enabling access to Super Admins only](#enable-access-to-super-admins-only)
+
+[Resetting Migrations](#resetting-migrations)
+
+{% /sequence %}
+
 After creating your migration, it's time to add the required code.
 
 In our example, we create the schema for a simple tasks application.
@@ -76,13 +90,21 @@ When you create a new table, always enable RLS.
 alter table tasks enable row level security;
 ```
 
-### RLS Policies
+## RLS Policies
 
 RLS Policies are fundamental to protect our tables.
 
 We insert an RLS policy for each action: `select`, `insert`, `update` and `delete`.
 
-#### Selecting Tasks
+### Enable RLS for a table
+
+In the majority of cases, you want to enable RLS for a table after creating it:
+
+```sql
+alter table public.tasks enable row level security;
+```
+
+### Selecting Tasks
 
 When writing an RLS policy for selecting data from the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
 
@@ -93,7 +115,7 @@ create policy select_tasks on public.tasks
     for select
     to authenticated
     using (
-      account_id = auth.uid() or
+      account_id = (select auth.uid()) or
       public.has_role_on_account(account_id)
     );
 ```
@@ -105,7 +127,7 @@ Therefore, this RLS policy works in both ways:
 1. if the user is the owner of the task - we check that the `account_id` is equal to the `auth.uid()`
 2. if the user has a role on the account - we check that the user has a role on the account
 
-#### Inserting Tasks
+### Inserting Tasks
 
 When writing an RLS policy for inserting data into the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
 
@@ -113,7 +135,7 @@ When writing an RLS policy for inserting data into the `tasks` table, we need to
 create policy insert_tasks on public.tasks
     for insert
     with check (
-        account_id = auth.uid() or
+        account_id = (select auth.uid()) or
         public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
     );
 ```
@@ -131,11 +153,11 @@ When writing an RLS policy for updating data in the `tasks` table, we need to ma
 create policy update_tasks on public.tasks
     for update
     using (
-        account_id = auth.uid() or
+        account_id = (select auth.uid()) or
         public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
     )
     with check (
-        account_id = auth.uid() or
+        account_id = (select auth.uid()) or
         public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
     );
 ```
@@ -155,7 +177,7 @@ When writing an RLS policy for deleting data from the `tasks` table, we need to 
 create policy delete_tasks on public.tasks
     for delete
     using (
-        account_id = auth.uid() or
+        account_id = (select auth.uid()) or
         public.has_permission(auth.uid(), account_id, 'tasks.delete'::app_permissions)
     );
 ```
@@ -198,7 +220,7 @@ create policy restrict_logs_super_admins
 - By using the `public.is_super_admin` function, we ensure that only Super Admins can access the `logs` table.
 - By using the `restrictive` policy, we ensure that this access restriction is enforced, irrespective of other policies.
 
-### Resetting Migrations
+## Resetting Migrations
 
 When adding a new schema, we need to reset the migrations.
 

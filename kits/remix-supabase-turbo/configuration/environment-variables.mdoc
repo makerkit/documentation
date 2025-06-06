@@ -18,27 +18,8 @@ The `.env` file is not committed to git - so you **could** place sensitive infor
 
 I use the following convention:
 
-1. **Public Environment Variables** are prefixed with `VITE_` and are available to the client-side code. They are added to the `window` object when added to `apps/web/lib/public-env.ts`. This is copied from Next.js - with the difference we add them to the client side manually. I like the convention.
-2. **Private Environment Variables** are not prefixed and are only available to the server-side code. Please make this the default. If you need to add a public environment variable, please add it to the `apps/web/lib/public-env.ts` file.
-
-## Adding public environment variables to the client-side
-
-To add public environment variables to the client-side, you need to add them to the `apps/web/lib/public-env.ts` file.
-
-```typescript
-/**
- * @name PUBLIC_ENV
- * @description This is the public environment variables that are available to the client.
- * We use this to expose public environment variables to the client.
- */
-export const PUBLIC_ENV = {
-  // ... default public vars,
-
-  // Add your public environment variables here ...
-};
-```
-
-Please DO NOT add sensitive information to this file.
+1. **Public Environment Variables** are prefixed with `VITE_` and are available to the client-side code.
+2. **Private Environment Variables** are not prefixed and are only available to the server-side code.
 
 ## Sample Environment Variables
 

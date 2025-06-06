@@ -6,9 +6,27 @@ label: "React Query"
 order: 5
 ---
 
+{% sequence title="How to use React Query with Next.js Supabase" description="React Query is the best React library for managing asynchronous data fetching in your applications. Learn how to use it with Next.js Supabase." %}
+
+[Using React Query](#using-react-query)
+
+[Use the `use client` directive](#use-the-use-client-directive)
+
+[Fetching data from Supabase using React Query](#fetching-data-from-supabase-using-react-query)
+
+{% /sequence %}
+
+## Using React Query
+
 Makerkit uses React Query for client-side data fetching. This allows you to fetch data from your Supabase database and display it on the client-side using an ergonomic API.
 
-NB: since we use React Hooks, you need to use the `use client` directive at the top of your component. If you use this code inside a page, please write a separate component (with `use client`) and import it in your page.
+### Use the `use client` directive
+
+Since we use React Hooks, you need to use the `use client` directive at the top of your component. If you use this code inside a page, please write a separate component (with `use client`) and import it in your page.
+
+### Fetching data from Supabase using React Query
+
+In the example below, we fetch the tasks from the Supabase database and display them in a list.
 
 ```tsx
 'use client';

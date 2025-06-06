@@ -6,6 +6,34 @@ order: 0
 description: Learn how to configure environment variables in the Next.js Supabase Starter Kit.
 ---
 
+{% sequence title="Environment Variables" description="Learn how to configure environment variables in the Next.js Supabase Starter Kit." %}
+
+[Understanding Environment Variables](#understanding-environment-variables)
+
+[Core Configuration Variables](#core-configuration-variables)
+
+[Authentication Configuration](#authentication-configuration)
+
+[Navigation and Layout Settings](#navigation-and-layout-settings)
+
+[UI/UX](#ui/ux)
+
+[Feature Flags](#feature-flags)
+
+[Notifications](#notifications)
+
+[Supabase Configuration](#supabase-configuration)
+
+[Billing Configuration](#billing-configuration)
+
+[Email Configuration](#email-configuration)
+
+[CMS Configuration](#cms-configuration)
+
+{% /sequence %}
+
+## Understanding Environment Variables
+
 Environment variables are defined in the `.env` file in the root of the `apps/web` package.
 
 1. **Shared Environment Variables**: Shared environment variables are defined in the `.env` file. These are the env variables shared between environments (e.g., development, staging, production).
@@ -47,12 +75,6 @@ NEXT_PUBLIC_SITE_TITLE="Makerkit - The easiest way to start your next project"
 Your site's meta description, important for SEO optimization.
 ```bash
 NEXT_PUBLIC_SITE_DESCRIPTION="Makerkit is the easiest way to start your next project"
-```
-
-### NEXT_PUBLIC_DEFAULT_THEME_MODE
-Controls the default theme appearance. Options: `light`, `dark`, or `system`.
-```bash
-NEXT_PUBLIC_DEFAULT_THEME_MODE=light
 ```
 
 ### NEXT_PUBLIC_DEFAULT_LOCALE
@@ -132,7 +154,7 @@ NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED=false
 ```
 
 ### NEXT_PUBLIC_SIDEBAR_COLLAPSIBLE_STYLE
-Defines sidebar collapse behavior. Options: `offscreen`, `icon`, or `none`.
+Defines sidebar collapse behavior. Options: `offcanvas`, `icon`, or `none`.
 ```bash
 NEXT_PUBLIC_SIDEBAR_COLLAPSIBLE_STYLE=icon
 ```

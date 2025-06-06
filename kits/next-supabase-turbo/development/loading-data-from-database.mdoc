@@ -1,12 +1,10 @@
 ---
 status: "published"
-
 label: "Loading data from the DB"
 order: 4
 title: "Learn how to load data from the Supabase database"
 description: "In this page we learn how to load data from the Supabase database and display it in our Next.js application."
 ---
-
 
 Now that our database supports the data we need, we can start loading it into our application. We will use the `@makerkit/data-loader-supabase-nextjs` package to load data from the Supabase database.
 
@@ -14,7 +12,7 @@ Please check the [documentation](https://github.com/makerkit/makerkit/tree/main/
 
 This nifty package allows us to load data from the Supabase database and display it in our server components with support for pagination.
 
-In the snippet below, we will
+In the snippet below, we will:
 
 1. Load the user's workspace data from the database. This allows us to get the user's account ID without further round-trips because the workspace is loaded by the user layout.
 2. Load the user's tasks from the database.
@@ -139,7 +137,7 @@ function UserHomePage(props: { searchParams: SearchParams }) {
 export default withI18n(UserHomePage);
 ```
 
-Let's break this down a bit, shall we:
+Let's break this down a bit:
 
 1. We import the necessary components and functions.
 2. We define the `SearchParams` interface to type the search parameters.
@@ -149,7 +147,7 @@ Let's break this down a bit, shall we:
 6. We render the tasks in a table and provide a search input to filter the tasks by title.
 7. We export the `UserHomePage` component with the `withI18n` HOC. This helps bootstrap the i18n instance for the component.
 
-### Tasks Table
+### Displaying the tasks in a table
 
 Now, let's show the tasks table component:
 

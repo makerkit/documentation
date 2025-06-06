@@ -805,9 +805,9 @@ To integrate this onboarding flow into your app, you'll need to update your rout
 
 We can do this in the middleware, in the logic branch that handles the `/home` route. If the user is not logged in, we'll redirect them to the sign-in page. If the user is logged in but has not completed onboarding, we'll redirect them to the onboarding flow.
 
-Update the `apps/web/app/middleware.ts` file:
+Update the `apps/web/middleware.ts` file:
 
- ```typescript {% title="apps/web/app/middleware.ts" %}
+ ```typescript {% title="apps/web/middleware.ts" %}
 {
   pattern: new URLPattern({ pathname: '/home/*?' }),
   handler: async (req: NextRequest, res: NextResponse) => {
@@ -853,7 +853,7 @@ This code checks if the user is logged in and has completed onboarding. If the u
 
 Also add the following pattern to make sure the user is authenticated when visiting the `/onboarding` route:
 
-```typescript {% title="apps/web/app/middleware.ts" %}
+```typescript {% title="apps/web/middleware.ts" %}
 {
   pattern: new URLPattern({ pathname: '/onboarding/*?' }),
   handler: async (req: NextRequest, res: NextResponse) => {

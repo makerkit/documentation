@@ -8,6 +8,51 @@ description: "Learn the most useful database functions in your schema"
 
 The database schema contains several functions that you can use so that you can extend your database with custom logic and RLS.
 
+{% sequence title="How to use Database Functions" description="Learn how to use the functions in your schema" %}
+
+[How to use Database Functions](#how-to-use-database-functions)
+
+[Check if a user is the Owner of an Account](#check-if-a-user-is-the-owner-of-an-account)
+
+[Check if a user is a Member of an Account](#check-if-a-user-is-a-member-of-an-account)
+
+[Check if a user is a team member of an Account](#check-if-a-user-is-a-team-member-of-an-account)
+
+[Check if an account has permissions to action another account](#check-if-an-account-has-permissions-to-action-another-account)
+
+[Check Permissions](#check-permissions)
+
+[Check if a configuration is set](#check-if-a-configuration-is-set)
+
+[Check if an account has an active subscription](#check-if-an-account-has-an-active-subscription)
+
+[Check if an account is a Super Admin](#check-if-an-account-is-a-super-admin)
+
+[Check if an account is a MFA Compliant](#check-if-an-account-is-a-mfa-compliant)
+
+[Check if an account signed in with MFA](#check-if-an-account-signed-in-with-mfa)
+
+{% /sequence %}
+
+## How to use Database Functions
+
+To call the functions below, you can either:
+1. **SQL** - Use them directly in your SQL schema
+2. **RPC** - Use them using the Supabase's client RPC API
+
+### Example of calling a function from SQL
+
+```sql
+select public.is_account_owner(account_id) from accounts;
+```
+
+### Example of calling a function from RPC
+
+```tsx
+const { data, error } = await supabase.rpc('is_account_owner', { account_id: '123' });
+```
+
+
 ## Check if a user is the Owner of an Account
 
 This function checks if the user is the owner of an account. It is used in the `accounts` table to restrict access to the account owner.

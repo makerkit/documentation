@@ -6,19 +6,25 @@ description: "Configuring Authentication's production configuration in the Next.
 order: 3
 ---
 
+{% sequence title="How to configure the Supabase Auth Settings in Production" description="Configuring Authentication's production configuration in the Next.js Supabase SaaS kit" %}
+
+[Authentication URLs](#authentication-urls)
+
+[Third Party Providers](#third-party-providers)
+
+[Custom SMTP](#custom-smtp)
+
+[Troubleshooting](#troubleshooting)
+
+{% /sequence %}
+
 Supabase needs a few settings to be configured in their Dashboard to work correctly.
 
 This guide will walk you through the steps to get your Supabase authentication set up in your Production environment. The dev environment does not require any configuration.
 
-{% alert type="warning" %}
+{% alert type="warning" title="Don't skip this step" %}
 Skipping this step will result in your users not being able to log in or sign up.
 {% /alert %}
-
-## Third Party Providers
-
-Third Party providers need to be configured, managed and enabled fully on the provider's and Supabase's side. Makerkit does not need any configuration (beyond setting the provider to be displayed in the UI).
-
-Please [read Supabase's documentation](https://supabase.com/docs/guides/auth/social-login) on how to set up third-party providers.
 
 ## Authentication URLs
 
@@ -44,6 +50,13 @@ Supabase's SMTP settings have low limits and low deliverability. If you want you
 5. Tweak the `SMTP Settings` settings to your liking according to your provider's documentation.
 
 Please refer to the [Supabase documentation](https://supabase.com/docs/guides/auth/auth-smtp) for more information.
+
+## Third Party Providers
+
+Third Party providers need to be configured, managed and enabled fully on the provider's and Supabase's side. Makerkit does not need any configuration (beyond setting the provider to be displayed in the UI).
+
+Please [read Supabase's documentation](https://supabase.com/docs/guides/auth/social-login) on how to set up third-party providers.
+
 
 ### Troubleshooting
 

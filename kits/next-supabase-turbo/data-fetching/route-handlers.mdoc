@@ -1,23 +1,38 @@
 ---
 status: "published"
-
 title: "Using API Route Handlers in the Next.js Supabase SaaS Kit"
 label: "Route Handlers"
 description: "Learn how to write Route Handlers in the Next.js Supabase SaaS Kit to fetch and write data"
 order: 2
 ---
 
+{% sequence title="How to write API Route Handlers in the Next.js Supabase SaaS Kit" description="Learn how to write Route Handlers in the Next.js Supabase SaaS Kit to fetch and write data" %}
+
+[What are API Route Handlers?](#what-are-api-route-handlers)
+
+[Using the `enhanceRouteHandler` utility](#using-the-enhance-route-handler-utility)
+
+[Using a Captcha token protection](#using-a-captcha-token-protection)
+
+[Passing the CSRF Token to API Routes](#passing-the-csrf-token-to-api-routes)
+
+{% /sequence %}
+
+## What are API Route Handlers?
 
 API Route handlers are added using the convention `route.ts` and exporting one or many HTTP methods (e.g., `GET`, `POST`, `PUT`, `DELETE`).
 
+In the older Pages Router, we used to write API routes using the `api` folder. However, in the new App Router, simply use the `route.ts` file convention to define your API routes.
+
+## Using the enhanceRouteHandler utility
+
 While you won't be writing too many API route handlers (prefer Server Actions for mutations) - you can use the `enhanceRouteHandler` utility to help you with the following:
 
-1. checks the user state (if the user is authenticated)
-2. given a Zod schema, it validates the request body
-3. given a captcha site key, it validates the captcha token
-4. report an uncaught exception to the monitoring provider (if configured)
+1. **User state**: checks the user state (if the user is authenticated)
+2. **Validation**: given a Zod schema, it validates the request body
+3. **Captcha**: given a captcha site key, it validates the captcha token
 
-Fantastic, let's see how we can use it.
+Fantastic, let's see how we can use it
 
 ```tsx
 import { z } from 'zod';
@@ -82,7 +97,12 @@ function Component() {
 }
 ```
 
-Now, when calling the API route handler, we can pass the captcha and the CSRF token.
+## Passing the CSRF Token to API Routes
+
+When calling the API route handler, we can pass the captcha and the CSRF token. This is required if:
+
+1. It's a mutation
+2. The route is not inside the `/api` folder
 
 NB: The CSRF token **must be added for all API routes** making mutations in routes that are outside `/api/*`. Routes inside `/api/*` are not protected by default as they're meant to be used externally.
 
@@ -168,27 +188,3 @@ NEXT_PUBLIC_CAPTCHA_SITE_KEY=
 As a secret environment variable, please do not add it to the `.env` file. Instead, add it to the environment variables of your CI/CD system.
 
 The only captcha provider supported is Cloudflare Turnstile.
-
-## Capturing Exceptions
-
-This function **automatically reports uncaught exceptions** if you configured a monitoring provider. The monitoring provider is set in the environment variable `MONITORING_PROVIDER`.
-
-To disable it, pass `captureException: false` to the `enhanceAction` function.
-
-```tsx {12}
-import { enhanceRouteHandler } from '@kit/next/routes';
-
-export const POST = enhanceRouteHandler(
-  async function({ body, user, request }) {
-    // ... your code here
-    return NextResponse.json({
-      success: true,
-    });
-  },
-  {
-    captcha: true,
-    captureException: false,
-    schema: ZodSchema,
-  },
-);
-```

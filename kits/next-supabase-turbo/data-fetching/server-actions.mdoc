@@ -1,12 +1,24 @@
 ---
 status: "published"
-
 title: "Using Server Actions in the Next.js Supabase SaaS Kit"
 label: "Server Actions"
 description: "Learn how to write Server Actions to mutate and revalidate your data"
 order: 1
 ---
 
+{% sequence title="How to write Server Actions in the Next.js Supabase SaaS Kit" description="Learn how to write Server Actions to mutate and revalidate your data" %}
+
+[What are Server Actions?](#what-are-server-actions)
+
+[Using the enhanceAction utility](#using-the-enhance-action-utility)
+
+[Using a Captcha token protection](#using-a-captcha-token-protection)
+
+[Passing the Captcha Token to a Server Action](#passing-the-captcha-token-to-a-server-action)
+
+{% /sequence %}
+
+## What are Server Actions?
 
 Server Actions help us communicate with the server just by creating normal Javascript functions that Next.js converts to server POST endpoints. They are particularly useful to mutate data and revalidate the data that we fetched from Server Components.
 
@@ -143,32 +155,6 @@ As a secret environment variable, please do not add it to the `.env` file. Inste
 
 The only captcha provider supported is Cloudflare Turnstile.
 
-#### Passing the Captcha Token
+#### Passing the Captcha Token to a Server Action
 
 NB: you must pass the captcha token in the request body when calling the server action. The function's type checker will ensure that you pass the captcha token as it will error out if the token is not defined in the Zod schema as `captchaToken`.
-
-## Capturing Exceptions
-
-This function **automatically reports uncaught exceptions** if you configured a monitoring provider. The monitoring provider is set in the environment variable `MONITORING_PROVIDER`.
-
-To disable it, pass `captureException: false` to the `enhanceAction` function.
-
-```tsx {14}
-'use server';
-
-import { enhanceAction } from '@kit/next/actions';
-
-export const myServerAction = enhanceAction(
-  async function (data, user) {
-    // ... your code here
-    return {
-      success: true,
-    };
-  },
-  {
-    captcha: true,
-    captureException: false,
-    schema: ZodSchema,
-  },
-);
-```

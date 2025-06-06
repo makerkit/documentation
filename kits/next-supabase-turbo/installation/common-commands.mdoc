@@ -1,16 +1,43 @@
 ---
 status: "published"
-
 title: 'Common commands you need to know for the Next.js Supabase Turbo Starter Kit'
 label: 'Common Commands'
 order: 5
 description: 'Learn about the common commands you need to know to work with the Next.js Supabase Turbo Starter Kit.'
 ---
 
-
 Here are some common commands you'll need to know when working with the Next.js Supabase Turbo Starter Kit.
 
 **Note:** You don't need these commands to kickstart your project, but it's useful to know they exist for when you need them.
+
+{% sequence title="Commands" description="Learn about the common commands you need to know to work with the Next.js Supabase Turbo Starter Kit." %}
+[Install the dependencies](#installing-dependencies)
+
+[Start the development server](#starting-the-development-server)
+
+[Run Supabase CLI commands](#running-supabase-cli-commands)
+
+[Start Supabase](#starting-supabase)
+
+[Start Stripe (optional for billing system testing)](#starting-stripe)
+
+[Diffing Supabase Shema](#diffing-supabase-shema)
+
+[Reset Supabase](#resetting-supabase)
+
+[Generate Supabase Types](#generating-supabase-types)
+
+[Run Tests](#running-tests)
+
+[Clean the project](#cleaning-the-project)
+
+[Type-check the project](#type-checking-the-project)
+
+[Lint the project](#linting-the-project)
+
+[Format the project](#formatting-the-project)
+
+{% /sequence %}
 
 ## Installing Dependencies
 
@@ -69,6 +96,22 @@ pnpm run stripe:listen
 ```
 
 This routes webhooks to your local machine.
+
+## Diffing Supabase Shema
+
+After creating a schema, you can diff it against the existing schema to create a new migration with:
+
+```bash
+pnpm --filter web supabase:db:diff
+```
+
+To generate a new migration from the diff, run:
+
+```bash
+pnpm --filter web supabase:db:diff -f <migration-name>
+```
+
+Please use a meaningful migration name, such as `add-user-table`.
 
 ## Resetting Supabase
 

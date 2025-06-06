@@ -6,54 +6,61 @@ title: "How to create new migrations and update the database schema in your Reac
 description: "Learn how to create new migrations and update the database schema in your React Router Supabase application"
 ---
 
-
-Creating a schema for your data is one of the primary tasks when building a new application. In this guide, we'll walk through how to create new migrations and update the database schema in your React Router Supabase application.
+Creating a schema for your data is one of the primary tasks when building a new application. In this guide, we'll walk through how to create new migrations and update the database schema in your Next.js Supabase application.
 
 ## A quick word on migrations
 
 Supabase's hosted Studio is pretty great - but I don't think it should be used to perform schema changes. Instead, I recommend using your local Supabase Studio to make the changes and then generate the migration file. Then, you can push the migration to the remote Supabase instance.
 
-At this point, you have two options:
+## Declarative schema
 
-1. create a migration with `pnpm --filter web supabase migration new <name>` and update the code manually
-2. or, use the local Supabase Studio to make the changes and then run `pnpm --filter web supabase db diff -f <name>` which will generate the migration file for you. DOUBLY CHECK THE FILE!
+Using Supabase's declarative schema, you can define your schema at `apps/web/supabase/schemas`. In here, we can create a new file called using whatever name you want: for example, if our schema is about `integrations`, we can create a file called `integrations.sql`.
 
-Once you've tested it all and are happy with your local changes, push the migration to the remote Supabase instance with `pnpm --filter web supabase db push`.
+The file should contain the SQL statements to create the schema. 
 
-Doing the opposite is also okay - but:
+For example, here's a basic schema for an `integrations` table:
 
-1. You're making changes against the production database - which is risky
-2. You're not testing the changes locally - which is risky
-3. You need to pull the changes from the remote Supabase instance to your local instance so they are in sync
-
-## Creating a Migration
-
-The first step towards building your app schema is to create a new migration.
-
-To do so, run the command:
-
-```
-pnpm --filter web supabase migration new <name>
+```sql
+create table if not exists public.integrations (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
 ```
 
-The migration will be generated at `apps/web/supabase/migrations`.
+Now, you want this schema to be applied to your local Supabase instance so you can start using it and test it out. We can now use Supabase's diffing feature to generate a migration file for us.
 
-Once added some SQL commands, you need to reset the schema for it to take effect:
-
-```
-pnpm run supabase:web:reset
-```
-
-The schema is now populated! Yay!
-
-### Generating Supabase types
-
-Now that your schema is populated, you need to generate the types so that your Supabase client can work correctly.
-
-Please run the following command:
-
-```
-pnpm run supabase:web:typegen
+```bash
+pnpm --filter web run supabase:stop
+pnpm --filter web run supabase:db:diff
 ```
 
-Your Supabase client will now correctly infer the types with your schema changes.
+These two commands will respectively:
+
+1. Stop the Supabase service
+2. Generate the migration file
+
+The migration file will be created in the `apps/web/supabase/migrations` directory. Now, we want to restart Supabase with the `no-backup` flag to avoid restoring the database from the backup.
+
+```bash
+pnpm run supabase:web:start --no-backup
+```
+
+## Pushing the migration to the remote Supabase instance
+
+After you're happy with the changes, you can push the migration to the remote Supabase instance. This is so that the changes are reflected in the remote database and not only in your local Supabase Studio.
+
+```bash
+pnpm --filter web supabase db push
+```
+
+## Applying changes to the database schema
+
+Whenever you want to apply changes to the database schema, you can use the same process as above.
+
+0. Stop the Supabase service
+1. Modify the schema in the `apps/web/supabase/schemas` directory
+2. Generate the migration file using the diffing feature
+3. Restart Supabase with the `no-backup` flag to test the changes locally
+4. Push the migration to the remote Supabase instance

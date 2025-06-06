@@ -8,6 +8,16 @@ order: 0
 
 Before diving into the various ways we can communicate with the server, we need to introduce how we communicate with Supabase, which is hosting the database and therefore the source of our data.
 
+{% sequence title="How to use the Supabase client" description="Depending on whether you are running your code in the browser or on the server, you will need to use different clients to interact with Supabase." %}
+
+[Using the Supabase client in the browser](#using-the-supabase-client-in-the-browser)
+
+[Using the Supabase client in a Server environment](#using-the-supabase-client-in-a-server-environment)
+
+[Important Note about the Server Admin Client](#important-note-about-the-server-admin-client)
+
+{% /sequence %}
+
 ## Using the Supabase client
 
 Depending on whether you are running your code in the browser or on the server, you will need to use different clients to interact with Supabase.
@@ -65,7 +75,11 @@ export async function myServerAction() {
 }
 ```
 
-NB: The `getSupabaseServerAdminClient` function should only be used in server environments, as it requires the `SUPABASE_SERVICE_ROLE_KEY` environment variable to be set. Additionally, it should only be used in very exceptional cases, as it has elevated privileges. In most cases, please use the `getSupabaseServerClient` function.
+### Important Note about the Server Admin Client
+
+The `getSupabaseServerAdminClient` function should only be used in server environments, as it requires the `SUPABASE_SERVICE_ROLE_KEY` environment variable to be set. Additionally, it should only be used in very exceptional cases, as it has elevated privileges. In most cases, please use the `getSupabaseServerClient` function.
+
+The admin client uses the service role key, which has elevated privileges and should be used with extreme caution. For example, it can be used to bypass Row Level Security (RLS) policies. If you use the admin client, always make sure the server-side code makes the necessary checks to ensure the data is not exposed to unauthorized users.
 
 ### DEPRECATED: Older Versions of the Kit
 

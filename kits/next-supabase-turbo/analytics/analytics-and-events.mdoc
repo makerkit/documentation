@@ -6,6 +6,28 @@ description: 'Learn how to use the Analytics and App Events systems in Makerkit 
 order: 0
 ---
 
+{% sequence title="How to use the Analytics and App Events systems in Makerkit" description="Learn how to use the Analytics and App Events systems in Makerkit to track user behavior and app-wide occurrences." %}
+
+[Analytics and App Events](#analytics-and-app-events)
+
+[Analytics Providers](#analytics-providers)
+
+[Understanding the Relationship Between Analytics and App Events](#understanding-the-relationship-between-analytics-and-app-events)
+
+[Recommended Approach: Centralized Analytics](#recommended-approach:-centralized-analytics)
+
+[Using App Events with Analytics](#using-app-events-with-analytics)
+
+[Extending with Custom Events](#extending-with-custom-events)
+
+[Default Event Types](#default-event-types)
+
+[When to use Custom Events](#when-to-use-custom-events)
+
+{% /sequence %}
+
+
+## Analytics and App Events
 Makerkit provides two powerful, interconnected systems for tracking user behavior and app-wide occurrences: **Analytics** and **App Events**.
 
 While these systems are separate, they are designed to work seamlessly together, providing a flexible and maintainable approach to event tracking and analysis in your SaaS application.
@@ -16,7 +38,14 @@ One doesn't need the other to function, but they are designed to work together. 
 
 The Analytics system is implemented in the `@kit/analytics` package, and is abstracted to allow for easy integration with various analytics services, and not lock you into a specific provider.
 
-The implementations are made possible using Makerkit Plugins, which means you can install them using the normal plugins system. By default, Makerkit provides three analytics providers: Google Analytics, Umami, and PostHog.
+The implementations are made possible using Makerkit Plugins, which means you can install them using the normal plugins system. 
+
+By default, Makerkit provides three analytics providers: 
+1. Google Analytics
+2. Umami
+3. PostHog
+
+These are provided as plugins.
 
 However, should you prefer different providers than the ones provided by default, you can easily create your own custom analytics provider.
 

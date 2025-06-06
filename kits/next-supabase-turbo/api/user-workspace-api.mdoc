@@ -1,20 +1,30 @@
 ---
 status: "published"
-
 label: "User Workspace API"
 order: 3
 title: "User Workspace API"
 description: "The user workspace API allows you to retrieve all the data related to the current user."
 ---
 
+When within the layout `/home/(user)` - you have access to data fetched from the user workspace API. The data in this layout has most of the information you need around the currently selected account and the user.
 
-When within the layout `/home/(user)` - you have access to data fetched from the user workspace API.
+{% sequence title="How to use the User Workspace API" description="The user workspace API allows you to retrieve all the data related to the current user." %}
 
-The data in this layout has most of the information you need around the currently selected account and the user.
+[Accessing the Workspace Data in Server Components](#accessing-the-user-workspace-data-in-server-components)
+
+[Accessing the Workspace Data in Client Components](#accessing-the-user-workspace-data-in-client-components)
+
+{% /sequence %}
+
+## Accessing the User Workspace Data in Server Components
 
 To access the data, you can use the `loadUserWorkspace` loader function. This function is cached per-request, so you can call it multiple times without worrying about performance.
 
+### Data is cached per-request
+
 While multiple calls to this function are deduped within a single request, bear in mind that this request will be called when navigating to the page. If you only require a small subset of data, it would be best to make more granular requests.
+
+### Example
 
 ```tsx
 import { loadUserWorkspace } from '~/home/(user)/_lib/server/load-user-workspace';

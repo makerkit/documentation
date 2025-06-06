@@ -6,7 +6,19 @@ order: 4
 description: "Learn how to update the default layout style of your Makerkit application"
 ---
 
+{% sequence title="How to update the default layout style of your Makerkit application" description="Learn how to update the default layout style of your Makerkit application" %}
+
+[Changing the layout style](#changing-the-layout-style)
+
+[Sidebar Layout](#sidebar-layout)
+
+[Header Layout](#header-layout)
+
+{% /sequence %}
+
 By default, Makerkit uses the `sidebar` layout style for both the user and the team workspaces.
+
+## Changing the layout style
 
 You can change the layout style by setting the `NEXT_PUBLIC_USER_NAVIGATION_STYLE` and `NEXT_PUBLIC_TEAM_NAVIGATION_STYLE` environment variables. The default style is `sidebar`.
 
@@ -31,16 +43,6 @@ NEXT_PUBLIC_TEAM_SIDEBAR_COLLAPSED=true
 ```
 
 You can decide the configuration for the each workspace.
-
-### Auto-expanding the Sidebar on Hover
-
-You can set the sidebar to auto-expand on hover by setting the following environment variable:
-
-```
-NEXT_PUBLIC_EXPAND_SIDEBAR_ON_HOVER=true
-```
-
-This is a commonly used pattern in many SaaS apps - such as Supabase, or OpenAI.
 
 ## Header Layout
 

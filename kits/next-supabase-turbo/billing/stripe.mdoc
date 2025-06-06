@@ -1,14 +1,27 @@
 ---
 status: "published"
-
 label: "Stripe"
 title: "Configuring Stripe Billing"
 description: "Learn how to configure Stripe in the Makerkit Next.js Supabase SaaS Kit"
 order: 2
 ---
 
-
 Stripe is the default billing provider in both the local config and the DB, so you don't need to set these values if you want to use Stripe.
+
+{% sequence title="Steps to configure Stripe" description="Learn how to configure Stripe in the Makerkit Next.js Supabase SaaS Kit" %}
+
+[Environment variables](#environment-variables)
+
+[Stripe CLI](#stripe-cli)
+
+[Configuring the Stripe Customer Portal](#configuring-the-stripe-customer-portal)
+
+[Setting Production Webhooks in Stripe](#setting-production-webhooks-in-stripe)
+
+[Setting Stripe Trials without collecting a card](#setting-stripe-trials-without-collecting-a-card)
+{% /sequence %}
+
+## Environment variables
 
 For Stripe, you'll need to set the following environment variables:
 

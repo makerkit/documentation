@@ -1,14 +1,20 @@
 ---
 status: "published"
-
 title: "Configuring Notifications in the Next.js Supabase Starter Kit"
 description: "Learn how to configure notifications in the Next.js Supabase Starter Kit."
 label: "Notifications Configuration"
 order: 0
 ---
 
-
 Makerkit allows you to configure and send notifications using the `@kit/notifications` package. The package provides a simple API to send notifications.
+
+{% sequence title="Steps to configure notifications" description="Learn how to configure notifications in the Next.js Supabase Starter Kit." %}
+
+[Enabling notifications](#enabling-notifications)
+
+[Enabling real-time notifications](#enabling-real-time-notifications)
+
+{% /sequence %}
 
 There are two variables that you can set in the `.env` file to configure notifications:
 
@@ -20,15 +26,25 @@ NEXT_PUBLIC_ENABLE_NOTIFICATIONS=true
 NEXT_PUBLIC_REALTIME_NOTIFICATIONS=true
 ```
 
-1. If `NEXT_PUBLIC_ENABLE_NOTIFICATIONS` is set to `false`, the bell icon will not appear in the header. Otherwise, it will appear.
-2. If `NEXT_PUBLIC_REALTIME_NOTIFICATIONS` is set to `false`, the notifications will not be real-time. Otherwise, they will be real-time.
+## Enabling notifications
+If `NEXT_PUBLIC_ENABLE_NOTIFICATIONS` is set to `false`, the bell icon will not appear in the header. Otherwise, it will appear.
 
-### Why would you not want to enable notifications?
+```bash
+NEXT_PUBLIC_ENABLE_NOTIFICATIONS=false # Disable notifications
+```
 
-If you are not using notifications in your application, you can disable them to reduce the complexity of your application. This can be useful if you are building a simple application and do not need notifications.
+## Enabling real-time notifications
 
-### Real-time notifications
+If `NEXT_PUBLIC_REALTIME_NOTIFICATIONS` is set to `false`, the notifications will not be real-time. Otherwise, they will be real-time.
+
+```bash
+NEXT_PUBLIC_REALTIME_NOTIFICATIONS=false # Disable real-time notifications  
+```
 
 If you want to enable real-time notifications, you need to set the `NEXT_PUBLIC_REALTIME_NOTIFICATIONS` environment variable to `true`. This will enable real-time notifications in your application.
 
 This may be your preference for a more cost-effective solution, as it will reduce the number of requests to the server.
+
+### Why would you not want to enable notifications?
+
+If you are not using notifications in your application, you can disable them to reduce the complexity of your application. This can be useful if you are building a simple application and do not need notifications.

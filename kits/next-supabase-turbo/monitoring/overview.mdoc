@@ -6,18 +6,23 @@ position: 0
 description: "Introducing how Makerkit handles monitoring of performance metrics and exceptions in the Next.js Supabase SaaS kit"
 ---
 
+{% sequence title="Steps to configure monitoring" description="Learn how to configure monitoring in the Next.js Supabase Starter Kit." %}
+
+[Monitoring Providers](#monitoring-providers)
+
+[Configuring Monitoring in Makerkit](#configuring-monitoring-in-makerkit)
+
+[Performance Monitoring](#performance-monitoring)
+
+{% /sequence %}
+
+## Monitoring Providers
 Makerkit provides first-class support for two monitoring providers:
 
-1. Baselime (now part of Cloudflare)
-2. Sentry
+1. [Baselime](https://baselime.io) (now part of Cloudflare)
+2. [Sentry](https://sentry.io)
 
-Makerkit will set up a few things for you out of the box:
-
-1. **Performance Metrics** - Instrumentation using Next.js's instrumentation hook
-2. **Client exceptions** - Automatically capturing uncaught exceptions on the client
-3. **Server exceptions** - Automatically capturing server-side exceptions captured by the [Next.js instrumentation hook](https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation#onrequesterror-optional)
-
-Additionally, it provides you with the tools to manually capturing exceptions, should you want to.
+Our plugin system can allow you to add support for other providers in the future. For example, [here we added support for Telegram](/blog/tutorials/telegram-saas-error-monitoring).
 
 ### Configuring Monitoring in Makerkit
 
@@ -37,8 +42,12 @@ INSTRUMENTATION_SERVICE_NAME=your_service_name
 
 For the provider's specific settings, please check the relative documentation.
 
-#### Performance Monitoring
+## Performance Monitoring
 
-Performance monitoring uses Next.js' experimental instrumentation for reporting performance metrics using OpenTelemetry.
+Makerkit will set up a few things for you out of the box:
 
-NB: Performance monitoring is only enabled for Node.js runtimes.
+1. **Performance Metrics** - Instrumentation using Next.js's instrumentation hook
+2. **Client exceptions** - Automatically capturing uncaught exceptions on the client
+3. **Server exceptions** - Automatically capturing server-side exceptions captured by the [Next.js instrumentation hook](https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation#onrequesterror-optional)
+
+Additionally, it provides you with the tools to manually capturing exceptions, should you want to.

@@ -8,6 +8,29 @@ description: "Learn how to use the Billing service API in Makerkit to manage bil
 
 The Billing service API allows you to communicate with the billing service in Makerkit. You can use the API to manage billing for your preferred payment gateway.
 
+{% sequence title="Steps to use the Billing service API" description="Learn how to use the Billing service API in Makerkit to manage billing for your preferred payment gateway." %}
+
+[Instantiating the billing service](#instantiating-the-billing-service)
+
+[Creating a checkout session](#creating-a-checkout-session)
+
+[Retrieving a checkout session](#retrieving-a-checkout-session)
+
+[Creating a billing portal session](#creating-a-billing-portal-session)
+
+[Cancelling a subscription](#cancelling-a-subscription)
+
+[Reporting metered usage](#reporting-metered-usage)
+
+[Querying metered usage](#querying-metered-usage)
+
+[Updating a subscription](#updating-a-subscription)
+
+
+{% /sequence %}
+
+## Instantiating the billing service
+
 To instantiate the billing service, you need to import the `createBillingGatewayService` function from the `@kit/billing-gateway` package. You can then use this service to manage subscriptions, one-off payments, and more.
 
 ```tsx
@@ -18,7 +41,9 @@ const service = createBillingGatewayService('stripe');
 
 Of course - it's best to get the billing provider from the `subscriptions` record. This way, you can switch between providers without changing the code.
 
-The `createBillingGatewayService` instantiates a class that provides a set of methods for managing billing operations. The provider is determined by the `BillingProviderSchema` passed to the constructor. The `BillingGatewayService` class is a TypeScript class that provides a set of methods for managing billing operations. It uses the Strategy design pattern to delegate the actual implementation of these operations to a provider-specific strategy. The provider is determined by the BillingProviderSchema passed to the constructor.
+The `createBillingGatewayService` instantiates a class that provides a set of methods for managing billing operations. The provider is determined by the `BillingProviderSchema` passed to the constructor. The `BillingGatewayService` class is a TypeScript class that provides a set of methods for managing billing operations. 
+
+It uses the Strategy design pattern to delegate the actual implementation of these operations to a provider-specific strategy. The provider is determined by the BillingProviderSchema passed to the constructor.
 
 The class provides methods for creating and retrieving checkout sessions, creating a billing portal session, cancelling a subscription, reporting and querying usage, and updating a subscription. Each of these methods accepts a parameter object that is validated and parsed using the corresponding Zod schema.
 

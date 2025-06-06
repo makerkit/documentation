@@ -1,0 +1,28 @@
+---
+status: "published"
+label: "User Workspace API"
+order: 3
+title: "User Workspace API | React Router Supabase Turbo"
+description: "The user workspace API allows you to retrieve all the data related to the current user."
+---
+
+When within the layout `/home/(user)` - you have access to data fetched from the user workspace API.
+
+The data in this layout has most of the information you need around the currently selected account and the user.
+
+To access the data, you can use the `useRouterLoaderData` hook.
+
+```tsx
+import { useRouteLoaderData } from 'react-router';
+import type { Route as UserWorkspaceRoute } from '~/types/app/routes/home/user/+types/layout';
+
+export default function Layout() {
+  const { workspace } = useRouteLoaderData(
+    'routes/home/user/layout',
+  ) as UserWorkspaceRoute.ComponentProps['loaderData'];
+
+  // use workspace
+}
+```
+
+This data is only available in the `/home/(user)` layout.

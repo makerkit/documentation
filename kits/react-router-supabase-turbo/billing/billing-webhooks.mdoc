@@ -10,7 +10,7 @@ Makerkit takes care of handling billing webhooks to update the Database based on
 
 Sometimes - you will need to set more webhooks, or do something custom with the webhooks.
 
-In these cases, you can customize the billing webhook handler in Makerkit at `api/billing/webhooks/route.ts`.
+In these cases, you can customize the billing webhook handler in Makerkit at `apps/web/app/routes/api/billing/webhook.ts`.
 
 By default, the webhook handler is set to `service.handleWebhookEvent(request)`:
 

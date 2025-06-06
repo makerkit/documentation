@@ -8,6 +8,24 @@ order: 0
 
 The Next.js Supabase Turbo Dev Tools allows you to debug environment variables using contextual information and error messages.
 
+{% sequence title="How to debug environment variables using the Next.js Supabase Turbo Dev Tools" description="The Next.js Supabase Turbo Dev Tools allows you to debug environment variables using contextual information and error messages." %}
+
+[Getting Started with the Dev Tool](#getting-started-with-the-dev-tool)
+
+[Development Mode](#development-mode)
+
+[Production Mode](#production-mode)
+
+[Contextual Validation](#contextual-validation)
+
+[Using the Dev Tool to Debug Environment Variables](#using-the-dev-tool-to-debug-environment-variables)
+
+[Debugging Production Environment Variables](#debugging-production-environment-variables)
+
+[Adding your own Environment Variables](#adding-your-own-environment-variables)
+
+{% /sequence %}
+
 {% img src="/assets/images/dev-tools-env-variables.webp" width="1000"
 height="600" /%}
 
@@ -40,6 +58,16 @@ This mode will use the variables from the following files:
 2. `.env.production`
 3. `.env.local`
 4. `.env.production.local`
+
+### Generating Environment Variables for Production
+
+The right-hand side of the Dev Tool shows the effective environment variables that will be used in production. That is, the value that will ultimately be used in your application based on where they're defined.
+
+The "Copy" button will copy the environment variables to your clipboard in a format that is ready to be pasted into your hosting provider's environment variables.
+
+The Copy button will merge the variables from each environment file using the effective order of resolution.
+
+The recommendation is to create a new file at `apps/web/.env.production.local` and paste the copied variables into it, so that they will override the variables in the other files. Afterwards, copy the result using the "Copy" button again and paste it into your hosting provider's environment variables.
 
 ### Contextual Validation
 

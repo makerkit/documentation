@@ -1,0 +1,125 @@
+---
+status: "published"
+title: "Deploy Next.js Supabase using Docker"
+label: "Deploy using Docker"
+order: 10
+description: "This guide will help you deploy the Next.js SaaS boilerplate to any Docker-compatible platform. Easily self-host your application with Docker."
+---
+
+If you want to self-host your application, you can deploy it using Docker. 
+
+This guide will help you deploy the Next.js SaaS boilerplate to any Docker-compatible platform. For the sake of this guide, we will build and run the Docker container on a local machine.
+
+### 0. Generate the Dockerfile
+
+Run the following command to generate the Dockerfile:
+
+```bash
+pnpm run turbo gen docker
+```
+
+This command will generate a `Dockerfile` in the root directory of the project. In addition, it will install some dependencies that may be required to build the project, and set `output=standalone` in the `apps/web/next.config.mjs` file. If not, please do it manually.
+
+### 1. Generate Environment Variables
+
+Using the Dev Tools, generate the environment variables for the production environment. Place the environment variables in the `.env.production.local` file. You will then need to add them to the Docker container.
+
+#### Exclude secrets during the build time
+
+To avoid exposing secrets during the build time, make sure to temporarily
+remove the secret keys from the env file. Open the `.env.production.local` file in the
+`apps/web` directory and remove the following (but keep them around for later):
+
+```bash
+CAPTCHA_SECRET_TOKEN=***
+OPENAI_API_KEY=***
+RESEND_API_KEY=***
+STRIPE_SECRET_KEY=***
+STRIPE_WEBHOOK_SECRET=***
+SUPABASE_DB_WEBHOOK_SECRET=***
+SUPABASE_SERVICE_ROLE_KEY=***
+```
+
+### 2. Build the Docker Image
+
+Run the following command to build the Docker image:
+
+```bash
+docker buildx build --platform linux/amd64 -t next-supabase-turbo .
+```
+
+The above command will build the Docker image for the `linux/amd64` architecture. This is the most common architecture for Docker images, however modify the command to build for the architecture you need.
+
+### 3. Run the Docker Container
+
+#### 3.1. Make sure the .env.production.local file exists
+
+First, ensure that the `.env.production.local` file is present in the `apps/web` directory.
+
+
+#### 3.2 Add secret environment variables
+
+We can now add back the environment variables containing secret values that
+will only be used at runtime:
+
+```bash
+CAPTCHA_SECRET_TOKEN=***
+OPENAI_API_KEY=***
+RESEND_API_KEY=***
+STRIPE_SECRET_KEY=***
+STRIPE_WEBHOOK_SECRET=***
+SUPABASE_DB_WEBHOOK_SECRET=***
+SUPABASE_SERVICE_ROLE_KEY=***
+```
+
+#### 3.3 Run the Docker container
+Then, run the following command to run the Docker container:
+
+```bash
+docker run -d -p 3000:3000 --env-file .env.production.local next-supabase-turbo
+```
+
+### 4. Access the Application
+
+You can now access the application at `http://<your-docker-host>:3000`.
+
+### 5. Push the Docker Image to a Container Registry
+
+If you want to push the Docker image to a container registry, you can run the following command:
+
+```bash
+docker push <your-docker-image>
+```
+
+If you're using the Github Container Registry, you can run the following command:
+
+1. **Create a personal access token**: Generate a personal access token from Github - so that you can login to the Container Registry.
+2. **Login to the Container Registry**: Login into the Github Container Registry:
+
+```bash
+docker login ghcr.io
+```
+
+### 6. Pull the Docker Image from the Github Container Registry in your VPS
+
+Now, you can pull the Docker image from the Github Container Registry in your VPS.
+
+1. **Login into your VPS**: Login into your VPS using SSH or a VPS management tool.
+2. **Pull the Docker image**: Pull the Docker image from the Github Container Registry:
+
+```bash
+docker pull ghcr.io/your-username/repo
+```
+
+### 7. Run the Docker Container
+
+Then, you can run the Docker container:
+
+```bash
+docker run -d -p 3000:3000 --env-file .env.production.local next-supabase-turbo
+```
+
+### 8. Access the Application
+
+You can now access the application at `http://<your-docker-host>:3000`.
+

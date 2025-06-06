@@ -6,6 +6,16 @@ description: "Guide to generate and validate the environment variables needed fo
 order: 1
 ---
 
+{% sequence title="How to generate and validate the environment variables needed for deployment in your Next.js Supabase SaaS Kit project" description="Guide to generate and validate the environment variables needed for deployment in your Next.js Supabase SaaS Kit project" %}
+
+[Before you start](#before-you-start)
+
+[Generating the environment variables](#generating-the-environment-variables)
+
+[Validating the environment variables](#validating-the-environment-variables)
+
+{% /sequence %}
+
 Makerkit has a lot of environment variables that need to be set for the project to work correctly. The environment variables are validated using Zod, so if you miss any, the project will not build correctly - at least in most cases.
 
 While this can be annoying, you will agree with me that it's better to have a project that doesn't build than a project that doesn't work correctly.

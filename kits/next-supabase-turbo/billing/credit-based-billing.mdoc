@@ -6,6 +6,16 @@ order: 7
 description: 'Learn how to add credit based usage in your Next.js Supabase application'
 ---
 
+{% sequence title="How to add credit based usage in your Next.js Supabase application" description="Learn how to add credit based usage in your Next.js Supabase application" %}
+
+[Credit-based billing](#credit-based-billing)
+
+[How to implement credit-based billing](#how-to-implement-credit-based-billing)
+
+{% /sequence %}
+
+## Credit-based billing
+
 Credit-based billing is a billing model where you charge your users based on the number of credits they consume. This model is useful when you want to charge your users based on the number of actions they perform in your application.
 
 As you may know, this is extremely popular for AI SaaS products, where users may have a limited amount of tokens (or credits) to perform actions - such as requesting data from an LLM.
@@ -153,12 +163,16 @@ create policy tasks_write_policy
 
 You can use webhooks from your billing provider to recharge credits when a user makes a payment. To do so, listen to events and update the `credits` table accordingly.
 
-In the example below, we extend the webook handler to listen to the `onInvoicePaid` event and update the `credits` table with the new credits.
+In the example below, we extend the webook handler to listen to the `onInvoicePaid` (subscriptions-only) event and update the `credits` table with the new credits.
+
+{% alert type="warning" title="This example is for Stripe Subscriptions" %}
+By default, Stripe does not create invoices for one-off payments. You need to manually enable this functionality in the Stripe dashboard, or you can listen to the `onPaymentSucceeded` event instead.
+{% /alert %}
 
 1. First, update the existing webhook handler to listen to the `onInvoicePaid` event.
 2. Then, update the `credits` table with the new credits.
 
- ```tsx {% title="apps/web/app/api/billing/webhook.ts" %}
+ ```tsx {% title="apps/web/app/api/billing/webhook/route.ts" %}
 import { getBillingEventHandlerService } from '@kit/billing-gateway';
 import { enhanceRouteHandler } from '@kit/next/routes';
 import { getLogger } from '@kit/shared/logger';
@@ -240,10 +254,10 @@ async function updateMessagesCountQuota(params: {
   variantId: string;
   accountId: string;
 }) {
-  const client = getSupabaseRouteHandlerClient<Database>({ admin: true });
+  const adminClient = getSupabaseServerAdminClient();
 
   // get the max messages for the price based on the price ID
-  const plan = await client
+  const plan = await adminClient
     .from('plans')
     .select('tokens_quota')
     .eq('variant_id', params.variantId)
@@ -257,7 +271,7 @@ async function updateMessagesCountQuota(params: {
 
   // upsert the message count for the account
   // and set the period start and end dates (from the subscription)
-  const response = await client
+  const response = await adminClient
     .from('credits')
     .update({
       tokens_quota,

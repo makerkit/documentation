@@ -6,6 +6,18 @@ order: 8
 description: "How to configure one-off payments in Makerkit for products that are not recurring in nature."
 ---
 
+{% sequence title="One Off payments" description="Setting up one-off payments in Makerkit" %}
+
+[Schema Definition](#schema-definition)
+
+[Setting the billing mode](#setting-the-billing-mode)
+
+{% /sequence %}
+
+{% alert type="warning" title="One off payments and subscriptions cannot coexist" %}
+At this time, one off payments and subscriptions cannot coexist. If you enable one off payments, you will not be able to use subscriptions.
+{% /alert %}
+
 While not exactly a common SaaS billing mode, Makerkit offers support for one-off payments.
 
 You can use the tables `orders` and `orders_items` to store single orders for products not recurring in nature. You can use this in two ways:
@@ -49,17 +61,9 @@ export default createBillingSchema({
 });
 ```
 
-Let's break down the fields:
-- **name**: The name of the plan
-- **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
-- **paymentType**: The payment type (e.g., `recurring`, `one-time`). In this case, it's `one-time`.
-- **lineItems**: The line items for the plan
-  - **id**: The unique identifier for the line item. **This must match the price ID in the billing provider**. The schema will validate this, but please remember to set it correctly.
-  - **name**: The name of the line item
-  - **cost**: The cost of the line item
-  - **type**: The type of the line item (e.g., `flat`). It can only be `flat` for one-off payments.
-
 When a products gets purchased, Makerkit will create an order in the `orders` table and an order item in the `orders_items` table. You can use this data to fulfill the order and grant access to the product.
+
+## Setting the billing mode
 
 If you would like to switch from `subscriptions` to `orders` as your primary billing mechanism, you can do so by setting the following environment variable:
 

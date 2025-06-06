@@ -98,10 +98,11 @@ export default withI18n(SignUpPage);
 
 #### Adding the Database Webhook to listen for new signups
 
-Let's extend the DB handler at `apps/web/api/db/webhook/route.ts`. This handler will listen for new signups and send an email to the user:
+Let's extend the DB handler at `apps/web/app/api/db/webhook/route.ts`. This handler will listen for new signups and send an email to the user:
 
 ```tsx
 import { getDatabaseWebhookHandlerService } from '@kit/database-webhooks';
+import { getServerMonitoringService } from '@kit/monitoring/server';
 import { enhanceRouteHandler } from '@kit/next/routes';
 
 import appConfig from '~/config/app.config';
@@ -116,8 +117,18 @@ export const POST = enhanceRouteHandler(
     const service = getDatabaseWebhookHandlerService();
 
     try {
+      const signature = request.headers.get('X-Supabase-Event-Signature');
+
+      if (!signature) {
+        return new Response('Missing signature', { status: 400 });
+      }
+
+      const body = await request.clone().json();
+
       // handle the webhook event
-      await service.handleWebhook(request, {
+      await service.handleWebhook({
+        body,
+        signature,
         async handleEvent(payload) {
           if (payload.table === 'waitlist' && payload.record.approved) {
             const { handleApprovedUserChange } = await import(
@@ -125,10 +136,17 @@ export const POST = enhanceRouteHandler(
             );
 
             const inviteToken = payload.record.invite_token;
-            const redirectToUrl = new URL(pathsConfig.auth.passwordUpdate, appConfig.url);
+            
+            const redirectToUrl = new URL(
+              pathsConfig.auth.passwordUpdate,
+              appConfig.url,
+            );
 
             if (inviteToken) {
-              const next = encodeURI(pathsConfig.app.joinTeam + '?invite_token=' + inviteToken);
+              const next = encodeURI(
+                pathsConfig.app.joinTeam + '?invite_token=' + inviteToken,
+              );
+
               redirectToUrl.searchParams.append('callback', next);
             }
 
@@ -144,7 +162,12 @@ export const POST = enhanceRouteHandler(
 
       // return a successful response
       return new Response(null, { status: 200 });
-    } catch {
+    } catch (error) {
+      const service = await getServerMonitoringService();
+
+      await service.ready();
+      await service.captureException(error as Error);
+
       // return an error response
       return new Response(null, { status: 500 });
     }
@@ -153,7 +176,6 @@ export const POST = enhanceRouteHandler(
     auth: false,
   },
 );
-
 ```
 
 #### Adding the Trigger to the Database
@@ -225,7 +247,11 @@ Please add the following translations to your `auth.json` translation:
 }
 ```
 
-### Tailwind CSS Styles
+#### Disable oAuth
+
+If you are using any oAuth providers, please disable them in the [Makerkit Auth configuration](../configuration/authentication-configuration#third-party-providers). Since sign-ups are disabled, users will hit errors.
+
+### Tailwind CSS (v3) Styles
 
 If using TailwindCSS v3, please update the Tailwind CSS styles to include the new folder:
 

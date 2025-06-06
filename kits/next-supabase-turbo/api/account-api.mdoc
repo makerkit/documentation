@@ -8,6 +8,20 @@ description: "A quick introduction to the Account API in Makerkit"
 
 You can use the Account API for retrieving information about the personal user account.
 
+{% sequence title="How to use the Account API" description="Learn how to use the Account API in Makerkit" %}
+
+[Using the Account API](#using-the-account-api)
+
+[Get the account workspace data](#get-the-account-workspace-data)
+
+[Load the user accounts](#load-the-user-accounts)
+
+[Get the subscription data](#get-the-subscription-data)
+
+[Get the billing customer ID](#get-the-billing-customer-id)
+
+{% /sequence %}
+
 ## Using the Account API
 
 To use the Account API, you need to import the `createAccountsApi` function from `@kit/account/api`. We need to pass a valid `SupabaseClient` to the function - so we can interact with the database from the server.

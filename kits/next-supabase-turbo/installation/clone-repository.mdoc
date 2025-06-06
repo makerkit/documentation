@@ -6,6 +6,24 @@ order: 4
 description: "Clone the Next.js Supabase SaaS Kit Turbo repository to your local machine."
 ---
 
+{% sequence title="Cloning the repository" description="Clone the Next.js Supabase SaaS Kit Turbo repository to your local machine." %}
+
+[Prerequisites](#prerequisites)
+
+[Have Github configured with SSH](#have-github-configured-with-ssh)
+
+[Clone the repository](#cloning-the-repository)
+
+[Install Pnpm](#install-pnpm)
+
+[Setup Dependencies](#setup-dependencies)
+
+[Automatic Setup](#automatic-setup-(recommended))
+
+[Manual Setup](#manual-setup-(if-automatic-setup-fails))
+
+{% /sequence %}
+
 ## Prerequisites
 
 To get started with Makerkit, ensure you have the following prerequisites installed and set up:
@@ -27,6 +45,78 @@ To clone the repository using SSH, you need to have your Github account configur
 Alternatively, you can use HTTPS to clone the repository. For example, `git clone https://github.com/makerkit/next-supabase-saas-kit-turbo`.
 
 Another alternative is to use the Github CLI or Github Desktop to clone the repository.
+
+## Cloning the Repository
+
+Clone the repository using the following command:
+
+```bash
+git clone git@github.com:makerkit/next-supabase-saas-kit-turbo
+```
+
+**Note:** If your SSH key isn't set up, use HTTPS instead:
+
+```bash
+git clone https://github.com/makerkit/next-supabase-saas-kit-turbo
+```
+
+#### Windows Users: place the repository near the root of your drive
+
+Some Windows users hit errors loading certain modules due to very long paths. To avoid this, try placing the repository near the root of your drive.
+
+Avoid using OneDrive, as it can cause issues with Node.js.
+
+### Important: Use HTTPS for All Commands if Not Using SSH
+
+## Install Pnpm
+
+Install Pnpm globally with the following command:
+
+```bash
+npm i -g pnpm
+```
+
+## Setup Dependencies
+
+Install the necessary dependencies for the project:
+
+```bash
+pnpm i
+```
+
+## Automatic Setup (recommended)
+
+Makerkit provides a script to automatically clone the repository and setup the project. 
+
+If you have a repository created in version 2.9.0 or later, you can use the following command to setup the project (otherwise, you can manually setup the project by following the steps below):
+
+```bash
+pnpm turbo gen setup
+```
+
+If anything goes wrong or you have a repository created below version 2.9.0, you can manually setup the project by following the steps below.
+
+## Manual Setup (if automatic setup fails)
+
+## Configuring Git Remotes
+
+After cloning the repository, remove the original `origin` remote:
+
+```bash
+git remote rm origin
+```
+
+Add the upstream remote pointing to the original repository to pull updates:
+
+```bash
+git remote add upstream git@github.com:makerkit/next-supabase-saas-kit-turbo
+```
+
+Once you have your own repository set up, add your repository as the `origin`:
+
+```bash
+git remote add origin <your-repository-url>
+```
 
 ## Verify your Git username
 
@@ -54,51 +144,7 @@ git config --global user.username "johndoe"
 
 This is important to ensure you can run the repository.
 
-## Cloning the Repository
-
-Clone the repository using the following command:
-
-```bash
-git clone git@github.com:makerkit/next-supabase-saas-kit-turbo
-```
-
-**Note:** If your SSH key isn't set up, use HTTPS instead:
-
-```bash
-git clone https://github.com/makerkit/next-supabase-saas-kit-turbo
-```
-
-#### Windows Users: place the repository near the root of your drive
-
-Some Windows users hit errors loading certain modules due to very long paths. To avoid this, try placing the repository near the root of your drive.
-
-Avoid using OneDrive, as it can cause issues with Node.js.
-
-### Important: Use HTTPS for All Commands if Not Using SSH
-
-If you are not using SSH, ensure you switch to HTTPS for all Git commands, not just the clone command.
-
-## Configuring Git Remotes
-
-After cloning the repository, remove the original `origin` remote:
-
-```bash
-git remote rm origin
-```
-
-Add the upstream remote pointing to the original repository to pull updates:
-
-```bash
-git remote add upstream git@github.com:makerkit/next-supabase-saas-kit-turbo
-```
-
-Once you have your own repository set up, add your repository as the `origin`:
-
-```bash
-git remote add origin <your-repository-url>
-```
-
-### Keeping Your Repository Up to Date
+## Keeping Your Repository Up to Date
 
 To pull updates from the upstream repository, run the following command daily (preferably with your morning coffee ☕):
 
@@ -107,24 +153,6 @@ git pull upstream main
 ```
 
 This ensures your repository stays up to date with the latest changes.
-
-## 0.1. Install Pnpm
-
-Install Pnpm globally with the following command:
-
-```bash
-npm i -g pnpm
-```
-
-## 1. Setup Dependencies
-
-Install the necessary dependencies for the project:
-
-```bash
-pnpm i
-```
-
-With these steps completed, your development environment will be set up and ready to go! 🚀
 
 ## 2. Post-merge Hooks
 

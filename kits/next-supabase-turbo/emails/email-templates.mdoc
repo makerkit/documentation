@@ -6,10 +6,25 @@ title: "Email Templates in the Next.js Supabase Starter Kit"
 order: 2
 ---
 
+{% sequence title="Email Templates" description="Learn how to write email templates in the Next.js Supabase Starter Kit with React.Email" %}
+
+[Where to find the email templates](#where-to-find-the-email-templates)
+
+[Example of an email template in the kit](#example-of-an-email-template-in-the-kit)
+
+[Creating your own email templates](#creating-your-own-email-templates)
+
+{% /sequence %}
 
 Email templates are a great way to send beautiful and consistent emails to your users. In the Next.js Supabase Starter Kit, we use [React.Email](https://react.email) to create email templates.
 
+## Where to find the email templates
+
 Templates are stored in the package `@kit/email-templates` which you can find in the `packages/email-templates` directory.
+
+These templates use [React.Email](https://react.email) to create beautiful-looking email templates.
+
+## Example of an email template in the kit
 
 For example, here is our template for accepting an invitation to join a team:
 
@@ -106,7 +121,15 @@ export function renderInviteEmail(props: Props) {
 }
 ```
 
-If you want to create your own email templates, you can create a new file in the `packages/email-templates/src` directory and export a function that returns the email template.
+## Creating your own email templates
+
+If you want to create your own email templates, you can create a new file in the `packages/email-templates/src/emails` directory and export a function that returns the email template.
+
+Now, export the function from the package.
+
+```tsx {% filename="packages/email-templates/src/index.ts" %}
+export * from './emails/example';
+```
 
 Then, import the function and transform the template into HTML that you can send using the mailer.
 

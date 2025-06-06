@@ -6,6 +6,15 @@ label: 'Sentry'
 order: 2
 ---
 
+{% sequence title="Steps to configure Sentry" description="Learn how to configure Sentry in your Next.js Supabase SaaS kit." %}
+
+[Configuring Sentry in Makerkit](#configuring-sentry-in-makerkit)
+
+[Uploading source maps](#uploading-source-maps)
+
+{% /sequence %}
+
+## Configuring Sentry in Makerkit
 
 [Sentry](https://sentry.com) is an observability platform that helps you monitor your application's performance and errors. In this guide, you'll learn how to configure Sentry in your Next.js Supabase SaaS kit.
 
@@ -32,6 +41,8 @@ withSentryConfig(nextConfig);
 ```
 
 You can find your Sentry DSN in the Sentry dashboard.
+
+## Uploading source maps
 
 To upload source maps to Sentry, use the following options:
 

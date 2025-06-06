@@ -6,13 +6,27 @@ description: "Learn how to add new translations to your Next.js Supabase SaaS pr
 order: 1
 ---
 
-Makerkit projects store translations at the application level, specifically in the `apps/web/public/locales` directory. By default, English translations are provided and can be found at `apps/web/public/locales/en`.
+{% sequence title="Steps to add new translations" description="Learn how to add new translations to your Next.js Supabase SaaS project." %}
+
+[Create Language Files](#1.-create-language-files)
+
+[Update Language Settings](#2.-update-language-settings)
+
+[Add new namespaces](#3.-add-new-namespaces)
+
+{% /sequence %}
+
+Makerkit projects store translations at the application level, specifically in the `apps/web/public/locales` directory. By default, We provide the English translations at `apps/web/public/locales/en`.
 
 If you're looking to expand your application's language support, follow these two steps:
 
 ## 1. Create Language Files
 
 First, create a new folder in `apps/web/public/locales/[lng]`, where `[lng]` represents the appropriate language code. This could be `de` for German, `it` for Italian, `es` for Spanish, `ja` for Japanese, and so on.
+
+### Regional Language Codes
+
+If you use a regional language code, such as `es-ES` for Spanish in Spain, you must use a lowercase `es-es` instead. Thus, the folder name should be `apps/web/public/locales/es-es`.
 
 ## 2. Update Language Settings
 
@@ -43,7 +57,7 @@ export const defaultI18nNamespaces = [
   'teams',
   'billing',
   'marketing',
-  'chatbots',
+  'chatbots',      // <--- Add the new namespace here
 ];
 ```
 

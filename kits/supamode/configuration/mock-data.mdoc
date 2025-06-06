@@ -1,0 +1,111 @@
+---
+status: "published"
+title: "Adding mock data to Supamode"
+label: "Mock Data"
+order: 2
+description: "How to add mock data to Supamode for development purposes"
+---
+
+Seeding the data is optional, but it can help you get started with some demo data.
+
+The repository comes with a predefined schema (based off of Makerkit's schema) and a seed file that you can use to populate your database with mock data.
+
+The seed file uses [Snaplet](https://snaplet.dev/) to generate realistic mock data based on the schema. This allows you to have a more realistic development environment.
+
+## Creating a Seed File
+
+```bash
+pnpm --filter app run supabase:seed:gen
+```
+
+This command creates a seed file at `apps/app/supabase/seeds/03-demo-seed.
+sql`.
+
+## Modifying the Seed File
+
+The default seed file is the below:
+
+```tsx
+import { copycat } from '@snaplet/copycat';
+import { createSeedClient } from '@snaplet/seed';
+
+(async () => {
+  const seed = await createSeedClient({
+    dryRun: true,
+  });
+
+  const { users } = await seed.users((x) =>
+    x(10, (user) => {
+      return {
+        id: copycat.uuid(user.seed),
+        email: copycat.email(user.seed),
+        password: `testingpassword`,
+        confirmation_token: copycat.uuid(user.seed),
+        recovery_token: copycat.uuid(user.seed),
+        email_change_token_new: copycat.email(user.seed),
+      };
+    }),
+  );
+
+  for (const user of users) {
+    await seed.public_accounts(
+      (x) =>
+        x(1, (account) => {
+          return {
+            is_personal_account: false,
+            name: copycat.fullName(account.seed),
+            picture_url: null,
+            notifications: (x) =>
+              x({ min: 4, max: 20 }, (notification) => ({
+                link: '',
+                title: copycat.sentence(notification.seed),
+                body: copycat.paragraph(notification.seed),
+              })),
+            subscriptions: (x) =>
+              x(1, () => ({
+                billing_provider: 'stripe',
+                subscription_items: () => x(1),
+              })),
+            invitations: (x) =>
+              x(3, (invitation) => ({
+                email: copycat.email(invitation.seed),
+                role: 'member',
+                status: 'pending',
+              })),
+          };
+        }),
+      {
+        connect: {
+          users,
+        },
+      },
+    );
+
+    await seed.blog_posts(
+      (x) =>
+        x({ min: 4, max: 20 }, (blogPost) => ({
+          title: copycat.sentence(blogPost.seed),
+          tags: [copycat.word(blogPost.seed), copycat.word(blogPost.seed)],
+          content: [
+            copycat.paragraph(blogPost.seed),
+            copycat.paragraph(blogPost.seed * 2),
+            copycat.paragraph(blogPost.seed * 3),
+            copycat.paragraph(blogPost.seed * 4),
+          ].join('\n\n'),
+          blog_post_comments: (x) =>
+            x({ min: 0, max: 50 }, (comment) => ({
+              content: copycat.paragraph(comment.seed),
+              author_email: copycat.email(comment.seed),
+            })),
+        })),
+      {
+        connect: {
+          users,
+        },
+      },
+    );
+  }
+
+  process.exit(0);
+})();
+```

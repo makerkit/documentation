@@ -8,7 +8,19 @@ order: 0
 
 The Super Admin panel allows you to manage users and accounts.
 
-To access the super admin panel at `/admin`, you will need to assign a user as a super admin.
+{% sequence title="Steps to add a Super Admin" description="Learn how to add a Super Admin to your Next.js Supabase application." %}
+
+[How to access the Super Admin panel](#how-to-access-the-super-admin-panel)
+
+[Testing the Super Admin locally](#testing-the-super-admin-locally)
+
+[Assigning a Super Admin role to a user](#assigning-a-super-admin-role-to-a-user)
+
+{% /sequence %}
+
+## How to access the Super Admin panel
+
+To access the super admin panel at `/admin`, you will need to assign a user as a super admin. In addition, you will need to enable MFA for the user from the normal user profile settings.
 
 ## Testing the Super Admin locally
 
@@ -44,7 +56,7 @@ settings of the user
 
 To assign a user as a super admin, run the following SQL query from your Supabase SQL Query editor:
 
-```sql {% title="apps/web/supabase/migrations/20230815034829_super-admin.sql" %}
+```sql
 UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "super-admin"}' WHERE id='<user_id>';
 ```
 
@@ -54,4 +66,4 @@ Please replace `<user_id>` with the user ID you want to assign as a super admin.
 
 Starting from version `2.5.0`, the Super Admin user will be required to use Multi-Factor Authentication (MFA) to access the Super Admin panel.
 
-Please navigate to the `/settings` page and enable MFA for the Super Admin user.
+Please navigate to the `/home/settings` page and enable MFA for the Super Admin user.

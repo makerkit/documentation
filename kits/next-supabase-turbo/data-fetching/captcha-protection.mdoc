@@ -6,7 +6,25 @@ label: "Captcha Protection"
 order: 7
 ---
 
-For captcha protection, we use Cloudflare Turnstile. To enable it, you need to set the following environment variables:
+For captcha protection, we use [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile). 
+
+{% sequence title="How to set up captcha protection for your API routes" description="Learn how to set up captcha protection for your API routes" %}
+
+[Setting up the environment variables](#setting-up-the-environment-variables)
+
+[Enabling the captcha protection](#enabling-the-captcha-protection)
+
+[Retrieving the token](#retrieving-the-token)
+
+[Resetting the token](#resetting-the-token)
+
+[Verifying the token](#verifying-the-token)
+
+{% /sequence %}
+
+## Setting up the environment variables
+
+To enable it, you need to set the following environment variables:
 
 ```bash
 CAPTCHA_SECRET_TOKEN=
@@ -17,7 +35,7 @@ You can find the `CAPTCHA_SECRET_TOKEN` in the Turnstile configuration. The `NEX
 
 This guide assumes you have correctly set up your Turnstile configuration. If you haven't, please refer to the [Turnstile documentation](https://developers.cloudflare.com/turnstile).
 
-## Authentication
+## Enabling the captcha protection
 
 When you set the token in the environment variables, the kit will automatically protect your API routes with captcha.
 

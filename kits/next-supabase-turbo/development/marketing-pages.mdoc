@@ -1,14 +1,26 @@
 ---
 status: "published"
-
 label: "Marketing Pages"
 title: "Marketing Pages in the Next.js Supabase Turbo Starter Kit"
 description: "Learn how to create and update marketing pages in the Next.js Supabase Turbo Starter Kit."
 order: 7
 ---
 
+{% sequence title="How to create and update marketing pages" description="Learn how to create and update marketing pages in the Next.js Supabase Turbo Starter Kit." %}
+
+[The marketing pages included in the Starter Kit](#the-marketing-pages-included-in-the-starter-kit)
+
+[Adding a new marketing page](#adding-a-new-marketing-page)
+
+[Customizing the layout](#customizing-the-layout)
+
+[Adding a contact form](#adding-a-contact-form)
+
+{% /sequence %}
 
 Makerkit comes with pre-defined marketing pages to help you get started with your SaaS application. These pages are built with Next.js and Tailwind CSS and are located in the `apps/web/app/(marketing)` directory.
+
+## The marketing pages included in the Starter Kit
 
 Makerkit comes with the following marketing pages:
 
@@ -17,6 +29,7 @@ Makerkit comes with the following marketing pages:
 - Pricing Page
 - FAQ
 - Contact Page (with a contact form)
+- [Legal Pages (Terms of Service, Privacy Policy, Cookie Policy)](./legal-pages)
 
 ## Adding a new marketing page
 
@@ -31,6 +44,8 @@ export default function AboutPage() {
 }
 ```
 
+### Customizing the layout
+
 This page inherits the layout at `apps/web/app/(marketing)/layout.tsx`. You can customize the layout by editing this file - but remember that it will affect all marketing pages.
 
 ## Contact Form
@@ -41,4 +56,4 @@ To make the contact form work, you need to add the following environment variabl
 CONTACT_EMAIL=
 ```
 
-In this variable, you need to set the email address where you want to receive the contact form submissions. The sender will be the same as the one configured in your [mailing configuration](email-configuration).
+In this variable, you need to set the email address where you want to receive the contact form submissions. The sender will be the same as the one configured in your [mailing configuration](../emails/email-configuration).

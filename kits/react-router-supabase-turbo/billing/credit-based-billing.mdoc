@@ -158,7 +158,7 @@ In the example below, we extend the webook handler to listen to the `onInvoicePa
 1. First, update the existing webhook handler to listen to the `onInvoicePaid` event.
 2. Then, update the `credits` table with the new credits.
 
- ```tsx {% title="apps/web/app/routes/api.billing.webhook._index/route.ts" %}
+ ```tsx {% title="apps/web/app/routes/api/billing/webhook.ts" %}
 import { ActionFunctionArgs } from 'react-router';
 import { getBillingEventHandlerService } from '@kit/billing-gateway';
 import { getLogger } from '@kit/shared/logger';
@@ -235,7 +235,7 @@ async function updateMessagesCountQuota(params: {
   variantId: string;
   accountId: string;
 }) {
-  const client = getSupabaseRouteHandlerClient<Database>({ admin: true });
+  const client = getSupabaseServerAdminClient();
 
   // get the max messages for the price based on the price ID
   const plan = await client

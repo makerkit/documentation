@@ -6,15 +6,41 @@ order: 1
 description: "Guide on how to setup your Supabase environment for production deployment."
 ---
 
+{% alert type="warning" title="Please complete the following steps" %}
+Not completing these steps will result in your project not working correctly. Please make sure to complete these steps before testing your project.
+{% /alert %}
+
+{% sequence title="How to deploy Supabase to Production" description="Guide on how to setup your Supabase environment for production deployment." %}
+
+[Create a Supabase project](#create-a-supabase-project)
+
+[Keeping your Supabase Database Password safe](#keeping-your-supabase-database-password-safe)
+
+[Navigating to the Supabase API settings](#navigating-to-the-supabase-api-settings)
+
+[Setting up your Supabase project authentication](#setting-up-your-supabase-project-authentication)
+
+[Setting up your Supabase project SMTP service](#setting-up-your-supabase-project-smtp-service)
+
+[Setting the Emails in your Supabase project](#setting-the-emails-in-your-supabase-project)
+
+[Linking your Supabase project](#linking-your-supabase-project)
+
+[Pushing the Migration to Supabase for production](#pushing-the-migration-to-supabase-for-production)
+
+[Setting up the Database Webhooks](#database-webhooks)
+
+[Set up Google Auth (Optional)](#set-up-google-auth-[optional])
+
+{% /sequence %}
+
+## Create a Supabase project
+
 Unless you're self-hosting Supabase, you will need to create an account on Supabase. You can do so by visiting [supabase.com](https://supabase.com).
 
 Once you have created an account, you will need to create a project. You can do so by clicking on the "Create Project" button.
 
 Supabase will promptly create a project and the API Keys required to connect your project to the Supabase API.
-
-{% alert type="warning" title="Please complete the following steps" %}
-Not completing these steps will result in your project not working correctly. Please make sure to complete these steps before testing your project.
-{% /alert %}
 
 ### Keeping your Supabase Database Password safe
 

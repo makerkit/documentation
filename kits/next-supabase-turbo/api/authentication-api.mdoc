@@ -6,6 +6,18 @@ title: "Authentication API | Next.js Supabase SaaS Kit"
 description: "A quick introduction to the Authentication API in Makerkit"
 ---
 
+{% sequence title="How to use the Authentication API" description="Learn how to use the Authentication API in Makerkit" %}
+
+[Checking if a user is signed in](#checking-if-a-user-is-signed-in)
+
+[Using the Authentication API in Server Actions](#using-the-authentication-api-in-server-actions)
+
+[Using the Authentication API in Client Components](#using-the-authentication-api-in-client-components)
+
+{% /sequence %}
+
+## Checking if a user is signed in
+
 To check if users are authed, or to retrieve information about the currently signed-in user, use the `requireUser` function:
 
 ```tsx
@@ -28,7 +40,9 @@ async function ServerComponent() {
 }
 ```
 
-NB: use the correct Supabase client based on the context. In this case, we use the server component client.
+## Using the Authentication API in Server Actions
+
+To use the Authentication API in server actions, you can use the `requireUser` function. This function will return the user data if the user is signed in, or redirect the user to the login page if they are not signed in.
 
 ```tsx
 'use server';
@@ -52,3 +66,17 @@ export async function myServerAction() {
 ```
 
 If the user needs MFA and is not yet verified, the `redirect` function will redirect the user to the MFA verification page. This is why it is important to check the `redirectTo` property in the response.
+
+## Using the Authentication API in Client Components
+
+To use the Authentication API in client components, you can use the `useUser` hook. This hook will return the user data if the user is signed in, or redirect the user to the login page if they are not signed in.
+
+```tsx
+import { useUser } from '@kit/supabase/hooks/use-user';
+
+function MyComponent() {
+  const user = useUser();
+
+  // ...
+}
+```

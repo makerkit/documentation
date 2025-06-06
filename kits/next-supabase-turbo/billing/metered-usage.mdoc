@@ -6,11 +6,23 @@ order: 5
 description: "Metered usage billing is a billing model where you charge your customers based on their usage of your product. This model is common in APIs, where you charge based on the number of requests made to your API."
 ---
 
+{% sequence title="How to configure metered usage billing in the Next.js Supabase SaaS Kit Turbo" description="Let's see how to configure metered usage billing in the Next.js Supabase SaaS Kit Turbo" %}
+
+[Providers Differences in reporting usage](#providers-differences-in-reporting-usage)
+
+[Defining a Metered Usage Plan](#defining-a-metered-usage-plan)
+
+[Reporting Usage in Stripe](#reporting-usage-in-stripe)
+
+[Reporting Usage in Lemon Squeezy](#reporting-usage-in-lemon-squeezy)
+
+{% /sequence %}
+
 Metered usage billing is a billing model where you charge your customers based on their usage of your product. This model is common in APIs, where you charge based on the number of requests made to your API.
 
 As we have already seen in the schema definition section, we can define a metered usage plan in the billing schema. This plan will charge the customer based on the number of requests they make to your API.
 
-### Providers Differences
+### Providers Differences in reporting usage
 
 NB: different providers (Stripe, Lemon Squeezy, etc.) have different ways of handling metered usage billing: we keep the API consistent across all providers - but the details of how you report usage to the billing provider may differ. Please read the provider's documentation to understand how to report usage to the billing provider.
 

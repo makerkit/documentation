@@ -44,7 +44,7 @@ settings of the user
 
 To assign a user as a super admin, run the following SQL query from your Supabase SQL Query editor:
 
-```sql {% title="apps/web/supabase/migrations/20230815034829_super-admin.sql" %}
+```sql
 UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role": "super-admin"}' WHERE id='<user_id>';
 ```
 
@@ -54,4 +54,4 @@ Please replace `<user_id>` with the user ID you want to assign as a super admin.
 
 The Super Admin user will be required to use Multi-Factor Authentication (MFA) to access the Super Admin panel.
 
-Please navigate to the `/settings` page and enable MFA for the Super Admin user.
+Please navigate to the `/home/settings` page and enable MFA for the Super Admin user.

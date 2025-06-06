@@ -1,19 +1,41 @@
 ---
 status: "published"
-
 label: 'RBAC: Roles and Permissions'
 title: 'RBAC: Understanding roles and permissions in Next.js Supabase'
 description: 'Learn how to implement roles and permissions in Next.js Supabase'
 order: 6
 ---
 
+{% sequence title="How to implement roles and permissions" description="Learn how to implement roles and permissions in Next.js Supabase" %}
+
+[Roles and Permissions tables](#roles-and-permissions-tables)
+
+[Hierarchy levels](#hierarchy-levels)
+
+[Adding new permissions](#adding-new-permissions)
+
+[Default roles and permissions](#default-roles-and-permissions)
+
+[Adding new roles and permissions](#adding-new-roles-and-permissions)
+
+[Using roles and permissions in RLS](#using-roles-and-permissions-in-rls)
+
+[Using roles and permissions in application code](#using-roles-and-permissions-in-application-code)
+
+[Using permissions client-side](#using-permissions-client-side)
+
+{% /sequence %}
 
 Makerkit implements granular RBAC for team members. This allows you to define roles and permissions for each team member - giving you fine-grained control over who can access what.
+
+## Roles and Permissions tables
 
 Makerkit implements two tables for roles and permissions:
 
 - `roles` table: This table stores the roles for each team member.
 - `role_permissions` table: This table stores the permissions for each role.
+
+## The "role_permissions" table
 
 The table `role_permissions` has the following schema:
 
@@ -21,14 +43,19 @@ The table `role_permissions` has the following schema:
 - `role`: The role for the team member.
 - `permission`: The permission for the role.
 
+## The "roles" table
+
 The `roles` table has the following schema:
 
 - `name`: The name of the role. This must be unique.
 - `hierarchy_level`: The hierarchy level of the role.
 
+### Hierarchy levels
 We can use `hierarchy_level` to define the hierarchy of roles. For example, an `admin` role can have a higher hierarchy level than a `member` role. This will help you understand if a role has more permissions than another role.
 
-And an enum for permissions `app_permissions`:
+### Adding new permissions
+
+To add new permissions, we can use an enum for permissions `app_permissions`:
 
 - `app_permissions` enum: This enum stores the permissions for each role.
 
@@ -84,6 +111,7 @@ In the below, we create an RLS policy `insert_tasks` on the `tasks` table to che
 ```sql
 create policy insert_tasks on public.tasks
     for insert
+    to authenticated
     with check (
         public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
     );
@@ -94,6 +122,7 @@ And now we can also add a policy to check if a user can delete a task:
 ```sql
 create policy delete_tasks on public.tasks
     for delete
+    to authenticated
     using (
         public.has_permission(auth.uid(), account_id, 'tasks.delete'::app_permissions)
     );

@@ -14,6 +14,10 @@ If you wish to provide a new language, there are two steps.
 
 Create a new folder using the correct language code at `apps/web/public/locales/[lng]` where `[lng]` can be any correct language code, such as `de`, `it`, `es`, `ja`, etc.
 
+### Regional Language Codes
+
+If you use a regional language code, such as `es-ES` for Spanish in Spain, you must use a lowercase `es-es` instead. Thus, the folder name should be `apps/web/public/locales/es-es`.
+
 ### 2. Update settings
 
 Add the language to the settings file at `apps/web/lib/i18n/i18n.settings.ts`:

@@ -6,9 +6,21 @@ title: "How to handle custom database webhooks in your Next.js Supabase applicat
 description: "Learn how to handle custom database webhooks in your Next.js Supabase application"
 ---
 
+{% sequence title="How to handle custom database webhooks" description="Learn how to handle custom database webhooks in your Next.js Supabase application" %}
+
+[What are Database Webhooks?](#what-are-database-webhooks)
+
+[How to handle custom database webhooks](#how-to-handle-custom-database-webhooks)
+
+{% /sequence %}
+
+## What are Database Webhooks?
+
 Database webhooks allow you to listen to changes in your database and trigger custom logic when a change occurs. This is useful for sending notifications, updating caches, or triggering other services.
 
 Makerkit handles some webhooks by default for functionalities such as deleting a subscription following a user deletion, or sending emails after a user signs up.
+
+## How to handle custom database webhooks
 
 You can extend this functionality by adding your own webhook handlers:
 

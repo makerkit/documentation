@@ -6,25 +6,15 @@ order: 2
 description: "Update your Next.js Supabase application with new Shadcn UI components"
 ---
 
-To install a Shadcn UI component, you can use the following command:
+Makerkit implements most of the Shadcn UI components - however, if you need to add a new component, you can do so by following the steps below.
 
-```bash
-npx shadcn@latest add <component> -c ./packages/ui
-```
+1. Use **Manual Installation** steps from the Shadcn UI component documentation.
+2. Add the component to the `packages/ui/src/shadcn` directory.
+3. Replace the imports with the relative imports.
+4. Export the component by adding a new export to the `package.json` file.
+5. Import the component directly from the package.
 
-For example, to install the `Button` component, you can use the following command:
-
-```bash
-npx shadcn@latest add button -c ./packages/ui
-```
-
-We pass the `--path` flag to specify the path where the component should be installed. You may need to adjust the path based on your project structure.
-
-### Update the imports
-
-**NB**: you may need to update the imports to the `cn` utility function to use the relative imports because it somehow breaks. Please do that.
-
-### Export the component
+### Exporting the component
 
 To achieve optimal tree-shaking, we export each component individually using the `exports` field in the `package.json` file. This allows you to import the component directly from the package.
 

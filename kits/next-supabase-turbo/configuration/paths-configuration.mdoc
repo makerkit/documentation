@@ -7,12 +7,9 @@ description: "Learn how to setup the paths configuration of your Next.js Supabas
 order: 3
 ---
 
-
 The paths configuration is set at `apps/web/config/paths.config.ts`. This configuration stores all the paths that you'll be using in your application. It is a convenient way to store them in a central place rather than scatter them in the codebase using magic strings.
 
 The configuration is validated using the Zod schema `PathsSchema`, so if something is off, you'll see the errors.
-
-It **is unlikely you'll need to change this** unless you're heavily editing the codebase.
 
 ```tsx
 const pathsConfig = PathsSchema.parse({

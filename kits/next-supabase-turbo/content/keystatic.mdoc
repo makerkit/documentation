@@ -6,26 +6,38 @@ description: "KeyStatic is a CMS that stores data in a JSON file or on your Gith
 order: 1
 ---
 
-This implementation is used when the host app's environment variable is set as:
+To use Keystatic, you need to set the `CMS_CLIENT` environment variable to `keystatic`. This is the default value, so you don't need to do anything.
 
 ```bash
 CMS_CLIENT=keystatic
 ```
 
-Additionally, the following environment variables may be required:
+## Storage kinds
+Keystatic can be used in two ways:
+
+1. **Local storage**: the content is loaded directly from the file system.
+2. **GitHub storage**: the content is loaded from a Github repository. This is best for collaborative content editing or if using Cloudflare.
+
+## Local storage
+
+Keystatic uses the `local` storage kind by default. It is easy to get started with and requires no additional setup. Perfect for personal projects.
 
 ```bash
 NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=local # local, cloud, github
 KEYSTATIC_PATH_PREFIX=apps/web
-NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content # apps/web/content
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content
 ```
+
+Depending on whether you use the `local` or `github` storage kind, you may need to change the value of `NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH` (see below).
+
+## GitHub storage
 
 You can also use Keystatic Cloud or GitHub as the storage kind as remote storage.
 
 If `KEYSTATIC_STORAGE_KIND` is set to `cloud`, the following environment variables are required:
 
 ```bash
-KEYSTATIC_STORAGE_KIND=cloud
+NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=cloud
 KEYSTATIC_STORAGE_PROJECT=project-id
 ```
 
@@ -34,13 +46,20 @@ If `KEYSTATIC_STORAGE_KIND` is set to `github`, the following environment variab
 ```bash
 NEXT_PUBLIC_KEYSTATIC_STORAGE_KIND=github
 NEXT_PUBLIC_KEYSTATIC_STORAGE_REPO=makerkit/next-supabase-saas-kit-turbo-demo
-NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./content
+KEYSTATIC_PATH_PREFIX=
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=./apps/web/content
 KEYSTATIC_GITHUB_TOKEN=github_**********************************************
 KEYSTATIC_PATH_PREFIX=apps/web
 ```
 
 Of course, you need to replace the `NEXT_PUBLIC_KEYSTATIC_STORAGE_REPO` and `KEYSTATIC_GITHUB_TOKEN` with your own values.
 
+### GitHub token
+The `KEYSTATIC_GITHUB_TOKEN` is a Github token with read permissions to the repository, which you can generate from the Github Developer Settings in your account.
+
+**Note**: the Github token must have permissions to read to the repository (for read-only).
+
+### GitHub mode
 GitHub mode requires the installation of a GitHub app for displaying the admin.
 
 Please refer to the [Keystatic documentation](https://keystatic.com/docs/github-model) for more information.
@@ -48,12 +67,12 @@ Please refer to the [Keystatic documentation](https://keystatic.com/docs/github-
 If your content folder is not at `content`, you can set the `NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH` environment variable to the correct path. For example, if your content folder is at `data/content`, you can set the `NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH` environment variable as:
 
 ```bash
-NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=data/content
+NEXT_PUBLIC_KEYSTATIC_CONTENT_PATH=apps/web/data/content
 ```
 
 ## Adding the Keystatic admin to your app
 
-To add the Keystatic admin to your app, please run the following command:
+To add the Keystatic admin UI to your app, please run the following command:
 
 ```bash
 turbo gen keystatic
@@ -62,3 +81,5 @@ turbo gen keystatic
 Your app will now have a new route at `/keystatic` where you can manage your content.
 
 **Note**: your Github token must have permissions to read to the repository (for read-only).
+
+**Note**: by default, the Keystatic admin is only available in a development environment. For production environments, please add some sort of authentication. For example, use the `isSuperAdmin` function to check if the user is a super admin and allow them to access the Keystatic admin.

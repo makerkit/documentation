@@ -6,6 +6,16 @@ order: 9
 description: "Learn how to handle billing webhooks with your custom code in Next.js Supabase Kit"
 ---
 
+{% sequence title="Steps to handle billing webhooks" description="Learn how to handle billing webhooks with your custom code in Next.js Supabase Kit." %}
+
+[Handling billing webhooks](#handling-billing-webhooks)
+
+[Customizing the webhook handler](#customizing-the-webhook-handler)
+
+{% /sequence %}
+
+## Handling billing webhooks
+
 Makerkit takes care of handling billing webhooks to update the Database based on the events received from Stripe.
 
 Sometimes - you will need to set more webhooks, or do something custom with the webhooks.
@@ -31,6 +41,8 @@ await service.handleWebhookEvent(request, {
 ```
 
 You can provide one or more of the callbacks to handle the events you are interested in.
+
+## Customizing the webhook handler
 
 If the event is not in one of these methods, you can handle it in the `onEvent` method:
 

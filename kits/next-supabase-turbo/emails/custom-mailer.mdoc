@@ -6,6 +6,18 @@ description: "Learn how to create a custom mailer in the Next.js Supabase Starte
 order: 5
 ---
 
+{% sequence title="Steps to create a custom mailer" description="Learn how to create a custom mailer in the Next.js Supabase Starter Kit, so you can send emails using your own email provider." %}
+
+[Implementing the sendEmail method](#implementing-the-sendemail-method)
+
+[Registering the Mailer](#registering-the-mailer)
+
+[Setting a new Mailer Provider](#setting-a-new-mailer-provider)
+
+[Moving Megamailer to a separate package](#moving-megamailer-to-a-separate-package)
+
+{% /sequence %}
+
 Makerkit implements both Nodemailer (which can potentially support any SMTP provider) and Resend, using its HTTP API, which allows Makerkit to be compatible with edge runtimes (such as Cloudflare Workers).
 
 However, if you want to use your own email provider, you can create a custom mailer using the `packages/mailers` package.
@@ -48,42 +60,26 @@ class MegaMailer implements Mailer<unknown> {
 
 NB: for simplicity, we've placed the `megamailer.ts` file in the core package. However, if you have 5 minutes, you can move it to a separate package and import it in the `index.ts` file, just like we do for Nodemailer and Resend.
 
-Now that we have our custom mailer, we need to register it in the `packages/mailers/core/src/index.ts` file:
+## Registering the Mailer
 
-```tsx {% title="packages/mailers/core/src/index.ts" %}
-import { z } from 'zod';
+Now that we have our custom mailer, we need to register it in the `packages/mailers/core/src/registry.ts` file:
 
-const MAILER_PROVIDER = z
-  .enum(['nodemailer', 'resend', 'megamailer'])
-  .default('nodemailer')
-  .parse(process.env.MAILER_PROVIDER);
+```tsx {% title="packages/mailers/core/src/registry.ts" %}
+import { Mailer } from '@kit/mailers-shared';
+import { createRegistry } from '@kit/shared/registry';
 
-/**
- * @description Get the mailer based on the environment variable.
- */
-export async function getMailer() {
-  switch (MAILER_PROVIDER) {
-    case 'nodemailer':
-      return getNodemailer();
+import { MailerProvider } from './provider-enum';
 
-    case 'resend': {
-      const { createResendMailer } = await import('@kit/resend');
+const mailerRegistry = createRegistry<Mailer, MailerProvider>();
 
-      return createResendMailer();
-    }
+// here we add our custom mailer to the registry
+mailerRegistry.register('megamailer', async () => {
+  const { createMegaMailer } = await import('@kit/megamailer');
 
-    case 'megamailer': {
-      const { createMegamailer } = await import('./megamailer');
+  return createMegaMailer();
+});
 
-      return createMegamailer();
-    }
-
-    default:
-      throw new Error(`Invalid mailer: ${MAILER_PROVIDER as string}`);
-  }
-}
-
-async function getNodemailer() {
+mailerRegistry.register('nodemailer', async () => {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { createNodemailerService } = await import('@kit/nodemailer');
 
@@ -93,8 +89,18 @@ async function getNodemailer() {
       'Nodemailer is not available on the edge runtime. Please use another mailer.',
     );
   }
-}
+});
+
+mailerRegistry.register('resend', async () => {
+  const { createResendMailer } = await import('@kit/resend');
+
+  return createResendMailer();
+});
+
+export { mailerRegistry };
 ```
+
+## Setting a new Mailer Provider
 
 By setting the `MAILER_PROVIDER` environment variable to `megamailer`, you can use the Megamailer mailer in your application.
 
@@ -102,7 +108,7 @@ By setting the `MAILER_PROVIDER` environment variable to `megamailer`, you can u
 MAILER_PROVIDER=megamailer
 ```
 
-### Moving Megamailer to a separate package
+## Moving Megamailer to a separate package
 
 Let's move the Megamailer to a separate package. To do so, we create a new package called `@kit/megamailer` and move the `megamailer.ts` file to the new package.
 
@@ -120,52 +126,15 @@ To install the new package, run the following command:
 pnpm i "@kit/megamailer:workspace:*" --filter "@kit/mailers"
 ```
 
-#### Update the `index.ts` file
+#### Update the Mailer Registry
 
-Now that we have the new package, we need to update the `index.ts` file to export the new package and use the Megamailer.
+Now that we have the new package, we need to update the `registry.ts` file to export the new package and use the Megamailer.
 
-```tsx {% title="packages/mailers/core/src/index.ts" %}
-import { z } from 'zod';
+```tsx {% title="packages/mailers/core/src/registry.ts" %}
+// here we add our custom mailer to the registry
+mailerRegistry.register('megamailer', async () => {
+  const { createMegaMailer } = await import('@kit/megamailer');
 
-const MAILER_PROVIDER = z
-  .enum(['nodemailer', 'resend', 'megamailer'])
-  .default('nodemailer')
-  .parse(process.env.MAILER_PROVIDER);
-
-/**
- * @description Get the mailer based on the environment variable.
- */
-export async function getMailer() {
-  switch (MAILER_PROVIDER) {
-    case 'nodemailer':
-      return getNodemailer();
-
-    case 'resend': {
-      const { createResendMailer } = await import('@kit/resend');
-
-      return createResendMailer();
-    }
-
-    case 'megamailer': {
-      const { createMegamailer } = await import('@kit/megamailer');
-
-      return createMegamailer();
-    }
-
-    default:
-      throw new Error(`Invalid mailer: ${MAILER_PROVIDER as string}`);
-  }
-}
-
-async function getNodemailer() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { createNodemailerService } = await import('@kit/nodemailer');
-
-    return createNodemailerService();
-  } else {
-    throw new Error(
-      'Nodemailer is not available on the edge runtime. Please use another mailer.',
-    );
-  }
-}
+  return createMegaMailer();
+});
 ```
