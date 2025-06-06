@@ -165,8 +165,13 @@ Let's assume you have a page, and you want to check if the user has the permissi
 ```tsx
 import { loadTeamWorkspace } from '~/home/[account]/_lib/server/team-account-workspace.loader';
 
-export default function TasksPage() {
-  const data = await loadTeamWorkspace();
+interface TasksPageProps {
+  params: Promise<{ account: string }>
+}
+
+export default function TasksPage(props: TasksPageProps) {
+  const slug = (await props.params).account
+  const data = await loadTeamWorkspace(slug);
   const permissions = data.account.permissions; // string[]
 
   const canWriteTasks = permissions.includes('tasks.write');
@@ -187,8 +192,13 @@ This way, you can gate access to certain UI elements based on the user's permiss
 ```tsx
 import { loadTeamWorkspace } from '~/home/[account]/_lib/server/team-account-workspace.loader';
 
-export default function TasksPage() {
-  const data = await loadTeamWorkspace();
+interface TasksPageProps {
+  params: Promise<{ account: string }>
+}
+
+export default function TasksPage(props: TasksPageProps) {
+  const slug = (await props.params).account
+  const data = await loadTeamWorkspace(slug);
   const permissions = data.account.permissions; // string[]
 
   return (
@@ -204,8 +214,13 @@ Similarly, you can use the permissions to gate access to certain routes or pages
 ```tsx
 import { loadTeamWorkspace } from '~/home/[account]/_lib/server/team-account-workspace.loader';
 
-export default function TasksPage() {
-  const data = await loadTeamWorkspace();
+interface TasksPageProps {
+  params: Promise<{ account: string }>
+}
+
+export default function TasksPage(props: TasksPageProps) {
+  const slug = (await props.params).account
+  const data = await loadTeamWorkspace(slug);
   const permissions = data.account.permissions; // string[]
 
   if (!permissions.includes('tasks.read')) {
