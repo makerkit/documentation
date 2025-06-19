@@ -30,28 +30,28 @@ We start by creating two tables: one to declare the entitlements for each plan v
 This table stores entitlement definitions. Each row defines which features are enabled for a specific plan variant. Note the use of a unique constraint to avoid duplicate entries and strict permission controls to ensure data security.
 
 ```sql {% title="apps/web/supabase/migrations/20250205034829_subscription-entitlements.sql" %}
--- Table to store plan entitlements with strict security and RLS policies
+-- Table to store plan entitlements
 CREATE TABLE public.plan_entitlements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   variant_id VARCHAR(255) NOT NULL,
   feature VARCHAR(255) NOT NULL,
-  entitlement JSONB NOT NULL,
+  entitlement JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE (variant_id, feature)
 );
 
--- Revoke all and then selectively grant minimal permissions
-REVOKE ALL ON public.plan_entitlements FROM public;
-ALTER TABLE public.plan_entitlements ENABLE ROW LEVEL SECURITY;
-GRANT SELECT ON public.plan_entitlements TO authenticated;
+revoke all on public.plan_entitlements from public;
 
--- Policy ensuring authenticated users can select from the table
-CREATE POLICY select_plan_entitlements
-    ON public.plan_entitlements
-    FOR SELECT
-    TO authenticated
-    USING (true);
+alter table public.plan_entitlements enable row level security;
+
+grant select on public.plan_entitlements to authenticated;
+
+create policy select_plan_entitlements
+    on public.plan_entitlements
+    for select
+    to authenticated
+    using (true);
 ```
 
 ### Creating the `feature_usage` Table
@@ -59,7 +59,7 @@ CREATE POLICY select_plan_entitlements
 This table tracks the usage of features for each account. We use JSONB to support flexible usage metrics and add an index for efficient lookups.
 
 ```sql {% title="apps/web/supabase/migrations/20250205034829_subscription-entitlements.sql" %}
--- Table to track feature usage per account with RLS enforcement
+e to store feature usage
 CREATE TABLE public.feature_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
@@ -70,20 +70,20 @@ CREATE TABLE public.feature_usage (
   UNIQUE (account_id, feature)
 );
 
-REVOKE ALL ON public.feature_usage FROM public;
-GRANT SELECT ON public.feature_usage TO authenticated;
-ALTER TABLE public.feature_usage ENABLE ROW LEVEL SECURITY;
+revoke all on public.feature_usage from public;
+grant select on public.feature_usage to authenticated;
 
--- Policy providing access to accounts based on ownership or team roles
-CREATE POLICY select_feature_usage
-    ON public.feature_usage
-    FOR SELECT
-    TO authenticated
-    USING (
-      public.has_role_on_account(account_id) OR (SELECT auth.uid()) = account_id
+alter table public.feature_usage enable row level security;
+
+create policy select_feature_usage
+    on public.feature_usage
+    for select
+    to authenticated
+    using (
+        public.has_role_on_account(account_id) or ((select auth.uid()) = account_id)
     );
 
--- Add an index to optimize lookup by account and feature
+-- Index for faster lookups
 CREATE INDEX idx_feature_usage_account_id ON public.feature_usage(account_id, feature);
 ```
 
@@ -119,32 +119,123 @@ Encapsulate the core entitlement logic inside PostgreSQL functions. Each functio
 This function determines if an account meets the criteria to use a given feature based on its subscription and plan entitlements.
 
 ```sql
--- Function to check if the account is eligible to use a feature
+
+-- Function to check if an account can use a feature
 CREATE OR REPLACE FUNCTION public.can_use_feature(
-  p_account_id UUID, 
+  p_account_id UUID,
   p_feature VARCHAR
 )
-RETURNS BOOLEAN 
-SECURITY INVOKER 
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
-  eligible_variant VARCHAR(255);
+  entitlement_data JSONB;
+  subscription_type public.subscription_item_type;
+  account_member_count INTEGER;
+  usage_count INTEGER;
+  feature_usage_exists BOOLEAN;
 BEGIN
-  SELECT si.variant_id 
-    INTO eligible_variant
-  FROM public.subscription_items si
-  JOIN public.subscriptions s ON s.id = si.subscription_id
-  WHERE s.account_id = p_account_id
-    AND si.type = 'flat'
-    AND EXISTS (
-      SELECT 1 
-      FROM public.plan_entitlements ent
-      WHERE ent.feature = p_feature
-        AND ent.variant_id = si.variant_id
-    )
+  -- Verify the account exists
+  PERFORM 1 FROM public.accounts WHERE id = p_account_id;
+  IF NOT FOUND THEN
+    RETURN FALSE;
+  END IF;
+
+  -- verify the user has access to the account
+  if (select public.has_role_on_account(p_account_id) is false) then
+    return false;
+  end if;
+
+  -- Simplified approach:
+  -- 1. Get the subscription items for the account
+  -- 2. Find which subscription item has a plan entitlement for the feature
+  -- 3. Choose the most appropriate item based on type priority
+
+  SELECT
+    si.type,
+    pe.entitlement
+  INTO
+    subscription_type,
+    entitlement_data
+  FROM
+    public.subscriptions s
+    JOIN public.subscription_items si ON s.id = si.subscription_id
+    JOIN public.plan_entitlements pe ON si.variant_id = pe.variant_id
+  WHERE
+    s.account_id = p_account_id
+    AND s.active = true
+    AND pe.feature = p_feature
+  ORDER BY
+    -- Prioritize by subscription type (flat > per_seat > metered)
+    CASE
+      WHEN si.type = 'flat' THEN 1
+      WHEN si.type = 'per_seat' THEN 2
+      WHEN si.type = 'metered' THEN 3
+      ELSE 4
+    END,
+    -- Then by max_usage (higher limits first)
+    COALESCE((pe.entitlement->>'max_usage')::INTEGER, 0) DESC
   LIMIT 1;
 
-  RETURN eligible_variant IS NOT NULL;
+  -- If no subscription or entitlement found for the feature, return false
+  IF subscription_type IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  -- Check if the subscription type is flat
+  IF subscription_type = 'flat' THEN
+    -- If the subscription type is flat, then the account can use the feature
+    RETURN TRUE;
+  END IF;
+
+  -- Check if the subscription type is per_seat
+  IF subscription_type = 'per_seat' THEN
+    -- Get the number of users in the account
+    SELECT COUNT(*) INTO account_member_count FROM public.accounts_memberships WHERE account_id = p_account_id;
+
+    -- Check if the number of users in the account is within the allowed limit
+    -- Use strict less-than to prevent exceeding the limit
+    IF account_member_count < (entitlement_data ->> 'max_usage')::INTEGER THEN
+      -- If the number of users in the account is within the allowed limit, then the account can use the feature
+      RETURN TRUE;
+    ELSE
+      -- If the number of users in the account is not within the allowed limit, then the account cannot use the feature
+      RETURN FALSE;
+    END IF;
+  END IF;
+
+  -- Check if the subscription type is metered
+  IF subscription_type = 'metered' THEN
+    -- Check if feature usage record exists
+    SELECT EXISTS (
+      SELECT 1 FROM public.feature_usage
+      WHERE account_id = p_account_id AND feature = p_feature
+    ) INTO feature_usage_exists;
+
+    -- If no feature usage record exists, create one with zero usage
+    IF NOT feature_usage_exists THEN
+      -- insert a new feature usage record with zero usage
+      INSERT INTO public.feature_usage (account_id, feature, usage)
+      VALUES (p_account_id, p_feature, '{"count": 0}'::jsonb);
+    END IF;
+
+    -- Get the usage count from the feature usage record
+    SELECT (usage ->> 'count')::INTEGER INTO usage_count FROM public.feature_usage WHERE account_id = p_account_id AND feature = p_feature;
+
+    -- Check if the feature usage is within the allowed limit
+    -- Use strict less-than to prevent exceeding the limit
+    IF usage_count < (entitlement_data ->> 'max_usage')::INTEGER THEN
+      -- If the feature usage is strictly less than the limit, then the account can use the feature
+      RETURN TRUE;
+    ELSE
+      -- If the feature usage has reached or exceeded the limit, then the account cannot use the feature
+      RETURN FALSE;
+    END IF;
+  END IF;
+
+  -- If the subscription type is not flat, per_seat, or metered, then the account cannot use the feature
+  RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
 ```
@@ -154,23 +245,42 @@ $$ LANGUAGE plpgsql;
 The following function returns the details of an entitlement along with any usage data for the account.
 
 ```sql {% title="apps/web/supabase/migrations/20250205034829_subscription-entitlements.sql" %}
--- Function to get entitlement details for a feature
+- Function to get entitlement details
 CREATE OR REPLACE FUNCTION public.get_entitlement(
-  p_account_id UUID, 
+  p_account_id UUID,
   p_feature VARCHAR
 )
-RETURNS TABLE(variant_id VARCHAR(255), entitlement JSONB) 
-SECURITY INVOKER 
+RETURNS TABLE(variant_id varchar(255), entitlement JSONB, type public.subscription_item_type, usage JSONB)
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT si.variant_id,
-         ent.entitlement AS entitlement
-  FROM public.subscriptions s
-  JOIN public.subscription_items si ON s.id = si.subscription_id
-  JOIN public.plan_entitlements ent ON ent.variant_id = si.variant_id
-  WHERE s.account_id = p_account_id
-    AND ent.feature = p_feature;
+  SELECT
+    si.variant_id,
+    pe.entitlement,
+    si.type,
+    COALESCE(fu.usage, '{}'::jsonb) as usage
+  FROM
+    public.subscriptions s
+    JOIN public.subscription_items si ON s.id = si.subscription_id
+    JOIN public.plan_entitlements pe ON si.variant_id = pe.variant_id
+    LEFT JOIN public.feature_usage fu ON s.account_id = fu.account_id AND pe.feature = fu.feature
+  WHERE
+    s.account_id = p_account_id
+    AND pe.feature = p_feature
+  ORDER BY
+    -- First by active status
+    s.active DESC,
+    -- Then by subscription type (flat > per_seat > metered)
+    CASE
+      WHEN si.type = 'flat' THEN 1
+      WHEN si.type = 'per_seat' THEN 2
+      WHEN si.type = 'metered' THEN 3
+      ELSE 4
+    END,
+    -- Then by max_usage (higher limits first)
+    COALESCE((pe.entitlement->>'max_usage')::INTEGER, 0) DESC;
 END;
 $$ LANGUAGE plpgsql;
 ```
@@ -180,50 +290,56 @@ $$ LANGUAGE plpgsql;
 These functions update the `feature_usage` table. The first function handles merging JSON usage data, and the second one atomically updates quota usage using an UPSERT pattern.
 
 ```sql
--- Function to update feature usage with custom JSON merge
-CREATE OR REPLACE FUNCTION public.update_feature_usage(
-  p_account_id UUID, 
-  p_feature VARCHAR, 
-  p_usage JSONB
-)
-RETURNS VOID AS $$
+-- Function to update feature usage
+CREATE OR REPLACE FUNCTION public.update_feature_usage(p_account_id UUID, p_feature VARCHAR, p_usage JSONB)
+RETURNS VOID
+SET search_path = ''
+AS $$
 BEGIN
   PERFORM 1 FROM public.accounts WHERE id = p_account_id;
+
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Cannot update feature usage for non-existent account';
   END IF;
-  
+
   INSERT INTO public.feature_usage (account_id, feature, usage)
   VALUES (p_account_id, p_feature, p_usage)
   ON CONFLICT (account_id, feature)
-  DO UPDATE SET usage = public.feature_usage.usage || p_usage,
-                updated_at = NOW();
+  DO UPDATE SET usage = public.feature_usage.usage || p_usage, updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to update feature quota usage atomically using UPSERT
+-- Atomic update for feature quota usage using UPSERT
 CREATE OR REPLACE FUNCTION public.update_feature_quota_usage(
-  p_account_id UUID, 
-  p_feature VARCHAR, 
+  p_account_id UUID,
+  p_feature VARCHAR,
   p_count INTEGER
 )
-RETURNS VOID 
-SECURITY INVOKER 
+RETURNS VOID
+SECURITY INVOKER
+SET search_path = ''
 AS $$
 BEGIN
+  -- Verify the account exists
+  PERFORM 1 FROM public.accounts WHERE id = p_account_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Cannot update feature usage for non-existent account';
+  END IF;
+
   INSERT INTO public.feature_usage (account_id, feature, usage, updated_at)
   VALUES (
-    p_account_id, 
-    p_feature, 
+    p_account_id,
+    p_feature,
     jsonb_build_object('count', p_count),
     NOW()
   )
-  ON CONFLICT (account_id, feature)
-  DO UPDATE SET usage = jsonb_set(
+  ON CONFLICT (account_id, feature) DO UPDATE
+  SET usage = jsonb_set(
       COALESCE(public.feature_usage.usage, '{}'::jsonb),
       '{count}',
       to_jsonb(
-        COALESCE((public.feature_usage.usage->>'count')::INTEGER, 0) + p_count
+        p_count
       )
     ),
     updated_at = NOW();
@@ -234,10 +350,13 @@ $$ LANGUAGE plpgsql;
 Grant execute permissions securely:
 
 ```sql
--- Granting execute permissions to appropriate roles
-GRANT EXECUTE ON FUNCTION public.can_use_feature(UUID, VARCHAR) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_entitlement(UUID, VARCHAR) TO authenticated;
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.can_use_feature(UUID, VARCHAR) TO authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.get_entitlement(UUID, VARCHAR) TO authenticated, service_role;
+
 GRANT EXECUTE ON FUNCTION public.update_feature_usage(UUID, VARCHAR, JSONB) TO service_role;
+
 GRANT EXECUTE ON FUNCTION public.update_feature_quota_usage(UUID, VARCHAR, INTEGER) TO service_role;
 ```
 
@@ -247,11 +366,17 @@ Encapsulate your entitlements logic in a TypeScript service. This service commun
 
 ```typescript {% title="apps/web/lib/server/entitlements.service.ts" %}
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '~/lib/database.types';
+
+import { object } from 'zod';
+
+// Example API route or server action for handling an API request
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+import type { Database, Json } from '~/lib/database.types';
 
 export function createEntitlementsService(
   client: SupabaseClient<Database>,
-  accountId: string
+  accountId: string,
 ) {
   return new EntitlementsService(client, accountId);
 }
@@ -259,7 +384,7 @@ export function createEntitlementsService(
 class EntitlementsService {
   constructor(
     private readonly client: SupabaseClient<Database>,
-    private readonly accountId: string
+    private readonly accountId: string,
   ) {}
 
   async canUseFeature(feature: string) {
@@ -274,17 +399,21 @@ class EntitlementsService {
   }
 
   async getEntitlement(feature: string) {
-    const { data, error } = await this.client.rpc('get_entitlement', {
-      p_account_id: this.accountId,
-      p_feature: feature,
-    });
+    const { data, error } = await this.client
+      .rpc('get_entitlement', {
+        p_account_id: this.accountId,
+        p_feature: feature,
+      })
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
     return data;
   }
 
-  async updateFeatureUsage(feature: string, usage: Record<string, unknown>) {
+  async updateFeatureUsage(feature: string, usage: Json) {
     const { error } = await this.client.rpc('update_feature_usage', {
       p_account_id: this.accountId,
       p_feature: feature,
@@ -293,10 +422,20 @@ class EntitlementsService {
 
     if (error) throw error;
   }
+
+  async updateFeatureQuotaUsage(feature: string, count: number) {
+    const { error } = await this.client.rpc('update_feature_quota_usage', {
+      p_account_id: this.accountId,
+      p_feature: feature,
+      p_count: count,
+    });
+
+    if (error) throw error;
+  }
 }
 ```
 
-### How to Use the Service
+### How to Use the Entitlements Service
 
 In your API route or server component, you can use the service to check for entitlements and update usage data. For example:
 
@@ -310,14 +449,16 @@ export async function handleApiRequest(accountId: string, endpoint: string) {
   const entitlementsService = createEntitlementsService(client, accountId);
 
   const canUseAPI = await entitlementsService.canUseFeature('api_access');
-  
+
   if (!canUseAPI) {
     throw new Error('No access to API');
   }
 
   const entitlement = await entitlementsService.getEntitlement('api_calls');
+
   // Adjust processing based on entitlement type (flat, quota, etc.)
   if (entitlement && entitlement.entitlement.type === 'flat') {
+    // NB: processApiRequest is a placeholder for your actual API request processing logic
     return processApiRequest(endpoint);
   } else if (entitlement && entitlement.entitlement.type === 'quota') {
     const currentUsage = Number(entitlement.usage?.count ?? 0);
@@ -327,6 +468,7 @@ export async function handleApiRequest(accountId: string, endpoint: string) {
       // Atomically update usage count
       await entitlementsService.updateFeatureUsage('api_calls', { count: currentUsage + 1 });
 
+      // NB: processApiRequest is a placeholder for your actual API request processing logic
       return processApiRequest(endpoint);
     } else {
       throw new Error('API call quota exceeded');

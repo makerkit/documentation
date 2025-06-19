@@ -10,7 +10,13 @@ order: 2
 
 [Supported Authentication Methods](#supported-authentication-methods)
 
+[Using Magic Link, Password, or OTP](#using-magic-link-password-or-otp)
+
+[OTP](#otp)
+
 [Third Party Providers](#third-party-providers)
+
+[Identity Linking](#identity-linking)
 
 [Password Requirements](#password-requirements)
 
@@ -24,7 +30,8 @@ Makerkit supports three different authentication methods:
 
 1. **Password** - the traditional email/password method, set to `true` by default
 2. **Magic Link** - magic link, set to `false` by default
-3. **oAuth** - oAuth providers, by default we set Google Auth
+3. **OTP** - one-time password, set to `false` by default
+4. **oAuth** - oAuth providers, by default we set Google Auth
 
 The authentication configuration is set at `apps/web/config/auth.config.ts`.
 
@@ -40,15 +47,23 @@ const authConfig = AuthConfigSchema.parse({
   displayTermsCheckbox:
     process.env.NEXT_PUBLIC_DISPLAY_TERMS_AND_CONDITIONS_CHECKBOX === 'true',
 
+  // whether to enable identity linking:
+  // This needs to be enabled in the Supabase Console as well for it to work.
+  enableIdentityLinking:
+    process.env.NEXT_PUBLIC_AUTH_IDENTITY_LINKING === 'true',
+
   // NB: Enable the providers below in the Supabase Console
   // in your production project
   providers: {
     password: process.env.NEXT_PUBLIC_AUTH_PASSWORD === 'true',
     magicLink: process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK === 'true',
+    otp: process.env.NEXT_PUBLIC_AUTH_OTP === 'true',
     oAuth: ['google'],
   },
 } satisfies z.infer<typeof AuthConfigSchema>);
 ```
+
+### Using Magic Link, Password, or OTP
 
 For example, if you wanted to switch from password auth to magic link, you'd set the below variables:
 
@@ -56,6 +71,38 @@ For example, if you wanted to switch from password auth to magic link, you'd set
 NEXT_PUBLIC_AUTH_PASSWORD=false
 NEXT_PUBLIC_AUTH_MAGIC_LINK=true
 ```
+
+If you wanted to enable OTP, you'd set the following:
+
+```bash
+NEXT_PUBLIC_AUTH_OTP=true
+NEXT_PUBLIC_AUTH_PASSWORD=false
+```
+
+For enabling password authentication, simply leave as is, since it is set to `true` by default.
+
+## OTP
+
+Available starting in version 2.11.0.
+
+If you decide to use OTP (One-Time Password) authentication, please ensure
+to use the email template at `apps/web/supabase/templates/otp.html` for the
+OTP email:
+
+```toml {% title="apps/web/supabase/config.toml" %}
+[auth.email.template.confirmation]
+subject = "Confirm your email"
+content_path = "./supabase/templates/otp.html"
+
+[auth.email.template.magic_link]
+subject = "Sign in to Makerkit"
+content_path = "./supabase/templates/otp.html"
+```
+
+This is because OTP and Magic Link share the same email template. So please
+use one of the two templates, either `otp.html` or `magic-link.html` and replace the email confirmation template as well. 
+
+In addition, update the Templates in the Supabase Dashboard under **Authentication > Templates** accordingly for your remote project.
 
 ## Third Party Providers
 
@@ -105,6 +152,18 @@ const OAUTH_SCOPES: Partial<Record<Provider, string>> = {
   google: 'email',
 };
 ```
+
+## Identity Linking
+
+Available starting in version 2.11.0.
+
+To enable identity linking, you need to set the following environment variable:
+
+```
+NEXT_PUBLIC_AUTH_IDENTITY_LINKING=true
+```
+
+In addition, you must enable identity linking in the Supabase Console under **Authentication > Settings**. This allows users to link multiple authentication methods to their account, such as linking a Google account with an email/password account.
 
 ## Password Requirements
 

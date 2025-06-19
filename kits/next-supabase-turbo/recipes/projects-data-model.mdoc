@@ -141,18 +141,20 @@ Now, let's create several helper functions to manage projects and permissions.
 This function checks if a user is a member of a specific project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_project_member(p_project_id UUID)
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.project_members
-    WHERE project_id = p_project_id
-    AND user_id = (SELECT auth.uid())
+-- public.is_project_member
+-- this function checks if a user is a member of a specific project
+create or replace function public.is_project_member(p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = p_project_id
+    and account_id = (select auth.uid())
   );
-$$ LANGUAGE sql SECURITY DEFINER;
+$$ language sql security definer;
 
-GRANT EXECUTE ON FUNCTION public.is_project_member(UUID) TO authenticated;
+grant execute on function public.is_project_member(uuid) to authenticated;
 ```
 
 ### Is Project Admin
@@ -160,19 +162,21 @@ GRANT EXECUTE ON FUNCTION public.is_project_member(UUID) TO authenticated;
 This function checks if a user is an admin or owner of a specific project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_project_admin(p_project_id UUID)
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.project_members
-    WHERE project_id = p_project_id
-    AND user_id = (SELECT auth.uid())
-    AND role IN ('owner', 'admin')
+-- public.is_project_admin
+-- this function checks if a user is an admin or owner of a specific project
+create or replace function public.is_project_admin(p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = p_project_id
+    and account_id = (select auth.uid())
+    and role in ('owner', 'admin')
   );
-$$ LANGUAGE sql;
+$$ language sql;
 
-GRANT EXECUTE ON FUNCTION public.is_project_admin TO authenticated;
+grant execute on function public.is_project_admin to authenticated;
 ```
 
 ### Is Project Owner
@@ -180,19 +184,21 @@ GRANT EXECUTE ON FUNCTION public.is_project_admin TO authenticated;
 This function checks if a user is the owner of a project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.is_project_owner(project_id UUID)
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.project_members
-    WHERE project_id = $1
-    AND user_id = (SELECT auth.uid())
-    AND role = 'owner'
+-- public.is_project_owner
+-- check if a user is the owner of a project
+create or replace function public.is_project_owner(project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.project_members
+    where project_id = $1
+    and account_id = (select auth.uid())
+    and role = 'owner'
   );
-$$ LANGUAGE sql;
+$$ language sql;
 
-GRANT EXECUTE ON FUNCTION public.is_project_owner TO authenticated;
+grant execute on function public.is_project_owner to authenticated;
 ```
 
 ### User Has Project Permission
@@ -200,41 +206,43 @@ GRANT EXECUTE ON FUNCTION public.is_project_owner TO authenticated;
 This function checks if a user has the required permissions to perform a specific action on a project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.user_has_project_permission(
-  p_user_auth_id UUID,
-  p_project_id UUID,
+-- public.user_has_project_permission
+-- check if the current user has the required permissions to perform a specific action on a project
+create or replace function public.user_has_project_permission(
+  p_user_auth_id uuid,
+  p_project_id uuid,
   p_action public.project_action
 )
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-DECLARE
+returns boolean
+set search_path = ''
+as $$
+declare
   v_role public.project_role;
-BEGIN
-  -- First, check if the user is a member of the project
-  SELECT role INTO v_role
-  FROM public.project_members
-  WHERE project_id = p_project_id AND user_id = p_user_auth_id;
+begin
+  -- first, check if the user is a member of the project
+  select role into v_role
+  from public.project_members
+  where project_id = p_project_id and account_id = p_user_auth_id;
 
-  IF v_role IS NULL THEN
-    RETURN FALSE;
-  END IF;
+  if v_role is null then
+    return false;
+  end if;
 
-  -- Check permissions based on role and action
-  CASE v_role
-    WHEN 'owner' THEN
-      RETURN TRUE;  -- Owners can do everything
-    WHEN 'admin' THEN
-      RETURN p_action != 'delete_project';  -- Admins can do everything except delete the project
-    WHEN 'member' THEN
-      RETURN p_action IN ('view_project');
-    ELSE
-      RAISE EXCEPTION 'User must be a member of the project to perform this action';
-  END CASE;
-END;
-$$ LANGUAGE plpgsql;
+  -- check permissions based on role and action
+  case v_role
+    when 'owner' then
+      return true;  -- owners can do everything
+    when 'admin' then
+      return p_action != 'delete_project';  -- admins can do everything except delete the project
+    when 'member' then
+      return p_action in ('view_project');
+    else
+      raise exception 'user must be a member of the project to perform this action';
+  end case;
+end;
+$$ language plpgsql;
 
-GRANT EXECUTE ON FUNCTION public.user_has_project_permission TO authenticated;
+grant execute on function public.user_has_project_permission to authenticated;
 ```
 
 In the above, we use the `CASE` statement to check the role of the user and the action they are trying to perform. If the user is a member of the project and has the required permissions, we return `TRUE`. Otherwise, we raise an exception.
@@ -246,21 +254,20 @@ Please feel free to modify the `user_has_project_permission` function to fit you
 This function is a wrapper around `user_has_project_permission` for the current user:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.current_user_has_project_permission(
-  p_project_id UUID,
+-- public.current_user_has_project_permission
+create or replace function public.current_user_has_project_permission(
+  p_project_id uuid,
   p_action public.project_action
 )
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-DECLARE
-  v_role public.project_role;
-BEGIN
-  SELECT public.user_has_project_permission((SELECT auth.uid()), p_project_id, p_action);
-END;
-$$ LANGUAGE plpgsql;
+returns boolean
+set search_path = ''
+as $$
+begin
+  return public.user_has_project_permission((select auth.uid()), p_project_id, p_action);
+end;
+$$ language plpgsql;
 
-GRANT EXECUTE ON FUNCTION public.current_user_has_project_permission TO authenticated;
+grant execute on function public.current_user_has_project_permission to authenticated;
 ```
 
 ### Current User Can Manage Project Member
@@ -268,31 +275,33 @@ GRANT EXECUTE ON FUNCTION public.current_user_has_project_permission TO authenti
 This function checks if the current user can manage another user in a project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.current_user_can_manage_project_member(
+-- public.current_user_can_manage_project_member
+-- Function to check if a user can manage another user in a project
+create or replace function public.current_user_can_manage_project_member(
   p_target_member_role public.project_role,
-  p_project_id UUID
+  p_project_id uuid
 )
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-DECLARE
+returns boolean
+set search_path = ''
+as $$
+declare
   v_current_user_role public.project_role;
-BEGIN
-  SELECT role INTO v_current_user_role
-  FROM public.project_members
-  WHERE project_id = p_project_id AND user_id = (SELECT auth.uid());
+begin
+  select role into v_current_user_role
+  from public.project_members
+  where project_id = p_project_id and account_id = (select auth.uid());
 
-  IF v_current_user_role IS NULL OR p_target_member_role IS NULL THEN
-    RAISE EXCEPTION 'User not found';
-  END IF;
+  if v_current_user_role is null or p_target_member_role is null then
+    raise exception 'User not found';
+  end if;
 
   -- Check if the manager has a higher role
-  RETURN (v_current_user_role = 'owner' AND p_target_member_role != 'owner') OR
-         (v_current_user_role = 'admin' AND p_target_member_role = 'member');
-END;
-$$ LANGUAGE plpgsql;
+  return (v_current_user_role = 'owner' and p_target_member_role != 'owner') or
+         (v_current_user_role = 'admin' and p_target_member_role = 'member');
+end;
+$$ language plpgsql;
 
-GRANT EXECUTE ON FUNCTION public.current_user_can_manage_project_member TO authenticated;
+grant execute on function public.current_user_can_manage_project_member to authenticated;
 ```
 
 This project is extremely useful to verify that a user can perform actions that affect another user in a project.
@@ -302,41 +311,43 @@ This project is extremely useful to verify that a user can perform actions that 
 This function updates the role of a project member:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.update_project_member_role(
-  p_user_id UUID,
+-- public.update_project_member_role
+-- function to update the role of a project member
+create or replace function public.update_project_member_role(
+  p_user_id uuid,
   p_new_role public.project_role,
-  p_project_id UUID
+  p_project_id uuid
 )
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-DECLARE
+returns boolean
+set search_path = ''
+as $$
+declare
   v_current_role public.project_role;
-BEGIN
+begin
   -- Get the current role of the member
-  SELECT role INTO v_current_role
-  FROM public.project_members
-  WHERE project_id = p_project_id AND user_id = p_user_id;
+  select role into v_current_role
+  from public.project_members
+  where project_id = p_project_id and account_id = p_user_id;
 
   -- Check if the manager can manage this member
-  IF NOT public.current_user_can_manage_project_member(v_current_role, p_project_id) THEN
-    RAISE EXCEPTION 'Permission denied';
-  END IF;
+  if not public.current_user_can_manage_project_member(v_current_role, p_project_id) then
+    raise exception 'Permission denied';
+  end if;
 
-  IF p_new_role = 'owner' THEN
-    RAISE EXCEPTION 'Owner cannot be updated to a different role';
-  END IF;
+  if p_new_role = 'owner' then
+    raise exception 'Owner cannot be updated to a different role';
+  end if;
 
   -- Update the member's role
-  UPDATE public.project_members
-  SET role = p_new_role
-  WHERE project_id = p_project_id AND user_id = p_user_id;
+  update public.project_members
+  set role = p_new_role
+  where project_id = p_project_id and account_id = p_user_id;
 
-  RETURN TRUE;
-END;
-$$ LANGUAGE plpgsql;
+  return true;
+end;
+$$ language plpgsql;
 
-GRANT EXECUTE ON FUNCTION public.update_project_member_role TO authenticated;
+grant execute on function public.update_project_member_role to authenticated;
 ```
 
 ### Can Edit Project
@@ -344,14 +355,16 @@ GRANT EXECUTE ON FUNCTION public.update_project_member_role TO authenticated;
 This function checks if a user can edit a project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.can_edit_project(p_user_auth_id UUID, p_project_id UUID)
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-  SELECT public.user_has_project_permission(p_user_auth_id, p_project_id, 'edit_project'::public.project_action);
-$$ LANGUAGE sql;
+-- public.can_edit_project
+-- check if the user can edit the project
+create or replace function public.can_edit_project(p_user_auth_id uuid, p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select public.user_has_project_permission(p_user_auth_id, p_project_id, 'edit_project'::public.project_action);
+$$ language sql;
 
-GRANT EXECUTE ON FUNCTION public.can_edit_project TO authenticated;
+grant execute on function public.can_edit_project to authenticated;
 ```
 
 This is a simple wrapper around the `user_has_project_permission` function that checks if the current user can edit a project.
@@ -378,14 +391,16 @@ This is a simple wrapper around the `user_has_project_permission` function that 
 This function checks if a user can invite a new member to the project:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.can_invite_project_member(p_user_auth_id UUID, p_project_id UUID)
-RETURNS BOOLEAN
-SET search_path = ''
-AS $$
-  SELECT public.user_has_project_permission(p_user_auth_id, p_project_id, 'invite_member'::public.project_action);
-$$ LANGUAGE sql;
+-- public.can_invite_project_member
+-- check if the user can invite a new member to the project
+create or replace function public.can_invite_project_member(p_user_auth_id uuid, p_project_id uuid)
+returns boolean
+set search_path = ''
+as $$
+  select public.user_has_project_permission(p_user_auth_id, p_project_id, 'invite_member'::public.project_action);
+$$ language sql;
 
-GRANT EXECUTE ON FUNCTION public.can_invite_project_member TO authenticated;
+grant execute on function public.can_invite_project_member to authenticated;
 ```
 
 This is also a simple wrapper around the `user_has_project_permission` function that checks if the current user can invite a new member to the project.
@@ -397,43 +412,47 @@ Now, let's set up RLS policies to secure our tables. RLS policies are used to co
 ### Projects Table Policies
 
 ```sql
--- SELECT
-CREATE POLICY select_projects
-  ON public.projects
-  FOR SELECT
-  TO authenticated
-  USING (
+/*
+RLS POLICIES
+*/
+
+-- SELECT(public.projects)
+create policy select_projects
+  on public.projects
+  for select
+  to authenticated
+  using (
     public.is_project_member(id)
   );
 
--- INSERT
-CREATE POLICY insert_new_project
-  ON public.projects
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
+-- INSERT(public.projects)
+create policy insert_new_project
+  on public.projects
+  for insert
+  to authenticated
+  with check (
     public.has_role_on_account(account_id)
   );
 
--- DELETE
-CREATE POLICY delete_project
-  ON public.projects
-  FOR DELETE
-  TO authenticated
-  USING (
-    public.can_delete_project((SELECT auth.uid()), id)
+-- DELETE(public.projects)
+create policy delete_project
+  on public.projects
+  for delete
+  to authenticated
+  using (
+    public.can_delete_project((select auth.uid()), id)
   );
 
--- UPDATE
-CREATE POLICY update_project
-  ON public.projects
-  FOR UPDATE
-  TO authenticated
-  USING (
-    public.can_edit_project((SELECT auth.uid()), id)
+-- UPDATE(public.projects)
+create policy update_project
+  on public.projects
+  for update
+  to authenticated
+  using (
+    public.can_edit_project((select auth.uid()), id)
   )
-  WITH CHECK (
-    public.can_edit_project((SELECT auth.uid()), id)
+  with check (
+    public.can_edit_project((select auth.uid()), id)
   );
 ```
 
@@ -447,51 +466,52 @@ Alright, let's break down the policies:
 ### Project Members Table Policies
 
 ```sql
--- SELECT
-CREATE POLICY select_project_members
-  ON public.project_members
-  FOR SELECT
-  TO authenticated
-  USING (
+
+-- SELECT(public.project_members)
+create policy select_project_members
+  on public.project_members
+  for select
+  to authenticated
+  using (
     public.is_project_member(project_id)
   );
 
--- INSERT
-CREATE POLICY insert_project_member
-  ON public.project_members
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
+-- INSERT(public.project_members)
+create policy insert_project_member
+  on public.project_members
+  for insert
+  to authenticated
+  with check (
     public.can_invite_project_member(
-      (SELECT auth.uid()),
+      (select auth.uid()),
       project_id
     )
   );
 
--- UPDATE
-CREATE POLICY update_project_members
-  ON public.project_members
-  FOR UPDATE
-  TO authenticated
-  USING (
+-- UPDATE(public.project_members)
+create policy update_project_members
+  on public.project_members
+  for update
+  to authenticated
+  using (
     public.current_user_can_manage_project_member(
       role,
       project_id
     )
   )
-  WITH CHECK (
+  with check (
     public.current_user_can_manage_project_member(
       role,
       project_id
     )
   );
 
--- DELETE
-CREATE POLICY delete_project_members
-  ON public.project_members
-  FOR DELETE
-  TO authenticated
-  USING (
+-- DELETE(public.project_members)
+create policy delete_project_members
+  on public.project_members
+  for delete
+  to authenticated
+  using (
     public.current_user_can_manage_project_member(
       role,
       project_id
@@ -547,16 +567,31 @@ SET search_path = ''
 AS $$
 DECLARE
   v_account_id UUID;
+  v_is_personal_account boolean;
 BEGIN
-  -- Check if the current user has permission to add members
-  IF NOT public.is_project_admin(p_project_id) OR p_role = 'owner' THEN
-    RAISE EXCEPTION 'Permission denied';
-  END IF;
-
   -- Get the account_id for the project
   SELECT account_id INTO v_account_id
   FROM public.projects
   WHERE id = p_project_id;
+
+  -- check if the target user account is a personal account (not a team account)Add commentMore actions
+  -- Use security definer context to bypass RLS for this validation
+  select is_personal_account into v_is_personal_account
+  from public.accounts
+  where id = p_user_id;
+
+  if v_is_personal_account is null then
+    raise exception 'user account not found';
+  end if;
+
+  if not v_is_personal_account then
+    raise exception 'cannot invite team accounts to projects - only individual users can be invited';
+  end if;
+
+  -- check if the current user has permission to add members
+  if not public.is_project_admin(p_project_id) or p_role = 'owner' then
+    raise exception 'permission denied';
+  end if;
 
   -- Check if the user is a member of the team account
   IF NOT EXISTS (
@@ -589,10 +624,24 @@ RETURNS TRIGGER
 AS $$
 DECLARE
   v_account_id UUID;
+  v_is_personal_account boolean;
 BEGIN
   SELECT account_id FROM public.projects
   WHERE id = NEW.project_id
   INTO v_account_id;
+
+  -- check if the account being added is a personal account (not a team account)Add commentMore actions
+  select is_personal_account into v_is_personal_account
+  from public.accounts
+  where id = new.account_id;
+
+  if v_is_personal_account is null then
+    raise exception 'account not found';
+  end if;
+
+  if not v_is_personal_account then
+    raise exception 'cannot add team accounts to projects - only individual user accounts can be project members';
+  end if;
 
   IF NOT EXISTS (
     SELECT 1 FROM public.accounts_memberships
@@ -685,7 +734,7 @@ The `ProjectsService` class encapsulates all the database operations related to 
  ```tsx {% title="apps/web/lib/server/projects/projects.service.ts" %}
 import { SupabaseClient } from '@supabase/supabase-js';
 
-import { Database } from '~/lib/database.types';
+import { Database, Tables } from '~/lib/database.types';
 
 type ProjectAction = Database['public']['Enums']['project_action'];
 
@@ -734,7 +783,16 @@ class ProjectsService {
   async getProjectMembers(projectId: string) {
     const { data, error } = await this.client
       .from('project_members')
-      .select('*')
+      .select<
+        string,
+        Tables<'project_members'> & {
+          account: {
+            id: string;
+            name: string;
+            email: string;
+          };
+        }
+      >('*, account: account_id ! inner (id, name, email)')
       .eq('project_id', projectId);
 
     if (error) {
@@ -791,6 +849,19 @@ class ProjectsService {
 
     return true;
   }
+
+  async removeProjectMember(params: { projectId: string; userId: string }) {
+    const { error } = await this.client.from('project_members').delete().match({
+      project_id: params.projectId,
+      account_id: params.userId,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  }
 }
 ```
 
@@ -811,38 +882,38 @@ The `ProjectsPage` component demonstrates how to use the `ProjectsService` in a 
 
 1. We create an instance of `ProjectsService` using the Supabase client:
 
-   ```typescript
-   const client = getSupabaseServerComponentClient();
-   const service = createProjectsService(client);
-   ```
+ ```typescript
+const client = getSupabaseServerComponentClient();
+const service = createProjectsService(client);
+```
 
 2. We fetch the projects for the current account:
 
-   ```typescript
-   const projects = use(service.getProjects(params.account));
-   ```
+```typescript
+const projects = use(service.getProjects(params.account));
+```
 
-   The `use` function is a React hook that allows us to use async data in a synchronous-looking way in server components.
+ The `use` function is a React hook that allows us to use async data in a synchronous-looking way in server components.
 
 3. We render the projects, showing an empty state if there are no projects:
 
-   ```tsx
-   <If condition={projects.length === 0}>
-     <EmptyState>
-       {/* Empty state content */}
-     </EmptyState>
-   </If>
+ ```tsx
+<If condition={projects.length === 0}>
+ <EmptyState>
+   {/* Empty state content */}
+ </EmptyState>
+</If>
 
-   <div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
-     {projects.map((project) => (
-       <CardButton key={project.id} asChild>
-         <Link href={`/home/${params.account}/projects/${project.id}`}>
-           {project.name}
-         </Link>
-       </CardButton>
-     ))}
-   </div>
-   ```
+<div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
+ {projects.map((project) => (
+   <CardButton key={project.id} asChild>
+     <Link href={`/home/${params.account}/projects/${project.id}`}>
+       {project.name}
+     </Link>
+   </CardButton>
+ ))}
+</div>
+ ```
 
 Here is a page that shows a list of projects for a given account:
 
@@ -851,9 +922,14 @@ import { use } from 'react';
 
 import Link from 'next/link';
 
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
 import { Button } from '@kit/ui/button';
-import { CardButton } from '@kit/ui/card-button';
+import {
+  CardButton,
+  CardButtonHeader,
+  CardButtonTitle,
+} from '@kit/ui/card-button';
 import {
   EmptyState,
   EmptyStateButton,
@@ -863,26 +939,29 @@ import {
 import { If } from '@kit/ui/if';
 import { PageBody, PageHeader } from '@kit/ui/page';
 
+import { CreateProjectDialog } from '~/home/[account]/projects/_components/create-project-dialog';
 import { createProjectsService } from '~/lib/server/projects/projects.service';
 
 interface ProjectsPageProps {
-  params: {
+  params: Promise<{
     account: string;
-  };
+  }>;
 }
 
 export default function ProjectsPage({ params }: ProjectsPageProps) {
-  const client = getSupabaseServerComponentClient();
+  const client = getSupabaseServerClient();
   const service = createProjectsService(client);
 
-  const projects = use(service.getProjects(params.account));
+  const { account } = use(params);
+
+  const projects = use(service.getProjects(account));
 
   return (
     <>
-      <PageHeader title="Projects" description="Manage your team's projects">
-        <Link href={`/home/${params.account}/projects/new`}>
+      <PageHeader title="Projects" description={<AppBreadcrumbs />}>
+        <CreateProjectDialog>
           <Button>New Project</Button>
-        </Link>
+        </CreateProjectDialog>
       </PageHeader>
 
       <PageBody>
@@ -895,15 +974,19 @@ export default function ProjectsPage({ params }: ProjectsPageProps) {
               now!
             </EmptyStateText>
 
-            <EmptyStateButton>Create Project</EmptyStateButton>
+            <CreateProjectDialog>
+              <EmptyStateButton>Create Project</EmptyStateButton>
+            </CreateProjectDialog>
           </EmptyState>
         </If>
 
         <div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
           {projects.map((project) => (
             <CardButton key={project.id} asChild>
-              <Link href={`/home/${params.account}/projects/${project.id}`}>
-                {project.name}
+              <Link href={`/home/${account}/projects/${project.id}`}>
+                <CardButtonHeader>
+                  <CardButtonTitle>{project.name}</CardButtonTitle>
+                </CardButtonHeader>
               </Link>
             </CardButton>
           ))}
@@ -1030,11 +1113,11 @@ alter table public.projects enable row level security;
 */
 create table if not exists public.project_members (
   project_id uuid not null references public.projects(id) on delete cascade,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  account_id uuid not null references public.accounts(id) on delete cascade,
   role public.project_role not null default 'member',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  primary key (project_id, user_id)
+  primary key (project_id, account_id)
 );
 
 -- make sure there is only one owner per project
@@ -1042,7 +1125,7 @@ create unique index projects_unique_owner on public.project_members (project_id)
 
 -- indexes on public.project_members
 create index project_members_project_id on public.project_members (project_id);
-create index project_members_user_id on public.project_members (user_id);
+create index project_members_account_id on public.project_members (account_id);
 
 -- revoke access by default to public.project_members
 revoke all on public.project_members from public, service_role;
@@ -1062,7 +1145,7 @@ as $$
   select exists (
     select 1 from public.project_members
     where project_id = p_project_id
-    and user_id = (select auth.uid())
+    and account_id = (select auth.uid())
   );
 $$ language sql security definer;
 
@@ -1077,7 +1160,7 @@ as $$
   select exists (
     select 1 from public.project_members
     where project_id = p_project_id
-    and user_id = (select auth.uid())
+    and account_id = (select auth.uid())
     and role in ('owner', 'admin')
   );
 $$ language sql;
@@ -1093,7 +1176,7 @@ as $$
   select exists (
     select 1 from public.project_members
     where project_id = $1
-    and user_id = (select auth.uid())
+    and account_id = (select auth.uid())
     and role = 'owner'
   );
 $$ language sql;
@@ -1116,7 +1199,7 @@ begin
   -- first, check if the user is a member of the project
   select role into v_role
   from public.project_members
-  where project_id = p_project_id and user_id = p_user_auth_id;
+  where project_id = p_project_id and account_id = p_user_auth_id;
 
   if v_role is null then
     return false;
@@ -1146,10 +1229,8 @@ create or replace function public.current_user_has_project_permission(
 returns boolean
 set search_path = ''
 as $$
-declare
-  v_role public.project_role;
 begin
-  select public.user_has_project_permission((select auth.uid()), p_project_id, p_action);
+  return public.user_has_project_permission((select auth.uid()), p_project_id, p_action);
 end;
 $$ language plpgsql;
 
@@ -1169,7 +1250,7 @@ declare
 begin
   select role into v_current_user_role
   from public.project_members
-  where project_id = p_project_id and user_id = (select auth.uid());
+  where project_id = p_project_id and account_id = (select auth.uid());
 
   if v_current_user_role is null or p_target_member_role is null then
     raise exception 'User not found';
@@ -1199,7 +1280,7 @@ begin
   -- Get the current role of the member
   select role into v_current_role
   from public.project_members
-  where project_id = p_project_id and user_id = p_user_id;
+  where project_id = p_project_id and account_id = p_user_id;
 
   -- Check if the manager can manage this member
   if not public.current_user_can_manage_project_member(v_current_role, p_project_id) then
@@ -1213,7 +1294,7 @@ begin
   -- Update the member's role
   update public.project_members
   set role = p_new_role
-  where project_id = p_project_id and user_id = p_user_id;
+  where project_id = p_project_id and account_id = p_user_id;
 
   return true;
 end;
@@ -1356,7 +1437,7 @@ create or replace function kit.add_project_owner()
 returns trigger
 as $$
 begin
-  insert into public.project_members (project_id, user_id, role)
+  insert into public.project_members (project_id, account_id, role)
   values (new.id, auth.uid(), 'owner'::public.project_role);
 
   return new;
@@ -1378,16 +1459,31 @@ set search_path = ''
 as $$
 declare
   v_account_id uuid;
+  v_is_personal_account boolean;
 begin
-  -- check if the current user has permission to add members
-  if not public.is_project_admin(p_project_id) or p_role = 'owner' then
-    raise exception 'permission denied';
-  end if;
-
   -- get the account_id for the project
   select account_id into v_account_id
   from public.projects
   where id = p_project_id;
+
+  -- check if the target user account is a personal account (not a team account)
+  -- Use security definer context to bypass RLS for this validation
+  select is_personal_account into v_is_personal_account
+  from public.accounts
+  where id = p_user_id;
+
+  if v_is_personal_account is null then
+    raise exception 'user account not found';
+  end if;
+
+  if not v_is_personal_account then
+    raise exception 'cannot invite team accounts to projects - only individual users can be invited';
+  end if;
+
+  -- check if the current user has permission to add members
+  if not public.is_project_admin(p_project_id) or p_role = 'owner' then
+    raise exception 'permission denied';
+  end if;
 
   -- check if the user is a member of the team account
   if not exists (
@@ -1398,9 +1494,9 @@ begin
   end if;
 
   -- add the new member (the trigger will enforce the team membership check)
-  insert into public.project_members (project_id, user_id, role)
+  insert into public.project_members (project_id, account_id, role)
   values (p_project_id, p_user_id, p_role)
-  on conflict (project_id, user_id) do update
+  on conflict (project_id, account_id) do update
   set role = excluded.role;
 
   return true;
@@ -1411,20 +1507,34 @@ grant execute on function public.add_project_member to authenticated;
 
 -- TRIGGERS on public.project_members
 -- this trigger function ensures that a user being added to a project
--- is already a member of the associated team account
+-- is already a member of the associated team account and is a personal account
 create or replace function kit.check_project_member_in_team()
 returns trigger
 as $$
 declare
   v_account_id uuid;
+  v_is_personal_account boolean;
 begin
   select account_id from public.projects
   where id = new.project_id
   into v_account_id;
 
+  -- check if the account being added is a personal account (not a team account)
+  select is_personal_account into v_is_personal_account
+  from public.accounts
+  where id = new.account_id;
+
+  if v_is_personal_account is null then
+    raise exception 'account not found';
+  end if;
+
+  if not v_is_personal_account then
+    raise exception 'cannot add team accounts to projects - only individual user accounts can be project members';
+  end if;
+
   if not exists (
     select 1 from public.accounts_memberships
-    where account_id = v_account_id and user_id = new.user_id
+    where account_id = v_account_id and new.account_id = public.accounts_memberships.user_id
   ) then
     raise exception 'user must be a member of the team account to be added to the project';
   end if;
@@ -1437,6 +1547,769 @@ $$ language plpgsql security definer;
 create trigger ensure_project_member_in_team
 before insert or update on public.project_members
 for each row execute function kit.check_project_member_in_team();
+
+create or replace function public.get_account_members_by_query(
+  p_account_id uuid,
+  p_query text
+)
+returns table (
+  account_id uuid,
+  user_id uuid,
+  id uuid,
+  name varchar(255),
+  email varchar(255),
+  picture_url varchar(1000)
+) language plpgsql
+set search_path = ''
+as $$
+begin
+    return QUERY select
+        am.account_id,
+        am.user_id,
+        acc.id,
+        acc.name,
+        acc.email,
+        acc.picture_url
+    from
+        public.accounts_memberships am
+        join public.accounts a on a.id = am.account_id
+        join public.accounts acc on acc.id = am.user_id
+    where
+        am.account_id = p_account_id and
+        (to_tsvector(acc.name || ' ' || acc.email) @@ plainto_tsquery(p_query))
+        and am.user_id != (select auth.uid())
+        and acc.is_personal_account = true; -- only return personal accounts, not team accounts
+
+end
+$$;
+
+grant execute on function public.get_account_members_by_query to authenticated, service_role;
+```
+
+And here are the tests for the above schema:
+
+```sql
+BEGIN;
+
+create extension "basejump-supabase_test_helpers" version '0.0.6';
+
+select
+  no_plan ();
+
+--- Create users which will automatically create personal accounts via triggers
+select
+  tests.create_supabase_user ('primary_owner', 'project-test-owner@example.com');
+
+select
+  tests.create_supabase_user ('admin', 'project-test-admin@example.com');
+
+select
+  tests.create_supabase_user ('member', 'project-test-member@example.com');
+
+select
+  tests.create_supabase_user ('custom', 'project-test-custom@example.com');
+
+-- Authenticate as primary_owner to trigger the personal account creation
+select makerkit.authenticate_as('primary_owner');
+
+-- Wait for personal accounts to be created by the triggers
+select pg_sleep(0.2);
+
+-- Also authenticate as each user to trigger their personal account creation
+select makerkit.authenticate_as('admin');
+select pg_sleep(0.1);
+select makerkit.authenticate_as('member');
+select pg_sleep(0.1);
+select makerkit.authenticate_as('custom');
+select pg_sleep(0.1);
+
+-- Switch to elevated permissions to set up team memberships
+reset role;
+
+-- Add all test users to the team account so they can be invited to projects
+INSERT INTO public.accounts_memberships (account_id, user_id, account_role, created_at, updated_at)
+VALUES
+  ((select makerkit.get_account_id_by_slug('makerkit')), tests.get_supabase_uid('primary_owner'), 'owner', now(), now()),
+  ((select makerkit.get_account_id_by_slug('makerkit')), tests.get_supabase_uid('admin'), 'member', now(), now()),
+  ((select makerkit.get_account_id_by_slug('makerkit')), tests.get_supabase_uid('member'), 'member', now(), now()),
+  ((select makerkit.get_account_id_by_slug('makerkit')), tests.get_supabase_uid('custom'), 'member', now(), now())
+ON CONFLICT (user_id, account_id) DO UPDATE SET
+  account_role = EXCLUDED.account_role;
+
+create
+or replace function tests.get_project_uuid () returns uuid as $$
+  -- return a valid UUID
+  select 'd8e789e4-8425-494b-9986-ad88ef430382'::uuid;
+$$ language sql immutable;
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Create projects as an authenticated user so the trigger can work properly
+INSERT INTO
+  public.projects (id, name, description, account_id)
+VALUES
+  (
+    tests.get_project_uuid (),
+    'Test Project 1',
+    'Description 1',
+    (
+      select
+        makerkit.get_account_id_by_slug ('makerkit')
+    )
+  ),
+  (
+    'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    'Test Project 2',
+    'Description 2',
+    (
+      select
+        makerkit.get_account_id_by_slug ('makerkit')
+    )
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+set
+  local role postgres;
+
+select
+  lives_ok (
+    $$ INSERT INTO public.project_members (project_id, account_id, role)
+   VALUES
+     (
+       tests.get_project_uuid (),
+       tests.get_supabase_uid ('member'),
+       'member'
+     ); $$,
+    'Inserting a user should create a personal account when personal accounts are enabled'
+  );
+
+select
+  throws_ok (
+    $$ INSERT INTO public.project_members (project_id, account_id, role)
+        values (
+            tests.get_project_uuid (),
+            tests.get_supabase_uid ('admin'),
+           'owner'
+        ) $$,
+    'duplicate key value violates unique constraint "projects_unique_owner"',
+    'A project can only have one owner'
+  );
+
+select
+  lives_ok (
+    $$ INSERT INTO public.project_members (project_id, account_id, role)
+        values (
+            tests.get_project_uuid (),
+            tests.get_supabase_uid ('admin'),
+           'admin'
+        ) $$,
+    'A project can add an admin'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+select
+  is (
+    (
+      select
+        count(*)
+      from
+        public.project_members
+      where
+        project_id = tests.get_project_uuid ()
+    )::int,
+    3,
+    'The primary owner should be able to see the other members'
+  );
+
+-- Test is_project_member function
+SELECT
+  lives_ok (
+    $$ select public.is_project_member (tests.get_project_uuid ()); $$,
+    'is_project_member should return true for existing member'
+  );
+
+select
+  makerkit.authenticate_as ('custom');
+
+SELECT
+  lives_ok (
+    $$ select not public.is_project_member (tests.get_project_uuid ()); $$,
+    'is_project_member should return false for non-member'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test is_project_admin function
+SELECT
+  lives_ok (
+    $$ select public.is_project_admin (tests.get_project_uuid ()); $$,
+    'is_project_admin should return true for admin'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+select
+  lives_ok (
+    $$ select public.is_project_admin (tests.get_project_uuid ()); $$,
+    'is_project_admin should return true for owner'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+SELECT
+  lives_ok (
+    $$
+    select NOT public.is_project_admin (tests.get_project_uuid ())$$,
+    'is_project_admin should return false for non-admin'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test user_has_project_permission function
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('primary_owner'),
+      tests.get_project_uuid (),
+      'delete_project'::project_action)
+    $$,
+    'Owner should have delete_project permission'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('admin'),
+      tests.get_project_uuid (),
+      'edit_project'::project_action) $$,
+    'Admin should have edit_project permission'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+SELECT
+  lives_ok (
+    $$ select NOT public.user_has_project_permission (
+      tests.get_supabase_uid ('member'),
+      tests.get_project_uuid (),
+      'delete_project'::project_action)
+    $$,
+    'Member should not have delete_project permission'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The primary owner should be able to see the other members'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test update_project_member_role function
+SELECT
+  lives_ok (
+    $$ SELECT public.update_project_member_role(
+       tests.get_supabase_uid('member'),
+        'admin'::project_role,
+        tests.get_project_uuid()
+     ) $$,
+    'Owner should be able to update member role to admin'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members
+     where project_id = tests.get_project_uuid()
+  $$,
+    'Primary owner should be able to see members'
+  );
+
+SELECT
+  lives_ok (
+    $$ delete from public.project_members
+       where account_id = tests.get_supabase_uid('member') and project_id = tests.get_project_uuid();
+    $$,
+    'Owner should be able to remove a member'
+  );
+
+select
+  is_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() and account_id = tests.get_supabase_uid('member') $$,
+    'The primary owner has removed the member'
+  );
+
+-- reinsert member
+insert into
+  public.project_members (project_id, account_id, role)
+values
+  (
+    tests.get_project_uuid (),
+    tests.get_supabase_uid ('member'),
+    'member'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+-- Test add_project_member function
+SELECT
+  throws_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('member'), 'owner'::public.project_role)$$,
+    'permission denied',
+    'Should not be able to add a member with owner role'
+  );
+
+SELECT
+  lives_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('custom'), 'member'::public.project_role)$$,
+    'Admin should be able to add a new member'
+  );
+
+-- Additional tests for is_project_member function
+SELECT
+  lives_ok (
+    $$ select NOT public.is_project_member ('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') $$,
+    'is_project_member should return false for a project the user is not a member of'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test is_project_owner function
+SELECT
+  lives_ok (
+    $$ select public.is_project_owner (tests.get_project_uuid ())$$,
+    'is_project_owner should return true for the project owner'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+SELECT
+  lives_ok (
+    $$ select NOT public.is_project_owner (tests.get_project_uuid ())$$,
+    'is_project_owner should return false for non-owner (admin)'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+SELECT
+  lives_ok (
+    $$ select NOT public.is_project_owner (tests.get_project_uuid ())$$,
+    'is_project_owner should return false for non-owner (member)'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Additional tests for user_has_project_permission function
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('primary_owner'),
+      tests.get_project_uuid (),
+      'invite_member'::project_action
+    ) $$,
+    'Owner should have invite_member permission'
+  );
+
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('primary_owner'),
+      tests.get_project_uuid (),
+      'remove_member'::project_action
+    )$$,
+    'Owner should have remove_member permission'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('admin'),
+      tests.get_project_uuid (),
+      'invite_member'::project_action
+    ) $$,
+    'Admin should have invite_member permission'
+  );
+
+SELECT
+  lives_ok (
+    $$ select NOT public.user_has_project_permission (
+      tests.get_supabase_uid ('admin'),
+      tests.get_project_uuid (),
+      'delete_project'::project_action
+    )$$,
+    'Admin should not have delete_project permission'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+SELECT
+  lives_ok (
+    $$ select public.user_has_project_permission (
+      tests.get_supabase_uid ('member'),
+      tests.get_project_uuid (),
+      'view_project'::project_action
+    )$$,
+    'Member should have view_project permission'
+  );
+
+SELECT
+  lives_ok (
+    $$ select NOT public.user_has_project_permission (
+      tests.get_supabase_uid ('member'),
+      tests.get_project_uuid (),
+      'invite_member'::project_action
+    )$$,
+    'Member should not have invite_member permission'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test add_project_member function
+SELECT
+  lives_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('custom'), 'member'::public.project_role)$$,
+    'Owner should be able to add a new member'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+SELECT
+  lives_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('custom'), 'member'::public.project_role)$$,
+    'Admin should be able to add a new member'
+  );
+
+SELECT
+  throws_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('custom'), 'owner'::public.project_role)$$,
+    'permission denied',
+    'Admin should not be able to add a member with owner role'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+SELECT
+  throws_ok (
+    $$SELECT public.add_project_member(tests.get_project_uuid(), tests.get_supabase_uid('custom'), 'member'::public.project_role)$$,
+    'permission denied',
+    'Member should not be able to add a new member'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test RLS policies
+SELECT
+  results_eq (
+    $$SELECT count(*) FROM public.projects$$,
+    ARRAY[2::bigint],
+    'Owner should see all projects'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+SELECT
+  results_eq (
+    $$SELECT count(*) FROM public.projects$$,
+    ARRAY[1::bigint],
+    'Member should only see projects they are a member of'
+  );
+
+select
+  tests.create_supabase_user ('foreigner', 'foreigner@test.com');
+
+select
+  makerkit.authenticate_as ('foreigner');
+
+SELECT
+  results_eq (
+    $$SELECT count(*) FROM public.projects$$,
+    ARRAY[0::bigint],
+    'Non-member should not see any projects'
+  );
+
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Testing direct updates for RLS policies
+select
+  makerkit.authenticate_as ('primary_owner');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The primary owner should be able to see the other members'
+  );
+
+select
+  makerkit.authenticate_as ('admin');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The owner should be able to see the other members'
+  );
+
+select
+  makerkit.authenticate_as ('member');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The member should be able to see the other members'
+  );
+
+select
+  makerkit.authenticate_as ('custom');
+
+select
+  isnt_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The custom user should be able to see the other members'
+  );
+
+select
+  makerkit.authenticate_as ('foreigner');
+
+select
+  is_empty (
+    $$ select * from public.project_members where project_id = tests.get_project_uuid() $$,
+    'The foreigner should not be able to see the other members'
+  );
+
+-- try to update a role
+select
+  makerkit.authenticate_as ('primary_owner');
+
+select
+  row_eq (
+    $$ select account_id, role from public.project_members where project_id = tests.get_project_uuid() $$,
+    row (
+      tests.get_supabase_uid ('primary_owner'),
+      'owner'::public.project_role
+    ),
+    'The primary owner should be able to see the other members'
+  );
+
+SELECT
+  lives_ok (
+    $$ update public.project_members set role = 'admin' where project_id = tests.get_project_uuid() and account_id = tests.get_supabase_uid('member') $$,
+    'Owner should be able to update a member role'
+  );
+
+SELECT
+  row_eq (
+    $$ select role from public.project_members where project_id = tests.get_project_uuid() and account_id = tests.get_supabase_uid('member') $$,
+    row ('admin'::public.project_role),
+    'Owner has updated member role'
+  );
+
+-- revert role to member
+update public.project_members
+set role = 'member'
+where
+  project_id = tests.get_project_uuid ()
+  and account_id = tests.get_supabase_uid ('member');
+
+-- Test update project
+select
+  lives_ok (
+    $$ update public.projects set name = 'Updated Project' where id = tests.get_project_uuid() $$,
+    'Owner should be able to update a project'
+  );
+
+select
+  row_eq (
+    $$ select name from public.projects where id = tests.get_project_uuid() $$,
+    row ('Updated Project'::varchar),
+    'Owner has updated project name'
+  );
+
+-- Test update project as member'
+select
+  makerkit.authenticate_as ('member');
+
+select
+  lives_ok (
+    $$ update public.projects set name = 'Updated Project 2' where id = tests.get_project_uuid() $$,
+    'Failing Updates are silently ignored'
+  );
+
+select
+  row_eq (
+    $$ select name from public.projects where id = tests.get_project_uuid() $$,
+    row ('Updated Project'::varchar),
+    'Member has not updated project name'
+  );
+
+-- Test cascading updates
+select
+  makerkit.authenticate_as ('primary_owner');
+
+SELECT
+  lives_ok (
+    $$DELETE FROM public.projects WHERE id = tests.get_project_uuid()$$,
+    'Owner should be able to delete a project'
+  );
+
+SELECT
+  results_eq (
+    $$SELECT count(*) FROM public.project_members WHERE project_id = tests.get_project_uuid()$$,
+    ARRAY[0::bigint],
+    'Project members should be deleted when project is deleted'
+  );
+
+-- Additional tests for account type validation
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Create a team account for testing
+reset role;
+
+INSERT INTO
+  public.accounts (id, name, slug, is_personal_account, primary_owner_user_id)
+VALUES
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'Test Team Account',
+    'test-team',
+    false,
+    tests.get_supabase_uid ('primary_owner')
+  );
+
+-- Note: We don't add the team account to memberships because:
+-- 1. It would violate foreign key constraints (team account UUID not in auth.users)
+-- 2. Team accounts should never be members of other accounts anyway
+-- The function validation will catch the account type before membership validation
+
+-- Reset to authenticated role for testing
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Try to add a team account to project members (should fail via trigger)
+set
+  local role postgres;
+SELECT
+  throws_ok (
+    $$ INSERT INTO public.project_members (project_id, account_id, role)
+       VALUES (
+         tests.get_project_uuid(),
+         '11111111-1111-1111-1111-111111111111',
+         'member'
+       ) $$,
+    'cannot add team accounts to projects - only individual user accounts can be project members',
+    'Should not be able to add team accounts as project members via trigger'
+  );
+
+-- Reset role for function testing
+reset role;
+select
+  makerkit.authenticate_as ('primary_owner');
+
+-- Test add_project_member function with team account (should fail)
+SELECT
+  throws_ok (
+    $$ SELECT public.add_project_member(
+         tests.get_project_uuid(),
+         '11111111-1111-1111-1111-111111111111',
+         'member'::public.project_role
+       ) $$,
+    'cannot invite team accounts to projects - only individual users can be invited',
+    'Should not be able to add team accounts via add_project_member function'
+  );
+
+-- Test with non-existent account (should fail)
+SELECT
+  throws_ok (
+    $$ SELECT public.add_project_member(
+         tests.get_project_uuid(),
+         '22222222-2222-2222-2222-222222222222',
+         'member'::public.project_role
+       ) $$,
+    'user account not found',
+    'Should fail when trying to add non-existent account'
+  );
+
+-- Test get_account_members_by_query excludes team accounts
+SELECT
+  is_empty (
+    $$ SELECT * FROM public.get_account_members_by_query(
+         (select makerkit.get_account_id_by_slug('makerkit')),
+         'Test Team Account'
+       ) $$,
+    'get_account_members_by_query should not return team accounts'
+  );
+
+-- Test that personal accounts appear in query results
+SELECT
+  isnt_empty (
+    $$ SELECT * FROM public.get_account_members_by_query(
+         (select makerkit.get_account_id_by_slug('makerkit')),
+         'custom'
+       ) $$,
+    'get_account_members_by_query should return personal accounts'
+  );
+
+-- Test add_project_member validation for user not in team
+select
+  tests.create_supabase_user ('outsider', 'outsider@test.com');
+
+-- Authenticate as outsider to trigger personal account creation
+select makerkit.authenticate_as('outsider');
+
+-- Go back to primary_owner for the test
+select makerkit.authenticate_as('primary_owner');
+
+SELECT
+  throws_ilike (
+    $$ SELECT public.add_project_member(
+         tests.get_project_uuid(),
+         tests.get_supabase_uid('outsider'),
+         'member'::public.project_role
+       ) $$,
+    'user account not found',
+    'User is not a member of the team account'
+  );
+
+-- Finish the tests
+SELECT
+  *
+FROM
+  finish ();
+
+ROLLBACK;
 ```
 
 ## User Interface
@@ -1449,15 +2322,15 @@ Let's update the navigation menu to add a new link to the projects page. We will
 
  ```tsx {% title="apps/web/config/team-account-navigation.config.tsx" %} {7-11}
 {
-    label: 'common:routes.dashboard',
-    path: pathsConfig.app.accountHome.replace('[account]', account),
-    Icon: <LayoutDashboard className={iconClasses} />,
-    end: true,
+  label: 'common:routes.dashboard',
+  path: pathsConfig.app.accountHome.replace('[account]', account),
+  Icon: <LayoutDashboard className={iconClasses} />,
+  end: true,
 },
 {
-    label: 'common:routes.projects',
-    path: `/home/${account}/projects`,
-    Icon: <FolderKanban className={iconClasses} />,
+  label: 'common:routes.projects',
+  path: `/home/${account}/projects`,
+  Icon: <FolderKanban className={iconClasses} />,
 },
 ```
 
@@ -1472,7 +2345,7 @@ import { use } from 'react';
 
 import Link from 'next/link';
 
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
 import { Button } from '@kit/ui/button';
 import {
@@ -1493,25 +2366,25 @@ import { CreateProjectDialog } from '~/home/[account]/projects/_components/creat
 import { createProjectsService } from '~/lib/server/projects/projects.service';
 
 interface ProjectsPageProps {
-  params: {
+  params: Promise<{
     account: string;
-  };
+  }>;
 }
 
 export default function ProjectsPage({ params }: ProjectsPageProps) {
-  const client = getSupabaseServerComponentClient();
+  const client = getSupabaseServerClient();
   const service = createProjectsService(client);
 
-  const projects = use(service.getProjects(params.account));
+  const { account } = use(params);
+
+  const projects = use(service.getProjects(account));
 
   return (
     <>
       <PageHeader title="Projects" description={<AppBreadcrumbs />}>
-        <Link href={`/home/${params.account}/projects/new`}>
-          <CreateProjectDialog>
-            <Button>New Project</Button>
-          </CreateProjectDialog>
-        </Link>
+        <CreateProjectDialog>
+          <Button>New Project</Button>
+        </CreateProjectDialog>
       </PageHeader>
 
       <PageBody>
@@ -1533,7 +2406,7 @@ export default function ProjectsPage({ params }: ProjectsPageProps) {
         <div className={'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'}>
           {projects.map((project) => (
             <CardButton key={project.id} asChild>
-              <Link href={`/home/${params.account}/projects/${project.id}`}>
+              <Link href={`/home/${account}/projects/${project.id}`}>
                 <CardButtonHeader>
                   <CardButtonTitle>{project.name}</CardButtonTitle>
                 </CardButtonHeader>
@@ -1766,17 +2639,18 @@ import { PageBody, PageHeader } from '@kit/ui/page';
 import { getProject } from './_lib/server/get-project';
 
 interface ProjectDetailLayoutProps {
-  params: {
+  params: Promise<{
     id: string;
     account: string;
-  };
+  }>;
 }
 
 export default function ProjectDetailLayout({
   params,
   children,
 }: React.PropsWithChildren<ProjectDetailLayoutProps>) {
-  const project = use(getProject(params.id));
+  const { id, account } = use(params);
+  const project = use(getProject(id));
 
   return (
     <>
@@ -1785,16 +2659,16 @@ export default function ProjectDetailLayout({
         description={<AppBreadcrumbs values={{ [project.id]: project.name }} />}
       />
 
-      <PageBody>
+      <PageBody className={'space-y-4'}>
         <div className={'border-b px-4 pb-2.5'}>
           <BorderedNavigationMenu>
             <BorderedNavigationMenuItem
-              path={`/home/${params.account}/projects/${project.id}`}
+              path={`/home/${account}/projects/${project.id}`}
               label={'Documents'}
             />
 
             <BorderedNavigationMenuItem
-              path={`/home/${params.account}/projects/${project.id}/members`}
+              path={`/home/${account}/projects/${project.id}/members`}
               label={'Members'}
             />
           </BorderedNavigationMenu>
@@ -1841,30 +2715,15 @@ Now, we want to create a detail page for each project.
 We will create a new file at `apps/web/app/home/[account]/projects/[id]/page.tsx` with the following content:
 
  ```tsx {% title="apps/web/app/home/[account]/projects/[id]/page.tsx" %}
-import { use } from 'react';
-
-import { getSupabaseServerComponentClient } from '@kit/supabase/server-component-client';
-import { AppBreadcrumbs } from '@kit/ui/app-breadcrumbs';
-import { PageBody, PageHeader } from '@kit/ui/page';
-
-import { createProjectsService } from '~/lib/server/projects/projects.service';
-
 interface ProjectDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
     account: string;
-  };
+  }>;
 }
 
-export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const client = getSupabaseServerComponentClient();
-  const service = createProjectsService(client);
-
-  const project = use(service.getProject(params.id));
-
-  return (
-    <></>
-  );
+export default function ProjectDetailPage(_: ProjectDetailPageProps) {
+  return <div className={'flex flex-col space-y-4'}>...</div>;
 }
 ```
 

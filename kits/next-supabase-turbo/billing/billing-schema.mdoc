@@ -30,6 +30,8 @@ description: "Learn how to configure the plans in your Makerkit application"
 
 [Custom Plans](#custom-plans)
 
+[Legacy Plans](#legacy-plans)
+
 {% /sequence %}
 
 ## Understanding the billing schema
@@ -442,3 +444,14 @@ You can also provide a custom button label for the plan. This is done by adding 
 ```
 
 As usual, strings can either be a translation key or a string. If it's a translation key, it will be translated using the `i18n` library.
+
+## Legacy Plans
+
+When dealing with legacy plans (eg. plan a user may have purchased, but you no longer sell), you have two options:
+
+1. **Use the "hidden" flag**: This will hide the plan from the pricing table, and allows displaying the plan details in the billing section.
+2. **Fallback to the payment provider**: If the plan gets removed, the kit will attempt to fetch the details of the plan directly from the billing provider.
+
+### Fallback to the payment provider
+
+We will attempt to fetch the details of the plan directly from the billing provider. However, we only support `flat` line items for legacy plans. For more complex plans, please add a clear description of the plan, which the kit displays. That will help the user understand what the plan is about.
