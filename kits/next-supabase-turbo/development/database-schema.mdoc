@@ -1,6 +1,6 @@
 ---
 status: "published"
-label: "Database Schema"
+label: "Extending the DB Schema"
 order: 2
 title: "How to create new migrations and update the database schema in your Next.js Supabase application"
 description: "Learn how to create new migrations and update the database schema in your Next.js Supabase application"
@@ -8,230 +8,534 @@ description: "Learn how to create new migrations and update the database schema 
 
 {% sequence title="Steps to create a new migration" description="Learn how to create new migrations and update the database schema in your Next.js Supabase application" %}
 
-[Permissions](#permissions)
+[Planning Your Schema Extension](#planning-your-schema-extension)
 
-[RLS Policies](#rls-policies)
+[Creating Schema Files](#creating-schema-files)
 
-[Enabling MFA compliance](#enable-mfa-compliance)
+[Permissions and Access Control](#permissions-and-access-control)
 
-[Enabling access to Super Admins only](#enable-access-to-super-admins-only)
+[Building Tables with RLS](#building-tables-with-rls)
 
-[Resetting Migrations](#resetting-migrations)
+[Advanced Patterns](#advanced-patterns)
+
+[Testing and Deployment](#testing-and-deployment)
 
 {% /sequence %}
 
-After creating your migration, it's time to add the required code.
+This guide walks you through extending Makerkit's database schema with new tables and features. We'll use a comprehensive example that demonstrates best practices, security patterns, and integration with Makerkit's multi-tenant architecture.
 
-In our example, we create the schema for a simple tasks application.
+## Planning Your Schema Extension
 
-### Permissions
+Before writing any SQL, it's crucial to understand how your new features fit into Makerkit's multi-tenant architecture.
 
-Makerkit defines a set of default permissions in an enum named `public.app_permissions`.
+### Decision Framework
 
-To add more permissions for your app, please update the enum:
+**Step 1: Determine Data Ownership**
+Ask yourself: "Who owns this data - individual users or accounts?"
 
-```sql
--- insert new permissions
-alter type public.app_permissions add value 'tasks.write';
-alter type public.app_permissions add value 'tasks.delete';
-commit;
+- **User-owned data**: Personal preferences, activity logs, user settings
+- **Account-owned data**: Business content, shared resources, collaborative features
+
+**Step 2: Define Access Patterns**
+- **Public within account**: All team members can access
+- **Private within account**: Only creator + specific permissions
+- **Admin-only**: Requires special permissions or super admin access
+
+**Step 3: Consider Integration Points**
+- Does this feature affect billing? (usage tracking, feature gates)
+- Does it need notifications? (in-app alerts, email triggers)
+- Should it have audit trails? (compliance, change tracking)
+
+## Creating Schema Files
+
+Makerkit organizes database schema in numbered files for proper ordering. Follow this workflow:
+
+### 1. Create Your Schema File
+
+```bash
+# Create a new schema file with the next number
+touch apps/web/supabase/schemas/18-notes-feature.sql
 ```
 
-In the case above, we added the permissions `tasks.write` and `tasks.delete`. We can use these in our RLS rules to make sure
-the permissions are able to restrict access.
+### 2. Apply Development Workflow
 
-### Tasks Table
+```bash
+# Start Supabase
+pnpm supabase:web:start
 
-Let's now add the new `tasks` table
+# Create migration from your schema file
+pnpm --filter web run supabase:db:diff -f notes-feature
+
+# Restart with new schema
+pnpm supabase:web:reset
+
+# Generate TypeScript types
+pnpm supabase:web:typegen
+```
+
+## Permissions and Access Control
+
+### Adding New Permissions
+
+Makerkit defines permissions in the `public.app_permissions` enum. Add feature-specific permissions:
 
 ```sql
--- create tasks table
-create table if not exists public.tasks (
-  id uuid primary key default gen_random_uuid(),
-  title varchar(500) not null,
-  description varchar(50000),
-  done boolean not null default false,
-  account_id uuid not null references public.accounts(id),
-  created_at timestamp with time zone not null default now(),
-  updated_at timestamp with time zone not null default now()
+-- Add new permissions for your feature
+ALTER TYPE public.app_permissions ADD VALUE 'notes.create';
+ALTER TYPE public.app_permissions ADD VALUE 'notes.manage';
+ALTER TYPE public.app_permissions ADD VALUE 'notes.delete';
+COMMIT;
+```
+
+NB: the Supabase diff function does not support adding new permissions to enum types. Please add the new permissions manually instead of using the diff function.
+
+**Permission Naming Convention**: Use the pattern `resource.action` for consistency:
+- `notes.create` - Create new notes
+- `notes.manage` - Edit existing notes
+- `notes.delete` - Delete notes
+- `notes.share` - Share with external users
+
+### Role Assignment
+
+Consider which roles should have which permissions by default:
+
+```sql
+-- Grant permissions to roles
+INSERT INTO public.role_permissions (role, permission) VALUES
+  ('owner', 'notes.create'),
+  ('owner', 'notes.manage'),
+  ('owner', 'notes.delete'),
+  ('owner', 'notes.share'),
+  ('member', 'notes.create'),
+  ('member', 'notes.manage');
+```
+
+## Building Tables with RLS
+
+Let's create a comprehensive notes feature that demonstrates various patterns and best practices.
+
+### Core Notes Table
+
+```sql
+-- Create the main notes table with all standard fields
+CREATE TABLE IF NOT EXISTS public.notes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id uuid NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
+  title varchar(500) NOT NULL,
+  content text,
+  is_published boolean NOT NULL DEFAULT false,
+  tags text[] DEFAULT '{}',
+  metadata jsonb DEFAULT '{}',
+  
+  -- Audit fields (always include these)
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES auth.users(id),
+  updated_by uuid REFERENCES auth.users(id),
+  
+  -- Data integrity constraints
+  CONSTRAINT notes_title_length CHECK (length(title) >= 1),
+  CONSTRAINT notes_account_required CHECK (account_id IS NOT NULL)
 );
 
-grant select, insert, update, delete on table public.tasks to
-    authenticated, service_role;
+-- Add helpful comments for documentation
+COMMENT ON TABLE public.notes IS 'User-generated notes with sharing capabilities';
+COMMENT ON COLUMN public.notes.account_id IS 'Account that owns this note (multi-tenant isolation)';
+COMMENT ON COLUMN public.notes.is_published IS 'Whether note is visible to all account members';
+COMMENT ON COLUMN public.notes.tags IS 'Searchable tags for categorization';
+COMMENT ON COLUMN public.notes.metadata IS 'Flexible metadata (view preferences, etc.)';
 ```
 
-Let's explain:
-1. `uuid` is a primary key generated automatically
-2. `title` is a text field constrained to 500 chars. `not null` makes sure it cannot be null.
-3. `description` is a text field constrained to 50000
-4. `done` is a boolean field
-5. `account_id` is the account that owns the task
+### Performance Indexes
 
-We then add the required permissions to the roles `authenticated` and `service_role`.
-
-Anonymous users have no access to this table.
-
-### Accounts
-
-Accounts are the primary entities of our schema. An account can be a user or a team.
-
-We can connect an entity to the account that owns it using a foreign key
+Consider creating indexes for your query patterns if you are scaling to a large number of records.
 
 ```sql
-account_id uuid not null references public.accounts(id)
+-- Essential indexes for performance
+CREATE INDEX idx_notes_account_id ON public.notes(account_id);
+CREATE INDEX idx_notes_created_at ON public.notes(created_at DESC);
+CREATE INDEX idx_notes_account_created ON public.notes(account_id, created_at DESC);
+CREATE INDEX idx_notes_published ON public.notes(account_id, is_published) WHERE is_published = true;
+CREATE INDEX idx_notes_tags ON public.notes USING gin(tags);
 ```
 
-### Enabling RLS
-
-When you create a new table, always enable RLS.
+### Security Setup
 
 ```sql
--- enable row level security
-alter table tasks enable row level security;
+-- Always enable RLS (NEVER skip this!)
+ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+
+-- Revoke default permissions and grant explicitly
+REVOKE ALL ON public.notes FROM authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.notes TO authenticated, service_role;
 ```
 
-## RLS Policies
+### RLS Policies
 
-RLS Policies are fundamental to protect our tables.
-
-We insert an RLS policy for each action: `select`, `insert`, `update` and `delete`.
-
-### Enable RLS for a table
-
-In the majority of cases, you want to enable RLS for a table after creating it:
+Create comprehensive policies that handle both personal and team accounts:
 
 ```sql
-alter table public.tasks enable row level security;
+-- SELECT policy: Read published notes or own private notes
+CREATE POLICY "notes_select" ON public.notes
+  FOR SELECT TO authenticated
+  USING (
+    -- Personal account: direct ownership
+    account_id = (SELECT auth.uid())
+    OR
+    -- Team account: member can read published notes
+    (public.has_role_on_account(account_id) AND is_published = true)
+    OR
+    -- Team account: creator can read their own drafts
+    (public.has_role_on_account(account_id) AND created_by = auth.uid())
+    OR
+    -- Team account: users with manage permission can read all
+    public.has_permission(auth.uid(), account_id, 'notes.manage')
+  );
+
+-- INSERT policy: Must have create permission
+CREATE POLICY "notes_insert" ON public.notes
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    -- Personal account: direct ownership
+    account_id = (SELECT auth.uid())
+    OR
+    -- Team account: must have create permission
+    public.has_permission(auth.uid(), account_id, 'notes.create')
+  );
+
+-- UPDATE policy: Owner or manager can edit
+CREATE POLICY "notes_update" ON public.notes
+  FOR UPDATE TO authenticated
+  USING (
+    -- Personal account: direct ownership
+    account_id = (SELECT auth.uid())
+    OR
+    -- Team account: creator can edit their own
+    (public.has_role_on_account(account_id) AND created_by = auth.uid())
+    OR
+    -- Team account: users with manage permission
+    public.has_permission(auth.uid(), account_id, 'notes.manage')
+  )
+  WITH CHECK (
+    -- Same conditions for updates
+    account_id = (SELECT auth.uid())
+    OR
+    (public.has_role_on_account(account_id) AND created_by = auth.uid())
+    OR
+    public.has_permission(auth.uid(), account_id, 'notes.manage')
+  );
+
+-- DELETE policy: Stricter permissions required
+CREATE POLICY "notes_delete" ON public.notes
+  FOR DELETE TO authenticated
+  USING (
+    -- Personal account: direct ownership
+    account_id = (SELECT auth.uid())
+    OR
+    -- Team account: creator can delete own notes
+    (public.has_role_on_account(account_id) AND created_by = auth.uid())
+    OR
+    -- Team account: users with delete permission
+    public.has_permission(auth.uid(), account_id, 'notes.delete')
+  );
 ```
 
-### Selecting Tasks
+### Automatic Triggers
 
-When writing an RLS policy for selecting data from the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
-
-Generally speaking, entities belong to `public.accounts` - and we can use the `account_id` to check if the user is the owner.
+Add triggers for common patterns:
 
 ```sql
-create policy select_tasks on public.tasks
-    for select
-    to authenticated
-    using (
-      account_id = (select auth.uid()) or
-      public.has_role_on_account(account_id)
-    );
+-- Automatically update timestamps
+CREATE TRIGGER notes_updated_at
+  BEFORE UPDATE ON public.notes
+  FOR EACH ROW
+  EXECUTE FUNCTION kit.update_updated_at();
+
+-- Track who made changes
+CREATE TRIGGER notes_track_changes
+  BEFORE INSERT OR UPDATE ON public.notes
+  FOR EACH ROW
+  EXECUTE FUNCTION kit.track_user_changes();
 ```
 
-Did you know that an account can be a user or a team? We can use the `public.has_role_on_account` function to check if the user has a role on the account.
+## Advanced Patterns
 
-Therefore, this RLS policy works in both ways:
-
-1. if the user is the owner of the task - we check that the `account_id` is equal to the `auth.uid()`
-2. if the user has a role on the account - we check that the user has a role on the account
-
-### Inserting Tasks
-
-When writing an RLS policy for inserting data into the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+### 1. Hierarchical Notes (Categories)
 
 ```sql
-create policy insert_tasks on public.tasks
-    for insert
-    with check (
-        account_id = (select auth.uid()) or
-        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
-    );
+-- Note categories with hierarchy
+CREATE TABLE IF NOT EXISTS public.note_categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id uuid NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
+  parent_id uuid REFERENCES public.note_categories(id) ON DELETE CASCADE,
+  name varchar(255) NOT NULL,
+  color varchar(7), -- hex color codes
+  path ltree, -- efficient tree operations
+  
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES auth.users(id),
+  
+  -- Ensure hierarchy stays within account
+  CONSTRAINT categories_same_account CHECK (
+    parent_id IS NULL OR 
+    (SELECT account_id FROM public.note_categories WHERE id = parent_id) = account_id
+  ),
+  
+  -- Prevent circular references
+  CONSTRAINT categories_no_self_parent CHECK (id != parent_id)
+);
+
+-- Link notes to categories
+ALTER TABLE public.notes ADD COLUMN category_id uuid REFERENCES public.note_categories(id) ON DELETE SET NULL;
+
+-- Index for tree operations
+CREATE INDEX idx_note_categories_path ON public.note_categories USING gist(path);
+CREATE INDEX idx_note_categories_account ON public.note_categories(account_id, parent_id);
 ```
 
-In th above, we check if the user is the owner of the task or has the `tasks.write` permission.
-
-1. If the `account_id` is equal to the `auth.uid()` - the account is personal - so permissions are not required
-2. If the user has the `tasks.write` permission - the user can insert the task
-
-### Updating Tasks
-
-When writing an RLS policy for updating data in the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+### 2. Note Sharing and Collaboration
 
 ```sql
-create policy update_tasks on public.tasks
-    for update
-    using (
-        account_id = (select auth.uid()) or
-        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
-    )
-    with check (
-        account_id = (select auth.uid()) or
-        public.has_permission(auth.uid(), account_id, 'tasks.write'::app_permissions)
-    );
+-- External sharing tokens
+CREATE TABLE IF NOT EXISTS public.note_shares (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  note_id uuid NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
+  share_token varchar(64) NOT NULL UNIQUE,
+  expires_at timestamptz,
+  password_hash varchar(255), -- optional password protection
+  view_count integer DEFAULT 0,
+  max_views integer, -- optional view limit
+  
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES auth.users(id),
+  
+  -- Ensure token uniqueness
+  CONSTRAINT share_token_format CHECK (share_token ~ '^[a-zA-Z0-9_-]{32,64}$')
+);
+
+-- Function to generate secure share tokens
+CREATE OR REPLACE FUNCTION generate_note_share_token()
+RETURNS varchar(64) AS $$
+BEGIN
+  RETURN encode(gen_random_bytes(32), 'base64url');
+END;
+$$ LANGUAGE plpgsql;
 ```
 
-Did you know that we need to add the `using` and `with check` clauses?
-
-- `using` is used to filter the rows that the user can update
-- `with check` is used to check if the user can update the row
-
-In the above, we check if the user is the owner of the task or has the `tasks.write` permission.
-
-### Deleting Tasks
-
-When writing an RLS policy for deleting data from the `tasks` table, we need to make sure the user is the owner of the task or has the required permission.
+### 3. Usage Tracking for Billing
 
 ```sql
-create policy delete_tasks on public.tasks
-    for delete
-    using (
-        account_id = (select auth.uid()) or
-        public.has_permission(auth.uid(), account_id, 'tasks.delete'::app_permissions)
-    );
+-- Track note creation for usage-based billing
+CREATE TABLE IF NOT EXISTS public.note_usage_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  account_id uuid NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
+  action varchar(50) NOT NULL, -- 'create', 'share', 'export'
+  note_count integer DEFAULT 1,
+  date date DEFAULT CURRENT_DATE,
+  
+  -- Daily aggregation
+  UNIQUE(account_id, action, date)
+);
+
+-- Function to track note usage
+CREATE OR REPLACE FUNCTION track_note_usage(
+  target_account_id uuid,
+  usage_action varchar(50)
+) RETURNS void AS $$
+BEGIN
+  INSERT INTO public.note_usage_logs (account_id, action, note_count)
+  VALUES (target_account_id, usage_action, 1)
+  ON CONFLICT (account_id, action, date)
+  DO UPDATE SET note_count = note_usage_logs.note_count + 1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to track note creation
+CREATE OR REPLACE FUNCTION trigger_track_note_creation()
+RETURNS trigger AS $$
+BEGIN
+  PERFORM track_note_usage(NEW.account_id, 'create');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER notes_track_creation
+  AFTER INSERT ON public.notes
+  FOR EACH ROW
+  EXECUTE FUNCTION trigger_track_note_creation();
 ```
 
-In the above, we check if the user is the owner of the task or has the `tasks.delete` permission.
-
-Our schema is now complete! Yay! 🎉
-
-## Enable MFA compliance
-
-We can use the function `public.is_mfa_compliant` to enforce MFA compliance for our application.
+### 4. Feature Access Control
 
 ```sql
-create policy restrict_mfa_tasks
-    on public.tasks
-    as restrictive
-    to authenticated
-    using (public.is_mfa_compliant());
+-- Check if account has access to advanced note features
+CREATE OR REPLACE FUNCTION has_advanced_notes_access(target_account_id uuid)
+RETURNS boolean AS $$
+DECLARE
+  has_access boolean := false;
+BEGIN
+  -- Check active subscription with advanced features
+  SELECT EXISTS(
+    SELECT 1
+    FROM public.subscriptions s
+    JOIN public.subscription_items si ON s.id = si.subscription_id
+    WHERE s.account_id = target_account_id
+      AND s.status = 'active'
+      AND si.price_id IN ('price_pro_plan', 'price_enterprise_plan')
+  ) INTO has_access;
+  
+  RETURN has_access;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Restrictive policy for advanced features
+CREATE POLICY "notes_advanced_features" ON public.notes
+  AS RESTRICTIVE
+  FOR ALL TO authenticated
+  USING (
+    -- Basic features always allowed
+    is_published = true
+    OR category_id IS NULL
+    OR tags = '{}'
+    OR 
+    -- Advanced features require subscription
+    has_advanced_notes_access(account_id)
+  );
 ```
 
-In the above, we restrict access to the `tasks` table to users who are MFA compliant. Uses who enabled MFA must be signed in with MFA in order to access the table.
+## Security Enhancements
 
-Instead, users who did not enable MFA can keep accessing the table without MFA.
+### MFA Compliance
 
-## Enable access to Super Admins only
-
-We can use the function `public.is_super_admin` to restrict access to Super Admins only.
-
-We assume that we're protecting a table named `logs` and allow `select` access to Super Admins only.
+For sensitive note operations, enforce MFA:
 
 ```sql
-create policy restrict_logs_super_admins
-    on public.logs
-    as restrictive
-    for select
-    to authenticated
-    using (public.is_super_admin());
+-- Require MFA for note deletion
+CREATE POLICY "notes_delete_mfa" ON public.notes
+  AS RESTRICTIVE
+  FOR DELETE TO authenticated
+  USING (public.is_mfa_compliant());
 ```
 
-- By using the `public.is_super_admin` function, we ensure that only Super Admins can access the `logs` table.
-- By using the `restrictive` policy, we ensure that this access restriction is enforced, irrespective of other policies.
+### Super Admin Access
 
-## Resetting Migrations
+Allow super admins to access all notes for support purposes:
 
-When adding a new schema, we need to reset the migrations.
+```sql
+-- Super admin read access (for support)
+CREATE POLICY "notes_super_admin_access" ON public.notes
+  FOR SELECT TO authenticated
+  USING (public.is_super_admin());
+```
+
+### Rate Limiting
+
+Implement basic rate limiting for note creation:
+
+```sql
+-- Rate limiting: max 100 notes per day per account
+CREATE OR REPLACE FUNCTION check_note_creation_limit(target_account_id uuid)
+RETURNS boolean AS $$
+DECLARE
+  daily_count integer;
+BEGIN
+  SELECT COALESCE(note_count, 0) INTO daily_count
+  FROM public.note_usage_logs
+  WHERE account_id = target_account_id
+    AND action = 'create'
+    AND date = CURRENT_DATE;
+    
+  RETURN daily_count < 100; -- Adjust limit as needed
+END;
+$$ LANGUAGE plpgsql;
+
+-- Policy to enforce rate limiting
+CREATE POLICY "notes_rate_limit" ON public.notes
+  AS RESTRICTIVE
+  FOR INSERT TO authenticated
+  WITH CHECK (check_note_creation_limit(account_id));
+```
+
+### Type Generation
+
+After schema changes, always update TypeScript types:
 
 ```bash
-pnpm run supabase:web:reset
+# reset the database
+pnpm supabase:web:reset
+
+# Generate new types
+pnpm supabase:web:typegen
+
+# Verify types work in your application
+pnpm typecheck
 ```
 
-Then, we generate the new types using the following command:
+## Example Usage in Application
 
-```bash
-pnpm run supabase:web:typegen
+With your schema complete, here's how to use it in your application:
+
+```typescript
+// Server component - automatically inherits RLS protection
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+async function NotesPage({ params }: { params: { account: string } }) {
+  const client = getSupabaseServerClient();
+  
+  // RLS automatically filters to accessible notes
+  const { data: notes } = await client
+    .from('notes')
+    .select(`
+      *,
+      category:note_categories(name, color),
+      creator:created_by(name, avatar_url)
+    `)
+    .eq('account_id', params.account)
+    .order('created_at', { ascending: false });
+
+  return <NotesList notes={notes} />;
+}
 ```
 
-You can now use the new types in your application when using the Supabase client.
+From the client component, you can use the `useQuery` hook to fetch the notes.
+
+```typescript
+// Client component with real-time updates
+'use client';
+import { useSupabase } from '@kit/supabase/hooks/use-supabase';
+
+function useNotes(accountId: string) {
+  const supabase = useSupabase();
+  
+  return useQuery({
+    queryKey: ['notes', accountId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('notes')
+        .select('*, category:note_categories(name)')
+        .eq('account_id', accountId);
+      return data;
+    }
+  });
+}
+```
+
+## Summary
+
+You've now created a comprehensive notes feature that demonstrates:
+
+✅ **Proper multi-tenancy** with account-based data isolation
+✅ **Granular permissions** using Makerkit's role system  
+✅ **Advanced features** like categories, sharing, and usage tracking
+✅ **Security best practices** with comprehensive RLS policies
+✅ **Performance optimization** with proper indexing
+✅ **Integration patterns** with billing and feature gates
+
+This pattern can be adapted for any feature in your SaaS application. Remember to always:
+- Start with proper planning and data ownership decisions
+- Enable RLS and create comprehensive policies
+- Add appropriate indexes for your query patterns
+- Test thoroughly before deploying
+- Update TypeScript types after schema changes
+
+Your database schema is now production-ready and follows Makerkit's security and architecture best practices!

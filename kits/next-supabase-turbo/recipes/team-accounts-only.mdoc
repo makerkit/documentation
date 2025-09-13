@@ -58,17 +58,25 @@ function isTeamAccountRoute(request: NextRequest) {
 
 function storeTeamSlug(request: NextRequest, userId: string): NextResponse {
   const accountSlug = request.nextUrl.pathname.split('/')[2];
+
+  if (!accountSlug) {
+    return NextResponse.next();
+  }
+
+  const cookieName = createTeamCookie(userId);
+  const existing = request.cookies.get(cookieName);
+
+  if (existing?.value === accountSlug) {
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next();
 
-  if (accountSlug) {
-    const cookieName = createTeamCookie(userId);
-
-    response.cookies.set({
-      name: cookieName,
-      value: accountSlug,
-      path: '/',
-    });
-  }
+  response.cookies.set({
+    name: createTeamCookie(userId),
+    value: accountSlug,
+    path: '/',
+  });
 
   return response;
 }
@@ -89,19 +97,17 @@ function redirectToTeam(request: NextRequest, userId: string): NextResponse {
 
 We will now add the `handleTeamAccountsOnly` function to the middleware chain in the `apps/web/middleware.ts` file. This function will check if the user is on a team account route and store the team slug in a cookie. If the user is on the home route, it will redirect them to the team selection page.
 
- ```tsx {% title="apps/web/middleware.ts" %} {31}
+ ```tsx {% title="apps/web/middleware.ts" %}
  {
   pattern: new URLPattern({ pathname: '/home/*?' }),
   handler: async (req: NextRequest, res: NextResponse) => {
-    const {
-      data: { user },
-    } = await getUser(req, res);
+    const { data } = await getUser(req, res);
 
     const origin = req.nextUrl.origin;
     const next = req.nextUrl.pathname;
 
     // If user is not logged in, redirect to sign in page.
-    if (!user) {
+    if (!data?.claims) {
       const signIn = pathsConfig.auth.signIn;
       const redirectPath = `${signIn}?next=${next}`;
 
@@ -120,7 +126,9 @@ We will now add the `handleTeamAccountsOnly` function to the middleware chain in
       );
     }
 
-    return handleTeamAccountsOnly(req, user.id);
+    const userId = data.claims.sub;
+
+    return handleTeamAccountsOnly(req, userId);
   },
 }
 ```

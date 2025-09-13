@@ -6,13 +6,50 @@ order: 1
 description: "Introducing Supamode, a Super Admin for Supabase apps"
 ---
 
-Supamode is a self-hosted Super Admin for Supabase apps, designed to help you manage your DB data as easily as with a CMS. It empowers non-technical users to navigate the DB without needing to know any SQL jargon or database structure.
+**Supamode** is a self-hosted Super Admin dashboard for Supabase apps, designed to give you CMS-style control over your Postgres data without writing any SQL.
 
-Supamode is built with the following key features:
-- **User-friendly interface**: A clean and intuitive UI that makes it easy to manage your data.
-- **Role-based access control**: Fine-grained permissions to ensure that users can only access the data they are allowed to see.
-- **Customizable views**: Create custom views for your data, making it easier to work with complex datasets.
-- **Data Explorer**: A powerful tool to explore and visualize your data, making it easier to understand and analyze.
-- **Users Explorer**: Manage users authenticated with your app.
-- **CMS-like interface**: Create and manage your data using a familiar interface.
-- **Extensible**: Add your own custom views and features by modifying the code. The API provided by Supamode allows you to extend the functionality of the app to suit your needs.
+It empowers non-technical team members to view, filter, and edit data safely, while still giving developers the hooks they need to extend and customize behavior.
+
+Key benefits:
+
+* **No SQL needed**: Safely expose only the tables and views you choose.
+* **Rapid setup**: Deploy alongside your Supabase project in minutes.
+* **Full control**: Hosted in your environment — keep all data on your infrastructure.
+* **Extensible**: Built for developer-first customization
+
+## Key Features
+
+### 1. User-Friendly Interface
+
+* **Clean, responsive UI** built with React and Tailwind.
+* **Search, sort, and filter** across all tables and views.
+* **Inline editing** for quick updates.
+
+### 2. Role-Based Access Control (RBAC)
+
+* Define **roles** (e.g. *admin*, *editor*, *viewer*)
+* Assign **table - and column-level** permissions per role
+
+### 3. Data Explorer
+
+* Built-in **schema browser** to inspect table relationships.
+* Create and share **saved filters** for your data
+* Create and share **saved views** for your data
+* Global search to find any record in the entire application
+
+### 4. Users Explorer
+
+* Browse and manage users authenticated via Supabase Auth.
+* **Search** by email
+* Create, update and delete users
+* Ban, unban, and delete users
+
+### 5. CMS-Like Interface
+
+* **Rich-text editor** fields for content such as HTML/Markdown
+* Image/file uploads via Supabase Storage.
+
+### 6. Extensible Architecture
+
+* **Custom routes and endpoints**: add your own code to the application
+* **Theming with Shadcn UI**: swap out CSS variables or override component styles

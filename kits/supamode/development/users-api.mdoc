@@ -1,0 +1,411 @@
+---
+status: "published"
+title: "Users API"
+label: "Users API"
+order: 3
+description: "Use the Users API to manage users and their data"
+---
+
+The `AdminUserService` is a comprehensive service for managing users in Supamode with administrative privileges. It provides secure user management operations including user creation, invitation, banning, password resets, MFA management, and admin access control. The service implements robust permission checks, batch operations, and comprehensive audit logging.
+
+## Table of Contents
+
+1. [Basic Setup](#basic-setup)
+2. [Core Concepts](#core-concepts)
+3. [User Creation & Invitation](#user-creation--invitation)
+4. [User Management Operations](#user-management-operations)
+5. [Batch Operations](#batch-operations)
+6. [Admin Access Control](#admin-access-control)
+7. [MFA Management](#mfa-management)
+8. [Security Features](#security-features)
+9. [Error Handling](#error-handling)
+10. [Examples](#examples)
+
+## Basic Setup
+
+```typescript
+import { createAdminUserService } from '@kit/users-explorer';
+import { Context } from 'hono';
+
+// Create service instance
+const adminUserService = createAdminUserService(context);
+```
+
+## Core Concepts
+
+### Permission-Based Operations
+
+All operations require specific permissions:
+- **Create/Invite**: `canInsertAuthUser()` permission
+- **Update Operations**: `canUpdateAuthUser()` permission
+- **Delete Operations**: `canDeleteAuthUser()` permission
+
+### Security Validations
+
+The service implements multiple security checks:
+- **Self-action prevention**: Users cannot action their own accounts
+- **Admin protection**: Admin accounts cannot be modified by other users
+- **Permission validation**: All operations check user permissions
+- **Audit logging**: All operations are logged for security auditing
+
+### Batch Operations
+
+All operations support both single and batch processing:
+- **Error isolation**: Individual failures don't stop batch operations
+- **Detailed reporting**: Returns processed/skipped counts with error details
+- **Validation pre-processing**: Validates all users before processing
+
+## User Creation & Invitation
+
+### 1. Invite User
+
+Send an invitation email to a new user.
+
+```typescript
+async inviteUser(user: { email: string }): Promise<{ success: boolean }>
+```
+
+**Parameters:**
+- `user.email`: Email address of the user to invite
+
+**Returns:**
+```typescript
+interface InviteUserResult {
+  success: boolean;
+}
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.inviteUser({
+  email: 'newuser@example.com'
+});
+
+if (result.success) {
+  console.log('User invitation sent successfully');
+}
+```
+
+### 2. Create User
+
+Create a new user account with password.
+
+```typescript
+async createUser(user: {
+  email: string;
+  password: string;
+  autoConfirm: boolean;
+}): Promise<{ success: boolean }>
+```
+
+**Parameters:**
+- `user.email`: Email address for the new user
+- `user.password`: Password for the new user
+- `user.autoConfirm`: Whether to auto-confirm the user's email
+
+**Example:**
+```typescript
+const result = await adminUserService.createUser({
+  email: 'newuser@example.com',
+  password: 'securepassword123',
+  autoConfirm: true
+});
+
+if (result.success) {
+  console.log('User created successfully');
+}
+```
+
+## User Management Operations
+
+### 1. Ban User
+
+Ban a user by setting their banned_until date to 100 years in the future.
+
+```typescript
+async banUser(userId: string): Promise<BatchOperationResult>
+```
+
+**Single User Example:**
+```typescript
+const result = await adminUserService.banUser('user-123');
+console.log(`Banned user. Processed: ${result.processed}`);
+```
+
+### 2. Unban User
+
+Remove ban from a user by clearing their banned_until date.
+
+```typescript
+async unbanUser(userId: string): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.unbanUser('user-123');
+console.log(`Unbanned user. Processed: ${result.processed}`);
+```
+
+### 3. Reset Password
+
+Send a password reset email to a user.
+
+```typescript
+async resetPassword(userId: string): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.resetPassword('user-123');
+console.log(`Password reset sent. Processed: ${result.processed}`);
+```
+
+### 4. Delete User
+
+Permanently delete a user account.
+
+```typescript
+async deleteUser(userId: string): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.deleteUser('user-123');
+console.log(`User deleted. Processed: ${result.processed}`);
+```
+
+## Batch Operations
+
+All operations support batch processing for multiple users.
+
+### Batch Operation Result
+
+```typescript
+interface BatchOperationResult {
+  success: boolean;
+  processed: number;
+  skipped: number;
+  errors?: Array<{ userId: string; error: string }>;
+}
+```
+
+### 1. Batch Ban Users
+
+Ban multiple users in a single operation.
+
+```typescript
+async banUsers(userIds: string[]): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.banUsers([
+  'user-123',
+  'user-456',
+  'user-789'
+]);
+
+console.log(`Batch ban completed:
+  Total: ${result.processed + result.skipped}
+  Processed: ${result.processed}
+  Skipped: ${result.skipped}
+  Errors: ${result.errors?.length || 0}`);
+
+// Handle errors
+if (result.errors && result.errors.length > 0) {
+  result.errors.forEach(error => {
+    console.error(`Failed to ban user ${error.userId}: ${error.error}`);
+  });
+}
+```
+
+### 2. Batch Unban Users
+
+Unban multiple users in a single operation.
+
+```typescript
+async unbanUsers(userIds: string[]): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.unbanUsers([
+  'user-123',
+  'user-456',
+  'user-789'
+]);
+
+console.log(`Batch unban completed: ${result.processed} users processed`);
+```
+
+### 3. Batch Reset Passwords
+
+Reset passwords for multiple users.
+
+```typescript
+async resetPasswords(userIds: string[]): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.resetPasswords([
+  'user-123',
+  'user-456',
+  'user-789'
+]);
+
+console.log(`Password resets sent to ${result.processed} users`);
+```
+
+### 4. Batch Delete Users
+
+Delete multiple users in a single operation.
+
+```typescript
+async deleteUsers(userIds: string[]): Promise<BatchOperationResult>
+```
+
+**Example:**
+```typescript
+const result = await adminUserService.deleteUsers([
+  'user-123',
+  'user-456',
+  'user-789'
+]);
+
+console.log(`Deleted ${result.processed} users`);
+```
+
+## Admin Access Control
+
+### Update Admin Access
+
+Grant or revoke admin access for a user using PostgreSQL functions.
+
+```typescript
+async updateAdminAccess(userId: string, hasAdminAccess: boolean): Promise<{
+  success: boolean;
+  message?: string;
+}>
+```
+
+**Parameters:**
+- `userId`: ID of the user to update
+- `hasAdminAccess`: Whether the user should have admin access
+
+**Example:**
+```typescript
+// Grant admin access
+const grantResult = await adminUserService.updateAdminAccess('user-123', true);
+if (grantResult.success) {
+  console.log('Admin access granted:', grantResult.message);
+}
+
+// Revoke admin access
+const revokeResult = await adminUserService.updateAdminAccess('user-123', false);
+if (revokeResult.success) {
+  console.log('Admin access revoked:', revokeResult.message);
+}
+```
+
+**Database Functions:**
+- `supamode.grant_admin_access(user_id)`: Grants admin access and creates account if needed
+- `supamode.revoke_admin_access(user_id, delete_account)`: Revokes admin access
+
+## MFA Management
+
+### Send Magic Link
+
+Send a magic link to a user for passwordless authentication.
+
+```typescript
+async sendMagicLink(
+  userId: string,
+  type: 'signup' | 'recovery' | 'invite' = 'recovery'
+): Promise<{
+  success: boolean;
+  magicLink?: string;
+}>
+```
+
+**Parameters:**
+- `userId`: ID of the user
+- `type`: Type of magic link ('signup', 'recovery', 'invite')
+
+**Example:**
+```typescript
+// Send recovery magic link
+const result = await adminUserService.sendMagicLink('user-123', 'recovery');
+if (result.success) {
+  console.log('Magic link sent:', result.magicLink);
+}
+
+// Send invite magic link
+const inviteResult = await adminUserService.sendMagicLink('user-123', 'invite');
+if (inviteResult.success) {
+  console.log('Invite magic link sent');
+}
+```
+
+### Remove MFA Factor
+
+Remove a specific MFA factor from a user's account.
+
+```typescript
+async removeMfaFactor(userId: string, factorId: string): Promise<{
+  success: boolean;
+}>
+```
+
+**Parameters:**
+- `userId`: ID of the user
+- `factorId`: ID of the MFA factor to remove
+
+**Example:**
+```typescript
+const result = await adminUserService.removeMfaFactor('user-123', 'factor-456');
+if (result.success) {
+  console.log('MFA factor removed successfully');
+}
+```
+
+## Security Features
+
+### 1. Self-Action Prevention
+
+Users cannot perform actions on their own accounts:
+
+```typescript
+// This will throw an error if the current user tries to ban themselves
+try {
+  await adminUserService.banUser(currentUserId);
+} catch (error) {
+  console.error('Cannot ban yourself:', error.message);
+}
+```
+
+### 2. Admin Protection
+
+Admin accounts are protected from modification:
+
+```typescript
+// This will throw an error if trying to delete an admin account
+try {
+  await adminUserService.deleteUser(adminUserId);
+} catch (error) {
+  console.error('Cannot delete admin account:', error.message);
+}
+```
+
+### 3. Permission Validation
+
+All operations validate user permissions:
+
+```typescript
+// This will throw an error if user lacks delete permissions
+try {
+  await adminUserService.deleteUser('user-123');
+} catch (error) {
+  console.error('Permission denied:', error.message);
+}
+```

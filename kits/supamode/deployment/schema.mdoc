@@ -1,0 +1,47 @@
+---
+status: "published"
+title: "Deploying the Supamode schema to your Supabase project"
+label: "Schema"
+order: 3
+description: "Learn how to deploy the Supamode schema to your Supabase project"
+---
+
+The last step of the installation process is to deploy the Supamode schema to your Supabase project.
+
+Supamode provides a migration file that you can use to deploy the schema to your Supabase project, which installs the tables and functions needed to run Supamode in the `supamode` schema.
+
+## Copy migrations to your Supabase project
+
+Supamode's migrations are located in the `apps/app/supabase/migrations` directory. Copy them to your Supabase project's `migrations` directory.
+
+### Make sure to include the seed
+
+The migrations must include [the seed generated to bootstrap your permissions](../configuration/permissions-templates) that you may have used to create your initial roles and permissions. This is so we can assign the root account from which you'll be able to login.
+
+## Push migrations to your Supabase project
+
+Now that your Supabase project is linked to the Supamode project, you can push the migrations to your Supabase project.
+
+```bash
+supabase db push
+```
+
+NB: the actual command depends entirely on your existing application setup.
+
+For example, if you're running Makerkit, you can use the following command:
+
+```bash
+pnpm --filter web run supabase db push
+```
+
+However, if you're running a custom setup, you may need to use a different command to run the `supabase` CLI. If you installed the `supabase` CLI globally, you can use the following command:
+
+```bash
+supabase db push
+```
+
+This command will push the migrations to your Supabase project. This will create the `supamode` schema and install the tables and functions needed to run Supamode.
+
+## Verify the schema
+
+Navigate to the `supamode` schema in your Supabase project and verify that the tables and functions have been created.

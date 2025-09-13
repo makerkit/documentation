@@ -1,0 +1,34 @@
+---
+status: "published"
+title: "Cannot see tables"
+label: "Cannot see tables"
+order: 1
+description: "Understanding how to troubleshoot the issue where you cannot see tables"
+---
+
+This issue may happen mostly under the following circumstances:
+
+1. You did not sync the tables
+2. You don't have the correct permissions to see the tables
+
+## Fix 1. Sync the tables
+
+If you did not sync the tables, you can do so by running the following query from the SQL Query Editor in Supabase:
+
+```sql
+select supamode.sync_managed_tables('public');
+```
+
+This will sync all the tables in the `public` schema.
+
+If you have tables in other schemas, you can sync them by running the following query:
+
+```sql
+select supamode.sync_managed_tables('schema_name');
+```
+
+This will sync all the tables in the `schema_name` schema.
+
+## Fix 2. Check your permissions
+
+If you don't have the correct permissions to see the tables, and you're not the database administrator, you can ask the database administrator to [add the required permissions to your user's role](../configuration/permissions).

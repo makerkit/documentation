@@ -1,0 +1,848 @@
+---
+status: "published"
+title: "Data Explorer API"
+label: "Data Explorer API"
+order: 2
+description: "Use the Data Explorer API to fetch data from the database with ease"
+---
+
+The `DataExplorerService` is a comprehensive service for querying, manipulating, and analyzing data in Supamode.
+
+ It provides a type-safe, permission-aware interface for interacting with database tables while maintaining security through Row Level Security (RLS) policies.
+
+## Table of Contents
+
+1. [Basic Setup](#basic-setup)
+2. [Basic Usage](#basic-usage)
+3. [Core Methods](#core-methods)
+4. [Query & Filtering](#query--filtering)
+5. [Data Manipulation](#data-manipulation)
+6. [Permissions & Security](#permissions--security)
+7. [Advanced Features](#advanced-features)
+8. [Error Handling](#error-handling)
+9. [Examples](#examples)
+
+## Basic Setup
+
+```typescript
+import { createDataExplorerService } from '@kit/data-explorer';
+import { Context } from 'hono';
+
+// Create service instance
+const dataExplorerService = createDataExplorerService(context);
+```
+
+## Basic Usage
+
+### Service Creation
+
+```typescript
+// The service requires a Hono context for authentication and database access
+function createDataExplorerService(context: Context): DataExplorerService
+```
+
+### Authentication
+
+All operations automatically use the authenticated user's permissions through the Hono context. The service respects Row Level Security (RLS) policies and Supamode permission system.
+
+## Core Methods
+
+### 1. Query Table Data
+
+Query table data with pagination, filtering, sorting, and search capabilities.
+
+```typescript
+async queryTableData(params: {
+  schemaName: string;
+  tableName: string;
+  page: number;
+  pageSize: number;
+  properties?: Record<string, string | number | boolean | string[] | null>;
+  search?: string;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
+}): Promise<{
+  data: Record<string, unknown>[];
+  total: number;
+  hasMore: boolean;
+  table: TableMetadata;
+  columns: ColumnMetadata[];
+}>
+```
+
+**Parameters:**
+- `schemaName`: Database schema name (e.g., 'public')
+- `tableName`: Target table name
+- `page`: Page number (0-based)
+- `pageSize`: Number of records per page
+- `properties`: Filter conditions (see [Query & Filtering](#query--filtering))
+- `search`: Search term for searchable columns
+- `sortColumn`: Column name to sort by
+- `sortDirection`: Sort direction ('asc' or 'desc')
+
+**Example:**
+```typescript
+const result = await dataExplorerService.queryTableData({
+  schemaName: 'public',
+  tableName: 'users',
+  page: 0,
+  pageSize: 20,
+  properties: {
+    'status.eq': 'active',
+    'created_at.after': '2024-01-01'
+  },
+  search: 'john',
+  sortColumn: 'created_at',
+  sortDirection: 'desc'
+});
+```
+
+### 2. Get Table Metadata
+
+Retrieve table structure and configuration information.
+
+```typescript
+async getTableMetadata(params: {
+  schemaName: string;
+  tableName: string;
+}): Promise<{
+  table: TableMetadata;
+  columns: ColumnMetadata[];
+}>
+```
+
+**Example:**
+```typescript
+const metadata = await dataExplorerService.getTableMetadata({
+  schemaName: 'public',
+  tableName: 'users'
+});
+
+console.log(metadata.table.displayName); // "Users"
+console.log(metadata.columns.length); // Number of columns
+```
+
+### 3. Insert Record
+
+Create a new record in the specified table.
+
+```typescript
+async insertRecord(params: {
+  schemaName: string;
+  tableName: string;
+  data: Record<string, unknown>;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  data?: Record<string, unknown>;
+}>
+```
+
+**Example:**
+```typescript
+const result = await dataExplorerService.insertRecord({
+  schemaName: 'public',
+  tableName: 'users',
+  data: {
+    name: 'John Doe',
+    email: 'john@example.com',
+    status: 'active'
+  }
+});
+
+if (result.success) {
+  console.log('Record created:', result.data);
+} else {
+  console.error('Error:', result.error);
+}
+```
+
+### 4. Update Record
+
+Update an existing record by ID.
+
+```typescript
+async updateRecord(params: {
+  schemaName: string;
+  tableName: string;
+  id: string;
+  data: Record<string, unknown>;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  data?: Record<string, unknown>;
+}>
+```
+
+**Example:**
+```typescript
+const result = await dataExplorerService.updateRecord({
+  schemaName: 'public',
+  tableName: 'users',
+  id: 'user-123',
+  data: {
+    name: 'John Smith',
+    updated_at: new Date().toISOString()
+  }
+});
+```
+
+### 5. Delete Record
+
+Delete a record by ID.
+
+```typescript
+async deleteRecordById(params: {
+  schemaName: string;
+  tableName: string;
+  id: string;
+}): Promise<{
+  success: boolean;
+  error?: string;
+}>
+```
+
+**Example:**
+```typescript
+const result = await dataExplorerService.deleteRecordById({
+  schemaName: 'public',
+  tableName: 'users',
+  id: 'user-123'
+});
+```
+
+### 6. Batch Delete Records
+
+Delete multiple records based on conditions.
+
+```typescript
+async batchDeleteRecords(params: {
+  schemaName: string;
+  tableName: string;
+  items: Array<Record<string, unknown>>;
+}): Promise<Array<{
+  success: boolean;
+  condition: Record<string, unknown>;
+  response: unknown;
+}>>
+```
+
+**Example:**
+```typescript
+const results = await dataExplorerService.batchDeleteRecords({
+  schemaName: 'public',
+  tableName: 'users',
+  items: [
+    { id: 'user-1' },
+    { id: 'user-2' },
+    { id: 'user-3' }
+  ]
+});
+```
+
+### 7. Get Field Values
+
+Get unique values for a specific field, useful for dropdowns and filters.
+
+```typescript
+async getFieldValues(params: {
+  schemaName: string;
+  tableName: string;
+  fieldName: string;
+  search?: string;
+  limit?: number;
+  includeTopHits?: boolean;
+}): Promise<{
+  values: Array<{ value: string; count?: number }>;
+  topHits?: Array<{ value: string; count: number }>;
+}>
+```
+
+**Example:**
+```typescript
+const fieldValues = await dataExplorerService.getFieldValues({
+  schemaName: 'public',
+  tableName: 'users',
+  fieldName: 'status',
+  includeTopHits: true,
+  limit: 10
+});
+
+console.log(fieldValues.values); // [{ value: 'active' }, { value: 'inactive' }]
+console.log(fieldValues.topHits); // [{ value: 'active', count: 150 }]
+```
+
+### 8. Get Data Permissions
+
+Check user permissions for a specific table.
+
+```typescript
+async getDataPermissions(params: {
+  schemaName: string;
+  tableName: string;
+}): Promise<{
+  canCreate: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+}>
+```
+
+**Example:**
+```typescript
+const permissions = await dataExplorerService.getDataPermissions({
+  schemaName: 'public',
+  tableName: 'users'
+});
+
+if (permissions.canCreate) {
+  // Show create button
+}
+```
+
+## Query & Filtering
+
+### SQL Operators
+
+The service supports a comprehensive set of SQL operators for filtering:
+
+#### Comparison Operators
+- `eq` - Equal to
+- `neq` - Not equal to
+- `lt` - Less than
+- `lte` - Less than or equal to
+- `gt` - Greater than
+- `gte` - Greater than or equal to
+
+#### Text Operators
+- `contains` - Text contains (case-insensitive)
+- `startsWith` - Text starts with
+- `endsWith` - Text ends with
+- `like` - SQL LIKE pattern matching
+- `ilike` - Case-insensitive LIKE
+
+#### Array Operators
+- `in` - Value in array
+- `notIn` - Value not in array
+- `arrayContains` - Array contains value
+- `arrayContainedBy` - Array contained by value
+- `overlaps` - Arrays overlap
+
+#### Null Operators
+- `isNull` - Value is null
+- `notNull` - Value is not null
+
+#### Range Operators
+- `between` - Value between range
+- `notBetween` - Value not between range
+
+#### Date Operators
+- `before` - Date before
+- `beforeOrOn` - Date before or on
+- `after` - Date after
+- `afterOrOn` - Date after or on
+- `during` - Date during
+
+#### JSON Operators (for JSONB fields)
+- `containsText` - JSON contains text
+- `hasKey` - JSON has key
+- `keyEquals` - JSON key equals value
+- `pathExists` - JSON path exists
+
+### Filter Syntax
+
+Filters are specified using the format `column.operator`:
+
+```typescript
+const filters = {
+  // Basic comparison
+  'status.eq': 'active',
+  'age.gte': 18,
+  'name.contains': 'john',
+  
+  // Array operations
+  'category.in': ['electronics', 'books'],
+  'tags.arrayContains': 'featured',
+  
+  // Date operations
+  'created_at.after': '2024-01-01',
+  'updated_at.between': ['2024-01-01', '2024-12-31'],
+  
+  // Null checks
+  'deleted_at.isNull': true,
+  
+  // JSON operations
+  'metadata.hasKey': 'premium',
+  'settings.keyEquals': { theme: 'dark' }
+};
+```
+
+### Relative Date Filtering
+
+The service supports relative date filtering with predefined options:
+
+```typescript
+const filters = {
+  'created_at.eq': '__rel_date:today',
+  'updated_at.eq': '__rel_date:last_7_days',
+  'published_at.eq': '__rel_date:this_month'
+};
+```
+
+**Available Relative Dates:**
+- `today` - Today's date range
+- `yesterday` - Yesterday's date range
+- `tomorrow` - Tomorrow's date range
+- `thisWeek` - Current week
+- `lastWeek` - Previous week
+- `thisMonth` - Current month
+- `lastMonth` - Previous month
+- `thisYear` - Current year
+- `lastYear` - Previous year
+- `last_7_days` - Last 7 days
+- `last_30_days` - Last 30 days
+- `last_90_days` - Last 90 days
+
+### Search Functionality
+
+The search parameter performs a case-insensitive search across all columns marked as `is_searchable: true`:
+
+```typescript
+const results = await dataExplorerService.queryTableData({
+  schemaName: 'public',
+  tableName: 'users',
+  search: 'john doe',
+  page: 0,
+  pageSize: 20
+});
+```
+
+### Sorting
+
+Sort results by any sortable column:
+
+```typescript
+const results = await dataExplorerService.queryTableData({
+  schemaName: 'public',
+  tableName: 'users',
+  sortColumn: 'created_at',
+  sortDirection: 'desc',
+  page: 0,
+  pageSize: 20
+});
+```
+
+### Pagination
+
+Efficient pagination with total count:
+
+```typescript
+const results = await dataExplorerService.queryTableData({
+  schemaName: 'public',
+  tableName: 'users',
+  page: 0,        // First page (0-based)
+  pageSize: 20,   // 20 records per page
+});
+
+console.log(results.data.length);  // Number of records returned
+console.log(results.total);        // Total number of records
+console.log(results.hasMore);      // Whether there are more pages
+```
+
+## Data Manipulation
+
+### Advanced Update Operations
+
+#### Update by Conditions
+
+Update records based on complex conditions:
+
+```typescript
+async updateRecordByConditions(params: {
+  schemaName: string;
+  tableName: string;
+  conditions: Record<string, unknown>;
+  data: Record<string, unknown>;
+}): Promise<{
+  success: boolean;
+  error?: string;
+  data?: Record<string, unknown>;
+}>
+```
+
+**Example:**
+```typescript
+const result = await dataExplorerService.updateRecordByConditions({
+  schemaName: 'public',
+  tableName: 'users',
+  conditions: { status: 'pending', created_at: { lt: '2024-01-01' } },
+  data: { status: 'expired' }
+});
+```
+
+#### Delete by Conditions
+
+Delete records based on conditions:
+
+```typescript
+async deleteRecordByConditions(params: {
+  schemaName: string;
+  tableName: string;
+  conditions: Record<string, unknown>;
+}): Promise<{
+  success: boolean;
+  error?: string;
+}>
+```
+
+**Example:**
+```typescript
+const result = await dataExplorerService.deleteRecordByConditions({
+  schemaName: 'public',
+  tableName: 'sessions',
+  conditions: { expires_at: { lt: new Date().toISOString() } }
+});
+```
+
+### Data Validation
+
+All data operations respect:
+- **Database constraints** (foreign keys, unique constraints, etc.)
+- **Column types** and formatting
+- **Required fields** validation
+- **Custom validation rules** defined in table metadata
+
+### Transaction Safety
+
+All operations are wrapped in database transactions to ensure data consistency:
+
+```typescript
+// All operations are automatically wrapped in transactions
+const result = await dataExplorerService.insertRecord({
+  schemaName: 'public',
+  tableName: 'orders',
+  data: orderData
+});
+
+// If the operation fails, the transaction is automatically rolled back
+```
+
+## Permissions & Security
+
+### Row Level Security (RLS)
+
+The service automatically respects PostgreSQL Row Level Security policies:
+
+```typescript
+// Only returns records the user has permission to see
+const results = await dataExplorerService.queryTableData({
+  schemaName: 'public',
+  tableName: 'sensitive_data',
+  page: 0,
+  pageSize: 20
+});
+```
+
+
+### Audit Logging
+
+All data modifications are automatically logged for audit purposes:
+
+```typescript
+// This operation will be logged in the audit trail
+const result = await dataExplorerService.updateRecord({
+  schemaName: 'public',
+  tableName: 'users',
+  id: 'user-123',
+  data: { status: 'inactive' }
+});
+```
+
+### Bulk Operations
+
+Efficient bulk operations for large datasets:
+
+```typescript
+// Batch delete multiple records
+const results = await dataExplorerService.batchDeleteRecords({
+  schemaName: 'public',
+  tableName: 'temporary_records',
+  items: recordsToDelete
+});
+
+// Check results
+results.forEach((result, index) => {
+  if (result.success) {
+    console.log(`Record ${index} deleted successfully`);
+  } else {
+    console.error(`Failed to delete record ${index}`);
+  }
+});
+```
+
+### Field Value Analytics
+
+Get insights about field distributions:
+
+```typescript
+const fieldAnalytics = await dataExplorerService.getFieldValues({
+  schemaName: 'public',
+  tableName: 'users',
+  fieldName: 'country',
+  includeTopHits: true,
+  limit: 10
+});
+
+// Use for analytics or dropdown population
+fieldAnalytics.topHits.forEach(hit => {
+  console.log(`${hit.value}: ${hit.count} users`);
+});
+```
+
+## Error Handling
+
+### Common Error Patterns
+
+```typescript
+try {
+  const result = await dataExplorerService.insertRecord({
+    schemaName: 'public',
+    tableName: 'users',
+    data: userData
+  });
+  
+  if (!result.success) {
+    // Handle application-level errors
+    console.error('Insert failed:', result.error);
+    return;
+  }
+  
+  // Success case
+  console.log('Record created:', result.data);
+} catch (error) {
+  // Handle system-level errors
+  console.error('System error:', error);
+}
+```
+
+### Permission Errors
+
+Checking permissions is mostly useful for UI purposes, to show or hide buttons based on the user's permissions, because RLS will already prevent the user from accessing the data if they don't have the necessary permissions.
+
+```typescript
+const permissions = await dataExplorerService.getDataPermissions({
+  schemaName: 'public',
+  tableName: 'admin_users'
+});
+
+if (!permissions.canCreate) {
+  throw new Error('Insufficient permissions to create admin users');
+}
+```
+
+## Examples
+
+### Example 1: User Management Dashboard
+
+```typescript
+class UserDashboard {
+  constructor(private dataExplorer: DataExplorerService) {}
+  
+  async loadUsers(page: number = 0, filters: Record<string, any> = {}) {
+    const results = await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'users',
+      page,
+      pageSize: 20,
+      properties: filters,
+      sortColumn: 'created_at',
+      sortDirection: 'desc'
+    });
+    
+    return {
+      users: results.data,
+      totalPages: Math.ceil(results.total / 20),
+      hasMore: results.hasMore
+    };
+  }
+  
+  async searchUsers(searchTerm: string) {
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'users',
+      search: searchTerm,
+      page: 0,
+      pageSize: 10
+    });
+  }
+  
+  async createUser(userData: any) {
+    const permissions = await this.dataExplorer.getDataPermissions({
+      schemaName: 'public',
+      tableName: 'users'
+    });
+    
+    if (!permissions.canCreate) {
+      throw new Error('No permission to create users');
+    }
+    
+    return await this.dataExplorer.insertRecord({
+      schemaName: 'public',
+      tableName: 'users',
+      data: userData
+    });
+  }
+  
+  async updateUser(userId: string, updates: any) {
+    return await this.dataExplorer.updateRecord({
+      schemaName: 'public',
+      tableName: 'users',
+      id: userId,
+      data: updates
+    });
+  }
+  
+  async deleteUser(userId: string) {
+    const permissions = await this.dataExplorer.getDataPermissions({
+      schemaName: 'public',
+      tableName: 'users'
+    });
+    
+    if (!permissions.canDelete) {
+      throw new Error('No permission to delete users');
+    }
+    
+    return await this.dataExplorer.deleteRecordById({
+      schemaName: 'public',
+      tableName: 'users',
+      id: userId
+    });
+  }
+}
+```
+
+### Example 2: E-commerce Product Management
+
+```typescript
+class ProductManager {
+  constructor(private dataExplorer: DataExplorerService) {}
+  
+  async getProducts(filters: {
+    category?: string;
+    priceRange?: [number, number];
+    inStock?: boolean;
+    search?: string;
+  } = {}) {
+    const properties: Record<string, any> = {};
+    
+    if (filters.category) {
+      properties['category.eq'] = filters.category;
+    }
+    
+    if (filters.priceRange) {
+      properties['price.between'] = filters.priceRange;
+    }
+    
+    if (filters.inStock) {
+      properties['stock_quantity.gt'] = 0;
+    }
+    
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'products',
+      properties,
+      search: filters.search,
+      page: 0,
+      pageSize: 50,
+      sortColumn: 'name',
+      sortDirection: 'asc'
+    });
+  }
+  
+  async getLowStockProducts() {
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'products',
+      properties: {
+        'stock_quantity.lte': 10,
+        'status.eq': 'active'
+      },
+      sortColumn: 'stock_quantity',
+      sortDirection: 'asc',
+      page: 0,
+      pageSize: 100
+    });
+  }
+  
+  async updateStock(productId: string, quantity: number) {
+    return await this.dataExplorer.updateRecord({
+      schemaName: 'public',
+      tableName: 'products',
+      id: productId,
+      data: {
+        stock_quantity: quantity,
+        updated_at: new Date().toISOString()
+      }
+    });
+  }
+  
+  async getProductCategories() {
+    return await this.dataExplorer.getFieldValues({
+      schemaName: 'public',
+      tableName: 'products',
+      fieldName: 'category',
+      includeTopHits: true
+    });
+  }
+}
+```
+
+### Example 3: Analytics Dashboard
+
+```typescript
+class AnalyticsDashboard {
+  constructor(private dataExplorer: DataExplorerService) {}
+  
+  async getRecentActivity() {
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'activities',
+      properties: {
+        'created_at.after': '__rel_date:last_7_days'
+      },
+      sortColumn: 'created_at',
+      sortDirection: 'desc',
+      page: 0,
+      pageSize: 20
+    });
+  }
+  
+  async getMonthlyStats() {
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'analytics',
+      properties: {
+        'date.during': '__rel_date:this_month'
+      },
+      sortColumn: 'date',
+      sortDirection: 'asc',
+      page: 0,
+      pageSize: 31
+    });
+  }
+  
+  async getTopPerformers() {
+    return await this.dataExplorer.queryTableData({
+      schemaName: 'public',
+      tableName: 'performance_metrics',
+      properties: {
+        'score.gte': 80,
+        'active.eq': true
+      },
+      sortColumn: 'score',
+      sortDirection: 'desc',
+      page: 0,
+      pageSize: 10
+    });
+  }
+}
+```

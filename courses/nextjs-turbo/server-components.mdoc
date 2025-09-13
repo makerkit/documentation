@@ -194,11 +194,11 @@ const getRoutes = (account: string) => [
 
 This is meant as a B2B SaaS - and as such we will be adding our routes in the `/home/[account]` layout.
 
-Let's begin by adding a new route at `/home/[account]/tickets` by adding a new file `apps/web/home/[account]/tickets/page.tsx`.
+Let's begin by adding a new route at `/home/[account]/tickets` by adding a new file `apps/web/app/home/[account]/tickets/page.tsx`.
 
 NB: the kit uses i18n throughout the application, but for simplicity, **we will not be adding i18n to the course** and will be adding English text directly into the components.
 
-```tsx {% title="apps/web/home/[account]/tickets/page.tsx" %}
+```tsx {% title="apps/web/app/home/[account]/tickets/page.tsx" %}
 import { PageHeader, PageBody } from '@kit/ui/page';
 
 export default function TicketsPage() {
@@ -379,7 +379,7 @@ A couple of things you should note:
 
 Let's now use the `TicketsService` to fetch the support tickets data and display it on the page.
 
-```tsx {% title="apps/web/home/[account]/tickets/page.tsx" %}
+```tsx {% title="apps/web/app/home/[account]/tickets/page.tsx" %}
 import { use } from 'react';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
@@ -474,7 +474,7 @@ NB: pages are always **exported as default** in Next.js.
 
 Then, we use the `getSupabaseServerClient` function to get the Supabase client instance. We use the `createTicketsService` function to create a new `TicketsService` instance.
 
-```tsx {% title="apps/web/home/[account]/tickets/page.tsx" %} {8-13}
+```tsx {% title="apps/web/app/home/[account]/tickets/page.tsx" %} {8-13}
 export default function TicketsPage(props: TicketsPageProps) {
   const client = getSupabaseServerClient();
   const service = createTicketsService(client);
@@ -516,7 +516,9 @@ Therefore, the solution is to create a separate client component named `TicketsD
 
 We also want two reusable components for displaying the status and priority of the support tickets. We will be using the `Badge` component from the Shadcn UI kit to display the status and priority of the support tickets.
 
-```tsx title="apps/web/home/[account]/tickets/_components/ticket-status-badge.tsx"
+Let's create two new files in `apps/web/home/[account]/tickets/_components/ticket-status-badge.tsx` and `apps/web/home/[account]/tickets/_components/ticket-priority-badge.tsx` add the following code:
+
+```tsx title="apps/web/app/home/[account]/tickets/_components/ticket-status-badge.tsx"
 import { Badge } from '@kit/ui/badge';
 
 import { Tables } from '~/lib/database.types';
@@ -544,7 +546,7 @@ export function TicketStatusBadge({
 
 And the priority badge:
 
-```tsx title="apps/web/home/[account]/tickets/_components/ticket-priority-badge.tsx"
+```tsx title="apps/web/app/home/[account]/tickets/_components/ticket-priority-badge.tsx"
 import { Badge } from '@kit/ui/badge';
 
 import { Tables } from '~/lib/database.types';
@@ -567,9 +569,9 @@ export function TicketPriorityBadge({
 }
 ```
 
-Let's create a new file `apps/web/home/[account]/tickets/_components/tickets-data-table.tsx` and add the following code:
+Let's create a new file `apps/web/app/home/[account]/tickets/_components/tickets-data-table.tsx` and add the following code:
 
-```tsx title="apps/web/home/[account]/tickets/_components/tickets-data-table.tsx"
+```tsx title="apps/web/app/home/[account]/tickets/_components/tickets-data-table.tsx"
 'use client';
 
 import Link from 'next/link';
@@ -671,9 +673,9 @@ In this component, we define the `TicketsDataTable` component that wraps the `Da
 
 We use a variety of components built into the kit, such as `Badge`, `Button` (from Shadcn UI) to display the support tickets data. We also define the `getDateString` function to format the date string.
 
-We can now go back to the `apps/web/home/[account]/tickets/page.tsx` file and import the `TicketsDataTable` component to display the support tickets data.
+We can now go back to the `apps/web/app/home/[account]/tickets/page.tsx` file and import the `TicketsDataTable` component to display the support tickets data.
 
-```tsx title="apps/web/home/[account]/tickets/page.tsx" {8,46-51}
+```tsx title="apps/web/app/home/[account]/tickets/page.tsx" {8,46-51}
 import { use } from 'react';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
@@ -684,22 +686,24 @@ import { createTicketsService } from '~/lib/server/tickets/tickets.service';
 import { TicketsDataTable } from './_components/tickets-data-table';
 
 interface TicketsPageProps {
-  params: {
+  params: Promise<{
     account: string;
-  };
+  }>;
 
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     query?: string;
-  };
+  }>;
 }
 
 export default function TicketsPage(props: TicketsPageProps) {
   const client = getSupabaseServerClient();
   const service = createTicketsService(client);
 
-  const page = Number(props.searchParams.page ?? '1');
-  const query = props.searchParams.query ?? '';
+  const { account } = use(props.params);
+  const { page: pageParam, query = '' } = use(props.searchParams);
+
+  const page = Number(pageParam ?? '1');
 
   const { data, pageSize, pageCount } = use(
     service.getTickets({

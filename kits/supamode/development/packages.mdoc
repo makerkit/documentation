@@ -1,0 +1,1091 @@
+---
+status: "published"
+title: "Writing Packages to extend Supamode"
+label: "Writing Packages"
+order: 5
+description: "Add your own functions and tools to Supamode by writing packages"
+---
+
+Supamode is a monorepo, which means that it is a collection of packages that are used to build the Supamode platform.
+
+## Creating a package
+
+To create a new package, you can run the following command:
+
+```bash
+pnpm turbo gen package
+```
+
+This will create a new package in the packages directory, ready to use.
+
+Installing the package into other packages/apps
+
+To install a package into another package/app, you can run the following command:
+
+```bash
+pnpm i "@kit/my-package" --filter app
+```
+
+The command above would install the package `@kit/my-package` into the app directory. If you want to install it
+into another directory, you can replace app with the name of the directory you want to install it into. 
+
+For
+example, if the package in which you want to install your new library is named @kit/utils, you would run the
+following command:
+
+```bash
+pnpm i "@kit/my-package" --filter "@kit/utils"
+```
+
+Of course, `@kit/my-package` is just an example. You can replace it with the name of the package you want to
+install.
+
+## Structuring your package
+
+The best way to extend Supamode is to write packages that can be shared across the monorepo.
+
+When exporting a package, you'd normally need to expose a few things:
+
+1. **Client-Side Routing**: The router's configuration. This is a React Router object that contains the routing
+structure for the package (apps/app)
+2. **Hono API Routes**: The API routes for the package. These register the API routes for the package in the Hono
+application (apps/api)
+3. **React Components and Hooks**: The React-specific code for the package (if any)
+4. **Utilities**: Utility functions for the package - not specific to React or Hono (if any)
+5. **Types and Schemas**: Type definitions and Zod schemas for the package
+6. **Zod Schemas**: Validation schemas that can be shared between client and server
+
+My suggestion is to create a separate export file for each package. This allows you to separate code that should
+only be imported from a certain context. For example, API Routes should only ever import server-side code, and
+React Components should only ever be imported from a React file.
+
+Furthermore, separating types and schemas into their own export files makes it easier to import them from the
+package in other packages, whether they're Hono APIs, React APIs, and so on.
+
+Let's assume your package has the following structure:
+
+```
+my-package/
+src/
+    api/
+    routes/
+        index.ts
+    services/
+        my-feature.service.ts
+    components/
+        index.ts
+        my-feature-list.tsx
+        my-feature-detail.tsx
+    hooks/
+        index.ts
+        use-my-feature-data.ts
+    utils/
+        index.ts
+        formatters.ts
+        validators.ts
+    types/
+        index.ts
+        models.ts
+        api.ts
+    schemas/
+        index.ts
+        my-feature.schema.ts
+        validation.schema.ts
+    router.ts
+package.json
+```
+
+Your package.json would look like this:
+
+```json
+{
+  "name": "@kit/my-package",
+  "version": "0.0.1",
+  "exports": {
+    "./router": "./src/router.ts",
+    "./routes": "./src/api/routes/index.ts",
+    "./components": "./src/components/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./types": "./src/types/index.ts",
+    "./schemas": "./src/schemas/index.ts"
+  }
+}
+```
+
+After installing the package into another package/app, you can import the package like this:
+
+```tsx
+// Importing utilities
+import { formatCurrency } from "@kit/my-package/utils";
+
+// Importing API routes (server-side only)
+import { registerMyFeatureRoutes } from "@kit/my-package/routes";
+
+// Importing React components
+import { MyFeatureList } from "@kit/my-package/components";
+
+// Importing React hooks
+import { useMyFeatureData } from "@kit/my-package/hooks";
+
+// Importing types (safe for both client and server)
+import type { MyFeatureItem } from "@kit/my-package/types";
+
+// Importing Zod schemas (for validation on both client and server)
+import { MyFeatureItemSchema } from "@kit/my-package/schemas";
+```
+
+Let's now go over each of the above exports in more detail.
+
+## Client-Side Routing
+
+Supamode uses React Router 7 for client-side routing. Each feature package should export a router factory
+function that returns a `RouteObject`. 
+
+This pattern allows the main application to compose features together
+seamlessly.
+
+### Creating a Router Factory
+
+Your package should export a function that creates and returns a router configuration:
+
+```tsx
+// packages/features/my-feature/src/router.ts
+import { RouteObject } from "react-router";
+import { ContextualErrorBoundary } from "@kit/ui/contextual-error-boundary";
+
+export function createMyFeatureRouter(): RouteObject {
+  return {
+    // Optional layout wrapper that contains all child routes
+    lazy: () =>
+      import("./components/my-feature-layout").then((mod) => ({
+        Component: mod.MyFeatureLayout,
+      })),
+
+    children: [
+      {
+        path: "",
+        Component: MyFeatureEmptyState,
+      },
+      {
+        path: ":id",
+        loader: recordLoader,
+        action: updateRecordAction,
+        ErrorBoundary: ContextualErrorBoundary,
+        lazy: () =>
+          import("./components/detail-page").then((mod) => ({
+            Component: mod.DetailPage,
+          })),
+      },
+    ],
+  };
+}
+
+```
+
+### Key Routing Patterns
+
+Lazy Loading: Always lazy load heavy components to improve initial bundle size:
+
+```tsx
+{
+  path: 'edit/:id',
+  lazy: () => import('./components/edit-page').then(mod => ({
+    Component: mod.EditPage
+  }))
+}
+```
+
+### Data Loading with Bridge Pattern
+
+Use the `createLoader` utility for optimized data fetching with automatic caching that combines React Query and React Router.
+
+```tsx
+import { createLoader } from "@kit/shared/router-query-bridge";
+
+export const recordLoader = createLoader({
+  queryKey: (args) => ["my-feature", "record", args.params.id],
+  queryFn: async ({ params }) => {
+    const service = createMyService();
+    return service.getRecord(params.id);
+  },
+  staleTime: 15 * 1000, // Data is fresh for 15 seconds
+});
+```
+
+Actions with Automatic Cache Invalidation: Use createAction for mutations that automatically update the cache:
+
+```tsx
+import { createAction } from "@kit/shared/router-query-bridge";
+import { toast } from "@kit/ui/sonner";
+
+export const updateRecordAction = createAction({
+  mutationFn: async (args) => {
+    const data = await args.request.json();
+    const service = createMyService();
+
+    return service.updateRecord(args.params.id, data);
+  },
+  invalidateKeys: (args) => [
+    ["my-feature", "record", args.params.id],
+    ["my-feature", "list"], // Also invalidate list views
+  ],
+  onSuccessReturn: (data) => {
+    toast.success("Record updated successfully");
+    return data;
+  },
+  onError: (error) => {
+    toast.error("Failed to update record");
+    
+    // handle error somehow
+  },
+});
+
+```
+
+### Handling Multiple HTTP Methods
+
+For routes that handle different HTTP methods (PUT, DELETE, etc.):
+
+```tsx
+{
+path: 'record/:id',
+loader: recordLoader,
+Component: RecordPage,
+action: async (args: ActionFunctionArgs) => {
+  const method = args.request.method.toLowerCase();
+ 
+  switch (method) {
+    case "delete":
+      return deleteRecordAction(args);
+
+    case 'put':
+        return updateRecordAction(args);
+
+    default:
+        throw new Error(`Unsupported method: ${method}`);
+    }
+  }
+}
+```
+
+### Integrating with the Main Application
+
+In your main application, import and use the router factory:
+
+```tsx
+// apps/app/src/main.tsx
+import { createMyFeatureRouter } from "@kit/my-feature/router";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: AppShell,
+    children: [
+      {
+        path: "/my-feature",
+        ...createMyFeatureRouter(), // Spread the router configuration
+      },
+    ],
+  },
+]);
+
+```
+
+### Query Key Conventions
+
+Maintain consistent query keys for cache management:
+```tsx
+// packages/features/my-feature/src/lib/query-keys.ts
+export const myFeatureQueryKeys = {
+  all: () => ['my-feature'],
+  lists: () => [...myFeatureQueryKeys.all(), 'list'],
+  list: (filters: any) => [...myFeatureQueryKeys.lists(), filters],
+  records: () => [...myFeatureQueryKeys.all(), 'record'],
+  record: (id: string) => [...myFeatureQueryKeys.records(), id],
+};
+```
+
+### Best Practices
+
+1. **Use Factory Functions**: Export a function that returns the router configuration, not the configuration
+directly
+2. **Lazy Load Components**: Use dynamic imports for better code splitting
+3. **Leverage the Bridge Pattern**: Use createLoader and createAction for automatic cache management
+4. **Handle Errors Gracefully**: Always include error boundaries on routes that might fail
+5. **Use Factory Functions**: Export a function that returns the router configuration, not the configuration
+directly
+6. **Lazy Load Components**: Use dynamic imports for better code splitting
+7. **Leverage the Bridge Pattern**: Use createLoader and createAction for automatic cache management
+8. **Handle Errors Gracefully**: Always include error boundaries on routes that might fail
+9. **Type Your Parameters**: Use Zod schemas to validate route parameters
+
+By following these patterns, your feature packages will integrate seamlessly with Supamode's routing infrastructure while maintaining optimal performance and user experience.
+
+## Hono API Routes
+
+Supamode uses Hono.js for the backend API layer, providing type-safe RPC between client and server. 
+
+Each feature
+package should export a registration function that adds its API endpoints to the main Hono router.
+
+### Creating API Route Registration
+
+Your package should export a function that registers all API routes:
+
+```tsx
+// packages/features/my-feature/src/api/routes/index.ts
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+import { createMyFeatureService } from '../services/my-feature.service';
+
+export function registerMyFeatureRoutes(router: Hono) {
+  registerGetItemRoute(router);
+  registerCreateItemRoute(router);
+  registerUpdateItemRoute(router);
+  registerDeleteItemRoute(router);
+}
+
+// Type exports for RPC client usage
+export type GetItemRoute = ReturnType<typeof registerGetItemRoute>;
+export type CreateItemRoute = ReturnType<typeof registerCreateItemRoute>;
+```
+
+Service Layer Pattern
+
+Keep your Hono routes thin by delegating business logic to service classes:
+
+```tsx
+// packages/features/my-feature/src/api/services/my-feature.service.ts
+import { Context } from "hono";
+import { getSupabaseDrizzleClient } from "@kit/supabase/clients/drizzle-client";
+
+export function createMyFeatureService(context: Context) {
+  return new MyFeatureService(context);
+}
+
+class MyFeatureService {
+  constructor(private readonly context: Context) {  }
+
+  async getItem(id: string) {
+    const db = await getSupabaseDrizzleClient(this.context);
+
+    // Business logic using Drizzle ORM
+    return this.db.select().from(myTable).where(eq(myTable.id, id));
+  }
+
+  async createItem(data: CreateItemInput) {
+    const db = await getSupabaseDrizzleClient(this.context);
+
+    // Complex business logic here
+    return this.db.insert(myTable).values(data).returning();
+  }
+}
+```
+
+The above is just a convention - you can structure your service layer as you see fit.
+
+### Route Implementation Pattern
+
+Each route should follow this structure:
+
+```tsx
+import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
+import { createMyFeatureService } from "../services/my-feature.service";
+import { getLogger } from "@kit/shared/logger";
+import { getErrorMessage } from "@kit/shared/error-utils";
+
+const schema = zValidator(
+    "param",
+    z.object({
+    id: z.string().uuid(),
+    }),
+);
+
+function registerGetItemRoute(router: Hono) {
+  return router.get(
+    "/v1/my-feature/:id",
+    schema,
+    async (c) => {
+      const logger = await getLogger();
+      const { id } = c.req.valid("param");
+      const service = createMyFeatureService(c);
+
+      try {
+        const item = await service.getItem(id);
+
+        if (!item) {
+          return c.json({ error: "Item not found" }, 404);
+        }
+
+        return c.json({ success: true, data: item });
+      } catch (error) {
+        logger.error({ id, error }, "Failed to get item");
+
+        return c.json({ success: false, error: getErrorMessage(error) }, 500);
+      }
+    },
+  );
+}
+```
+
+### Input Validation with Zod
+
+Always validate inputs using Zod schemas:
+
+```tsx
+const CreateItemSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+  config: z
+    .object({
+      enabled: z.boolean().default(true),
+      priority: z.number().min(0).max(10),
+    })
+    .optional(),
+});
+
+function registerCreateItemRoute(router: Hono) {
+  return router.post(
+    "/v1/my-feature",
+    zValidator("json", CreateItemSchema),
+    async (c) => {
+      const data = c.req.valid("json");
+      const service = createMyFeatureService(c);
+
+      try {
+        const item = await service.createItem(data);
+        return c.json({ success: true, data: item }, 201);
+      } catch (error) {
+        // Handle error
+      }
+    },
+  );
+}
+```
+
+### Integrating with the Main API
+
+Register your routes in the main API application:
+
+```tsx
+// apps/api/app/routes.ts
+import { Hono } from 'hono';
+import { registerMyFeatureRoutes } from '@kit/my-feature/routes';
+
+const router = new Hono();
+
+// Register authentication middleware first
+registerAuthMiddleware(router);
+
+// Register your feature routes
+registerMyFeatureRoutes(router);
+
+export default router;
+```
+
+### Best Practices
+
+1. **Thin Routes, Fat Services**: Keep route handlers minimal, delegate to services
+2. **Always Validate**: Use Zod for all inputs (params, query, body)
+3. **Consistent Response Format**: Use a standard response structure
+4. **Proper Error Handling**: Log errors and return user-friendly messages
+5. **Export Route Types**: Enable type-safe client usage
+6. **Security First**: Always check permissions in your service layer
+7. **Consistent Naming**: Follow REST conventions for your endpoints
+
+By following these patterns, your API routes will be type-safe, maintainable, and integrate seamlessly with
+Supamode's backend infrastructure.
+
+## React Components and Hooks
+
+React components and hooks form the UI layer of your feature package. It's crucial to export these separately
+from server-side code to maintain clean code splitting and prevent accidental server imports in client code.
+
+### Separate Export for React Code
+
+Always create a dedicated export path for React-specific code:
+```json
+// package.json
+{
+"name": "@kit/my-feature",
+"exports": {
+    "./router": "./src/router.ts",
+    "./routes": "./src/api/routes/index.ts",
+    "./components": "./src/components/index.ts",
+    "./hooks": "./src/hooks/index.ts"
+  }
+}
+```
+
+This separation is critical because:
+- It prevents server-side dependencies from being bundled into client code
+- It enables proper tree-shaking and code splitting
+- It makes import intentions explicit and prevents accidental cross-contamination
+- It helps IDEs and bundlers optimize imports
+
+### Component Export Pattern
+
+Create an index file that re-exports your public components:
+
+```tsx
+// packages/features/my-feature/src/components/index.ts
+export { MyFeatureList } from './my-feature-list';
+export { MyFeatureDetail } from './my-feature-detail';
+export { MyFeatureForm } from './my-feature-form';
+
+// Don't export internal components
+// Keep these private to the package
+```
+
+### Hook Export Pattern
+
+Similarly, export custom hooks through a dedicated path:
+```tsx
+// packages/features/my-feature/src/hooks/index.ts
+export { useMyFeatureData } from './use-my-feature-data';
+export { useMyFeatureFilters } from './use-my-feature-filters';
+export { useMyFeaturePermissions } from './use-my-feature-permissions';
+```
+
+### Using Components in Other Packages
+
+Import components only through their designated export:
+
+```tsx
+// ✅ Good - explicit component import
+import { MyFeatureList } from '@kit/my-feature/components';
+
+// ❌ Bad - deep import bypassing exports
+import { MyFeatureList } from '@kit/my-feature/src/components/my-feature-list';
+```
+
+```tsx
+// ❌ Bad - importing from server exports
+import { MyFeatureList } from '@kit/my-feature/routes';
+```
+
+NB: It's toally okay to export a component by itself, for example, if it contains some heavy dependencies.
+
+### Why This Separation Matters
+
+Consider what happens without proper separation:
+```tsx
+// ❌ BAD: Mixed exports in index.ts
+export { MyFeatureComponent } from './components/my-feature';
+export { createMyFeatureService } from './api/services/my-feature.service';
+export { myFeatureRouter } from './api/routes';
+
+// This causes problems:
+// 1. Importing the component also imports server code
+// 2. Database clients get bundled into frontend
+// 3. Environment variables leak to client
+// 4. Bundle size explodes
+```
+
+Instead, with proper separation:
+```tsx
+// ✅ GOOD: Separate exports
+// @kit/my-feature/components - Only React code
+// @kit/my-feature/routes - Only server code
+// @kit/my-feature/hooks - Only React hooks
+// @kit/my-feature/types - Shared types (safe for both)
+```
+
+By maintaining this strict separation, you ensure that:
+- Client bundles remain lean
+- Server code stays secure
+- Build tools can optimize effectively
+- Developers can't accidentally import the wrong code
+
+This separation is not just a best practice—it's essential for maintaining a scalable, secure, and performant
+monorepo architecture.
+
+## Utilities
+
+Utility functions provide reusable business logic that can be shared across your package and potentially the
+entire monorepo. 
+
+Exporting utilities separately is crucial for testability and reusability.
+
+### Creating a Utilities Export
+
+```json
+// package.json
+{
+"name": "@kit/my-feature",
+"exports": {
+  "./utils": "./src/utils/index.ts"
+}
+}
+```
+
+### Why Export Utilities Separately
+
+Exporting utilities as a separate entry point is essential for:
+- **Unit Testing**: Vitest can directly import and test pure functions without loading React or server dependencies
+- **Cross-Package Reuse**: Other packages can use your utilities without pulling in unnecessary code
+- **Tree Shaking**: Bundlers can eliminate unused utilities from the final bundle
+- **Maintainability**: Clear separation makes it obvious which functions are meant to be reusable
+
+### Utility Function Patterns
+
+Create pure, testable functions:
+
+```tsx
+// packages/features/my-feature/src/utils/formatters.ts
+export function formatCurrency(amount: number, currency = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(amount);
+}
+
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 3)}...`;
+}
+
+// packages/features/my-feature/src/utils/validators.ts
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+export function sanitizeInput(input: string): string {
+  return input.trim().replace(/[<>]/g, "");
+}
+
+```
+
+### Testing Utilities with Vitest
+
+Because utilities are exported separately, they're easy to test:
+```tsx
+// packages/features/my-feature/src/utils/__tests__/formatters.test.ts
+import { describe, it, expect } from "vitest";
+import { formatCurrency, truncateText } from "../formatters";
+
+describe("formatCurrency", () => {
+  it("formats USD currency correctly", () => {
+    expect(formatCurrency(1234.56)).toBe("$1,234.56");
+  });
+
+  it("handles different currencies", () => {
+    expect(formatCurrency(1000, "EUR")).toContain("1,000");
+  });
+});
+
+describe("truncateText", () => {
+  it("returns original text if under limit", () => {
+    expect(truncateText("short", 10)).toBe("short");
+  });
+
+  it("truncates and adds ellipsis", () => {
+    expect(truncateText("very long text here", 10)).toBe("very lo...");
+  });
+});
+```
+
+### Export Strategy
+
+Only export utilities that are genuinely reusable:
+```tsx
+// packages/features/my-feature/src/utils/index.ts
+
+// ✅ Export: Generic, reusable utilities
+export { formatCurrency, truncateText } from './formatters';
+export { isValidEmail, sanitizeInput } from './validators';
+export { calculateDiscount } from './calculations';
+
+// ❌ Don't export: Feature-specific internal helpers
+// Keep these private to the package
+```
+
+Zod Schemas
+
+Zod schemas provide runtime validation and automatic TypeScript type inference. They're perfect for sharing
+validation logic and type definitions between client and server code. This ensures that both your frontend forms
+and backend APIs use the same validation rules.
+
+Creating a Schemas Export
+
+```json
+// package.json
+{
+"name": "@kit/my-feature",
+"exports": {
+    "./schemas": "./src/schemas/index.ts"
+ }
+}
+```
+
+### Why Zod Schemas Are Essential
+
+Zod schemas provide several critical benefits:
+- **Single Source of Truth**: Define validation once, use everywhere
+- **Type Inference**: Automatically generate TypeScript types from schemas
+- **Runtime Validation**: Validate data at runtime on both client and server
+- **Form Integration**: Works seamlessly with React Hook Form
+- **API Contract**: Ensures client and server agree on data structure
+
+### Basic Schema Patterns
+
+Create schemas that can be shared across your application:
+```tsx
+// packages/features/my-feature/src/schemas/my-feature.schema.ts
+import { z } from "zod";
+
+// Base schema with all fields
+export const MyFeatureItemSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
+  description: z.string().optional(),
+  email: z.string().email("Invalid email address"),
+  status: z.enum(["active", "inactive", "pending"]),
+  priority: z.number().int().min(0).max(10),
+  tags: z.array(z.string()).default([]),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Derive schemas for different use cases
+export const CreateMyFeatureItemSchema = MyFeatureItemSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const UpdateMyFeatureItemSchema = CreateMyFeatureItemSchema.partial();
+
+// Generate TypeScript types from schemas
+export type MyFeatureItem = z.infer<typeof MyFeatureItemSchema>;
+export type CreateMyFeatureItem = z.infer<typeof CreateMyFeatureItemSchema>;
+export type UpdateMyFeatureItem = z.infer<typeof UpdateMyFeatureItemSchema>;
+```
+
+### Advanced Schema Patterns
+
+Create more complex validation schemas:
+```tsx
+// packages/features/my-feature/src/schemas/validation.schema.ts
+import { z } from "zod";
+
+// Custom refinements and transformations
+export const PhoneNumberSchema = z
+  .string()
+  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
+  .transform((val) => val.replace(/\D/g, ""));
+
+// Conditional validation
+export const UserProfileSchema = z
+  .object({
+    accountType: z.enum(["personal", "business"]),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    companyName: z.string().optional(),
+    taxId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.accountType === "business") {
+        return !!data.companyName && !!data.taxId;
+      }
+      return true;
+    },
+    {
+      message: "Company name and tax ID required for business accounts",
+      path: ["companyName"],
+    },
+  );
+
+// Nested schemas
+export const AddressSchema = z.object({
+  street: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().length(2),
+  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/),
+  country: z.string().length(2),
+});
+
+export const ContactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: PhoneNumberSchema,
+  address: AddressSchema,
+  preferredContact: z.enum(["email", "phone", "mail"]),
+});
+```
+
+### Using Schemas in API Routes
+
+Use the same schemas for API validation:
+```tsx
+// packages/features/my-feature/src/api/routes/index.ts
+import { zValidator } from "@hono/zod-validator";
+
+import {
+  CreateMyFeatureItemSchema,
+  UpdateMyFeatureItemSchema,
+} from "@kit/my-feature/schemas";
+
+function registerCreateItemRoute(router: Hono) {
+  return router.post(
+    "/v1/my-feature",
+    zValidator("json", CreateMyFeatureItemSchema),
+    async (c) => {
+      const validatedData = c.req.valid("json");
+      // validatedData is fully typed and validated
+      const service = createMyFeatureService(c);
+      return c.json(await service.createItem(validatedData));
+    },
+  );
+}
+
+function registerUpdateItemRoute(router: Hono) {
+  return router.put(
+    "/v1/my-feature/:id",
+    zValidator("json", UpdateMyFeatureItemSchema),
+    async (c) => {
+      const validatedData = c.req.valid("json");
+      const { id } = c.req.param();
+      const service = createMyFeatureService(c);
+      return c.json(await service.updateItem(id, validatedData));
+    },
+  );
+}
+```
+
+### Using Schemas in React Forms
+
+Integrate schemas with React Hook Form:
+```tsx
+// packages/features/my-feature/src/components/my-feature-form.tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  CreateMyFeatureItemSchema,
+  type CreateMyFeatureItem,
+} from "@kit/my-feature/schemas";
+
+export function MyFeatureForm() {
+  const form = useForm<CreateMyFeatureItem>({
+    resolver: zodResolver(CreateMyFeatureItemSchema),
+    defaultValues: {
+      name: "",
+      status: "pending",
+      priority: 5,
+      tags: [],
+    },
+  });
+
+  const onSubmit = async (data: CreateMyFeatureItem) => {
+    // Data is already validated by the schema
+    const response = await fetch("/api/v1/my-feature", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      // Handle success
+    }
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Form fields with automatic validation */}
+    </form>
+  );
+}
+``` 
+
+### Schema Composition
+
+Build complex schemas from simpler ones:
+```tsx
+// packages/features/my-feature/src/schemas/index.ts
+import { z } from "zod";
+
+// Base schemas
+const IdSchema = z.string().uuid();
+const TimestampsSchema = z.object({
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+// Pagination schemas (reusable across features)
+export const PaginationParamsSchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  pageSize: z.coerce.number().min(1).max(100).default(25),
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+// Filter schemas
+export const FilterOperatorSchema = z.enum([
+  "eq",
+  "neq",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "like",
+  "in",
+]);
+
+export const FilterSchema = z.object({
+  field: z.string(),
+  operator: FilterOperatorSchema,
+  value: z.unknown(),
+});
+
+// Compose into feature-specific schemas
+export const MyFeatureQuerySchema = PaginationParamsSchema.extend({
+  filters: z.array(FilterSchema).optional(),
+  search: z.string().optional(),
+  includeArchived: z.boolean().default(false),
+});
+
+export type MyFeatureQuery = z.infer<typeof MyFeatureQuerySchema>;
+```
+
+### Best Practices for Zod Schemas
+
+1. **Define Once, Use Everywhere**: Create schemas in a central location and import them where needed
+2. **Use Type Inference**: Let Zod generate types instead of duplicating type definitions
+3. **Compose Schemas**: Build complex schemas from simpler, reusable parts
+4. **Add Custom Error Messages**: Provide user-friendly validation messages
+5. **Transform Data**: Use .transform() to normalize data during validation
+6. **Export Both Schemas and Types**: Export schemas for runtime validation and types for compile-time checking
+
+```tsx
+// ✅ Good - Single source of truth
+export const EmailSchema = z.string().email('Please enter a valid email');
+export type Email = z.infer<typeof EmailSchema>;
+
+// ❌ Bad - Duplicate definitions
+export const EmailSchema = z.string().email();
+export type Email = string; // Duplicates schema logic
+```
+
+## Types
+
+TypeScript types are the foundation of type safety across your monorepo. While Zod schemas provide runtime
+validation and can generate types, you'll still need standalone type definitions for interfaces, utility types,
+and types that don't require validation.
+
+### Creating a Types Export
+
+```json
+// package.json
+{
+"name": "@kit/my-feature",
+"exports": {
+    "./types": "./src/types/index.ts"
+}
+}
+```
+
+### Why Separate Type Exports Matter
+
+Types are unique because they:
+- **Disappear at Runtime**: TypeScript types are compile-time only, so they don't affect bundle size
+- **Are Needed Everywhere**: Both client and server code need access to the same types
+- **Enable Contract Sharing**: API types can be shared between backend and frontend
+- **Support IDE Features**: Proper type exports enable better autocomplete and type checking
+
+Type Definition Patterns
+
+Define your domain types clearly:
+
+```tsx
+// packages/features/my-feature/src/types/models.ts
+export interface MyFeatureConfig {
+  enabled: boolean;
+  maxItems: number;
+  refreshInterval?: number;
+}
+
+export interface MyFeatureContext {
+  user: User;
+  permissions: Permission[];
+  settings: MyFeatureConfig;
+}
+
+// packages/features/my-feature/src/types/api.ts
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: number;
+}
+
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
+  pagination: {
+    page: number;
+    pageSize: number;
+    pageCount: number;
+    totalCount: number;
+  };
+}
+```
+
+### Type-Only Imports
+
+Always use import type when importing only types:
+
+```tsx
+// ✅ Good - type-only import
+import type { MyFeatureItem, MyFeatureConfig } from '@kit/my-feature/types';
+
+// ❌ Avoid - regular import for types
+import { MyFeatureItem } from '@kit/my-feature/types';
+```
+
+### Best Practices
+
+1. **Use Type-Only Exports**: When exporting interfaces and types, use export type to make intentions clear
+2. **Co-locate Related Types**: Keep types close to where they're used, but export shared ones
+3. **Avoid Circular Dependencies**: Types should flow in one direction through your package hierarchy
+4. **Document Complex Types**: Add JSDoc comments for complex type definitions
+5. **Prefer Interfaces for Objects**: Use interfaces for object shapes (they're more extensible)
+
+```tsx
+// ✅ Good - documented complex type
+/**
+* Configuration for the my-feature widget
+* @property enabled - Whether the feature is active
+* @property maxItems - Maximum number of items to display
+* @property refreshInterval - How often to refresh data (in ms)
+*/
+export interface MyFeatureWidgetConfig {
+  enabled: boolean;
+  maxItems: number;
+  refreshInterval?: number;
+}
+```
+
+### Conclusion
+
+By maintaining separate exports for routing, API routes, components, hooks, utilities, Zod schemas, and types,
+you create a clean, testable, and maintainable package architecture that integrates seamlessly with the Supamode
+monorepo structure. 
+
+This separation ensures:
+
+- Optimal bundle sizes through proper code splitting
+- Type safety across client and server with shared Zod schemas
+- Runtime validation that matches compile-time types
+- Testability through isolated, pure functions
+- Security by preventing server code from leaking to the client
+- Maintainability through clear separation of concerns
+
+The key is to think of each export as a contract with specific consumers: React components for the UI, Hono
+routes for the API, schemas for validation everywhere, and utilities for shared logic. 
+
+This approach scales elegantly as your application grows.

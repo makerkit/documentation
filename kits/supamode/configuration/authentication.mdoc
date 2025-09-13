@@ -1,0 +1,66 @@
+---
+status: "published"
+title: "Configuring authentication for your Supamode accounts"
+label: "Authentication"
+order: -1
+description: "Learn how to set up authentication for your Supamode accounts"
+---
+
+To access the Supamode application, users require two layers of authentication:
+- **JWT Metadata**: users must have a property named `supamode_access` with value `true` in their JWT metadata. This is a lightweight, preliminary check to make sure the authenticated user has the permissions to access the Supamode API.
+- **Database**: they have to be part of the `supamode.accounts` table, and have a role. This is a more in-depth check that uses the Supamode permissions system to validate the user's access level.
+
+In addition, you can enable the following features:
+- **Multi Factor Authentication**: you can enable and enforce multi-factor authentication for all users (recommended).
+- **Captcha Protection**: you can enable and enforce captcha protection for all users (recommended).
+
+## How to add users to Supamode
+
+While you can assign users using custom seeds as explined in [Custom Seeds](./rbac), the easiest way to add users is using the Supamode UI. After setting up the application, you can add admins from the Users Explorer.
+
+NB: admins must have a Supabase account in the application! This is because we use Supabase Auth for authenticating them.
+
+First, search the user you want to add by email. Open their profile by clicking on the user's email. For users who are not yet admins, you will see the below actions:
+
+{% img src="/images/supamode/users-explorer-actions.webp" alt="Add User 1" width="1724" height="292" /%}
+
+Then, click on the "Make Admin" button at the top right of the page and you need to confirm that you want to make the user an admin:
+
+{% img src="/images/supamode/make-admin.webp" alt="Make Admin" width="1724" height="292" /%}
+
+After making user an Admin, you need to assign them a role (otherwise, they cannot quite see or do anything).
+
+## Multi Factor Authentication
+
+We recommend enabling Multi Factor Authentication and enforcing it for all users. This is because it adds an extra layer of security to your application.
+
+### Enabling Multi Factor Authentication for your account
+
+To enable Multi Factor Authentication, either use your existing application's flow, or use Supamode's flow at `/settings/authentication`.
+
+{% img src="/images/supamode/setup-mfa.webp" alt="Setup MFA" width="1724" height="292" /%}
+
+### Enforcing Multi Factor Authentication
+
+Once enabled MFA for your account, you can enforce it for all users by going to `/settings/authentication` and checking the "Enforce MFA" checkbox.
+
+{% img src="/images/supamode/enforce-mfa.webp" alt="Enforce MFA" width="1724" height="292" /%}
+
+NB: users must go through the MFA flow once to enable it for their account. It is recommended to enforce it after all users have enabled MFA if your application doesn't have a flow for it. 
+
+If you're using a Makerkit application, don't worry, we've got you covered!
+
+## Captcha Protection
+
+If you're using Turnstile Captcha, please add the following environment variables to your application:
+
+```bash
+VITE_TURNSTILE_SITE_KEY="0x4AAAAAA"
+VITE_TURNSTILE_SECRET_KEY="0x4AAAAAA"
+```
+
+This will automatically add the Captcha to the login and signup pages, and all the mutating API endpoints.
+
+## CORS and CSRF Protection
+
+The Hono API is protected by CORS and CSRF protection, nothing to do here.

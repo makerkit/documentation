@@ -2314,11 +2314,26 @@ ROLLBACK;
 
 ## User Interface
 
-Now that we have a data model, let's create the UI for managing projects. We will create a new page at `app/dashboard/[account]/projects/page.tsx` that will display a list of projects for the current account.
+Now that we have a data model, let's create the UI for managing projects. We will create a new page at `apps/web/app/home/[account]/projects/page.tsx` that will display a list of projects for the current account.
+
+### Adding Translations
+
+Before we add the navigation link, we need to add the translation for the "Projects" route. Add the following to your translation files:
+
+In `apps/web/public/locales/en/common.json`, add to the `routes` section:
+
+```json
+{
+  "routes": {
+    // ... existing routes
+    "projects": "Projects"
+  }
+}
+```
 
 ### Adding the Page to the Navigation
 
-Let's update the navigation menu to add a new link to the projects page. We will create a new file at `apps/web/config/team-account-navigation.config.tsx` with the following content:
+Let's update the navigation menu to add a new link to the projects page. Update the team account navigation configuration at `apps/web/config/team-account-navigation.config.tsx` by adding:
 
  ```tsx {% title="apps/web/config/team-account-navigation.config.tsx" %} {7-11}
 {
@@ -2338,9 +2353,9 @@ NB: you need to the component `FolderKanban` from `lucide-react` to use the icon
 
 ### Creating the Projects List Page
 
-We can now create the page at `app/dashboard/[account]/projects/page.tsx` with the following content:
+We can now create the page at `apps/web/app/home/[account]/projects/page.tsx` with the following content:
 
- ```tsx {% title="app/dashboard/[account]/projects/page.tsx" %}
+ ```tsx {% title="apps/web/app/home/[account]/projects/page.tsx" %}
 import { use } from 'react';
 
 import Link from 'next/link';
@@ -2430,11 +2445,27 @@ Instead, we can also display a message when there are no projects:
 
 {% img src="/assets/images/docs/projects-empty-state.webp" width="2858" height="1920" /%}
 
+### Creating the Schema for Project Creation
+
+First, we need to create a schema for the project creation form. Create a new file at `apps/web/app/home/[account]/projects/_lib/schema/create-project-schema.ts`:
+
+```typescript {% title="apps/web/app/home/[account]/projects/_lib/schema/create-project-schema.ts" %}
+import { z } from 'zod';
+
+export const CreateProjectSchema = z.object({
+  name: z.string().min(3).max(50),
+  accountId: z.string().uuid(),
+  description: z.string().optional(),
+});
+
+export type CreateProjectSchemaType = z.infer<typeof CreateProjectSchema>;
+```
+
 ### Creating the Dialog to Create a Project
 
-We can now create the dialog to create a project. We will create a new file at `apps/web/home/[account]/projects/_components/create-project-dialog.tsx` with the following content:
+We can now create the dialog to create a project. We will create a new file at `apps/web/app/home/[account]/projects/_components/create-project-dialog.tsx` with the following content:
 
- ```tsx {% title="apps/web/home/[account]/projects/_components/create-project-dialog.tsx" %}
+ ```tsx {% title="apps/web/app/home/[account]/projects/_components/create-project-dialog.tsx" %}
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -2554,9 +2585,9 @@ function CreateProjectDialogForm(props: {
 }
 ```
 
-We can now create the server action to create a project. We will create a new file at `apps/web/home/[account]/projects/_lib/server/server-actions.ts` with the following content:
+We can now create the server action to create a project. We will create a new file at `apps/web/app/home/[account]/projects/_lib/server/server-actions.ts` with the following content:
 
- ```tsx {% title="apps/web/home/[account]/projects/_lib/server/server-actions.ts" %}
+ ```tsx {% title="apps/web/app/home/[account]/projects/_lib/server/server-actions.ts" %}
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -2624,7 +2655,7 @@ Now, we want to create a detail page for each project.
 In this case, we will use an outer layout to wrap the project detail page, so that we can display an inner navigation menu that will reuse the same layout.
 
 
-We will create a new file at `apps/web/home/[account]/projects/[id]/layout.tsx` with the following content:
+We will create a new file at `apps/web/app/home/[account]/projects/[id]/layout.tsx` with the following content:
 
 ```tsx
 import { use } from 'react';

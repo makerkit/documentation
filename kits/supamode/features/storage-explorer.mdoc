@@ -1,0 +1,59 @@
+---
+status: "published"
+title: "Storage Explorer"
+label: "Storage Explorer"
+order: 2
+description: "Learn how to use the Storage Explorer to explore the files in your storage bucket"
+---
+
+The Storage Explorer is a feature that allows you to explore the files in your storage bucket. It is useful to navigate and browse the files in your storage bucket, as well as uploading, downloading, and deleting files.
+
+## Accessing the Storage Explorer
+
+The Storage Explorer is available at `/assets` and can be accessed through the Supamode UI's Sidebar. The storage explorer requires a Select Data Permission for the Assets scope. The path pattern and the bucket of the storage item must match the permission you have.
+
+{% img src="/images/supamode/storage-explorer.webp" alt="Storage Explorer" width="1724" height="292" /%}
+
+## Viewing files
+
+You can navigate the files in your storage bucket just like you navigate your files in a file explorer on your computer.
+
+When clicking on a file, you can see the details of the file, including the file name, size, and the last modified date.
+
+{% img src="/images/supamode/storage-explorer-details.webp" alt="Storage Explorer File Details" width="1724" height="292" /%}
+
+You can also download, delete, or rename the file.
+
+## Uploading files
+
+You can upload files to your storage bucket by clicking on the **Upload Files** button at the top right of the page.
+
+{% img src="/images/supamode/storage-explorer-upload.webp" alt="Storage Explorer Upload" width="1724" height="292" /%}
+
+## Searching files
+
+You can search for files in your storage bucket by using the search bar at the top of the page.
+
+{% img src="/images/supamode/storage-explorer-search.webp" alt="Storage Explorer Search" width="1724" height="292" /%}
+
+## Using storage items in the Data Explorer
+
+Once you've uploaded a file, you can use it in the Data Explorer, assuming the data type of the column is a storage reference, such as `Image`, `File`, `Video` or `Audio`.
+
+{% img src="/images/supamode/storage-explorer-data-explorer.webp" alt="Storage Explorer Data Explorer" width="1724" height="292" /%}
+
+Users have three options to use the storage item in the Data Explorer:
+
+1. **Upload a new file**: This will upload a new file to the storage bucket - as configured in the storage bucket settings.
+2. **Pick an existing file**: Users can pick an existing file from the storage bucket - which will store a reference to the file in the column.
+3. **Enter URL manually**: Users can also enter the URL manually.
+
+### Browsing files from the file picker
+
+If users choose to pick an existing file, they will be able to browse the files in the storage bucket.
+
+{% img src="/images/supamode/storage-explorer-file-picker.webp" alt="Storage Explorer File Picker" width="1724" height="292" /%}
+
+Once the user selected a bucket, they can browse the files in the bucket:
+
+{% img src="/images/supamode/storage-explorer-file-picker-item.webp" alt="Storage Explorer File Picker Item" width="1724" height="292" /%}

@@ -1,0 +1,173 @@
+---
+status: "published"
+title: "Navigating your Supabase database using the Data Explorer"
+label: "Data Explorer - Navigation"
+order: 1
+description: "Learn how to use the Data Explorer to find, filter and navigate your Supabase database data."
+---
+
+The Data Explorer is a feature that allows you to explore the data of your application, modify it, and create new records. 
+
+Unlike Supabase Studio's Data Explorer, Supamode's Data Explorer is integrated with Supamode's permission system and will provide a seamless experience for your users, thanks to smart forms that change based on the data types, and enhanced validation and search capabilities.
+
+In short, the Data Explorer is a powerful tool that allows you to manage your data in a way that is tailored to your application's needs, and requires zero SQL knowledge to do so.
+
+{% img src="/images/supamode/data-explorer.webp" alt="Data Explorer" width="2936" height="1978" /%}
+
+## Accessing the Data Explorer
+
+To access the Data Explorer, you need to go to the **Resources** section in the Supamode UI.
+
+Users will see a list of resources that they have access to, and they can click on a resource to view its data. Users can only see a resource if:
+
+1. **Table synced**: The resource was synced into Supamode using the `supamode.sync_managed_tables` function
+2. **Data permissions**: The user has the data permissions for the resource
+
+### Syncing your database tables into Supamode
+
+The resource will be displayed in the Data Explorer if it was synced into Supamode using the `supamode.sync_managed_tables` function. If not, you have to sync the table first.
+
+To sync the `users` table in the `public` schema, you can run the following function using Supabase SQL Editor:
+
+```sql
+select supamode.sync_managed_tables('public', 'users');
+```
+
+### Data Permissions
+
+The resource will be displayed in the Data Explorer if the user has the data permissions for the resource. Please refer to the [Data Permissions](../configuration/permissions) section for more information on how to configure the data permissions.
+
+## Tabs
+
+The Data Explorer provides a tabbing system to allow users to switch between the different views of the resource, similar to a browser tab.
+
+How it works:
+
+1. If you visit pages internal to the Data Explorer, the current tab will navigate to the new page.
+2. If you visit a page that is already open in a tab, the tab will be focused.
+3. To create a new tab, you can click on the **New Tab** button at the top left of the Data explorer
+
+Tabs allow you to quickly switch between the different views of the resource, and to keep track of your work.
+
+{% img src="/images/supamode/tabs.webp" alt="Data Explorer Tabs" width="1724" height="292" /%}
+
+## Filtering Data
+
+The Data Explorer allows you to filter the data using a neat full-text search bar at the very top of the page.
+
+## Full text search
+
+The easiest and quickest way to filter data is to use the full-text search bar at the very top of the page.
+
+{% img src="/images/supamode/full-text-search.webp" alt="Full Text Search" width="1724" height="292" /%}
+
+Full text search will search for the query in all columns of the resource unless you specifically excluded some columns from the search when configuring the resource (or if they were excluded during indexing by Supamode's inferred data types).
+
+## Text filters
+
+Text filters allow you to filter the data by a specific text value in a column.
+
+You can use various operators (that change depending on the data type) to filter the data. For example, in the example below, we are filtering the `slug` property for values that are exactly `postgres`. This will, as you can see, yield no results.
+
+{% img src="/images/supamode/text-filter-with-operator.webp" alt="Text Filters with Operator" width="1724" height="292" /%}
+
+However, users can change operator to `Contains` to get results.
+
+{% img src="/images/supamode/text-filter-with-operator-contains.webp" alt="Text Filters with Operator Contains" width="1512" height="500" /%}
+
+The operator will be displayed using a human-readable label that both technical and non-technical users can understand.
+
+Users can change the filter or the operator by clicking on the filter badge, add new filters, or remove the filter by clicking on the **X** button.
+
+## Date filters
+
+Date filters allow you to filter the data by a specific date value in a column. Supamode supports a variety of operators to filter the data, including data rages such as `Is Between` and `Is Not Between`, as well as single date values such as `Is` and `Is Not`, `Is Before` and `Is After`.
+
+{% img src="/images/supamode/relative-date-filters.webp" alt="Relative Date Filters" width="1724" height="292" /%}
+
+You can also use absolute date filters to filter the data by a specific date value in a column.
+
+{% img src="/images/supamode/custom-date-filters.webp" alt="Absolute Date Filters" width="1724" height="292" /%}
+
+You can also use between date filters to filter the data by a specific date range in a column.
+
+{% img src="/images/supamode/between-date-filters.webp" alt="Between Date Filters" width="1724" height="292" /%}
+
+## Boolean filters
+
+Boolean filters allow you to filter the data by a specific boolean value in a column.
+
+{% img src="/images/supamode/boolean-filters.webp" alt="Boolean Filters" width="1724" height="292" /%}
+
+## Numeric filters
+
+Numeric filters allow you to filter the data by a specific numeric value in a column.
+
+{% img src="/images/supamode/numeric-filters.webp" alt="Numeric Filters" width="1724" height="292" /%}
+
+## Reference filters
+
+Reference filters allow you to filter the data by a specific reference value in a column. Thanks to a smart autocomplete, users can easily find the reference they are looking for, without needing to know the exact value.
+
+{% img src="/images/supamode/reference-filters.webp" alt="Reference Filters" width="1724" height="292" /%}
+
+## Enum filters
+
+Enum filters allow you to filter the data by a specific enum value in a column.
+
+{% img src="/images/supamode/enum-filters.webp" alt="Enum Filters" width="1724" height="292" /%}
+
+## Global Search
+
+To summon the global search dialog, you can use a quick keyboard shortcut:
+
+- **Mac**: `Command + K`
+- **Windows**: `Ctrl + K`
+
+This will summon the global search dialog, where you can search for any record in the entire application. 
+
+This is easily one of the most powerful features of Supamode, as it allows you to quickly find any record in the entire application, without needing to know the exact value. The record will open in the currently focused tab.
+
+{% img src="/images/supamode/global-search.webp" alt="Global Search" width="1724" height="292" /%}
+
+## Sorting Data
+
+The Data Explorer allows you to sort the data by a specific column which you can click on the column header - or by clicking the "Sort" button at the top right of the page.
+
+In the example below, we are sorting the data by the `Content` column in ascending order.
+
+{% img src="/images/supamode/sorting.webp" alt="Sorting" width="1724" height="292" /%}
+
+The selected column will be displayed in the "Sort" dropdown next to "Saved Views".
+
+## Saved Views
+
+Saved views allow you to save a specific view of the data, and to quickly switch between them, or share them with specific roles of the application. 
+
+For example, you can create saved views such as:
+- 
+- **All users**: This view will show all users in the application.
+- **Active users**: This view will show only active users in the application.
+- **Inactive users**: This view will show only inactive users in the application.
+- **Users who today created a post**: This view will show only users who created a post today.
+- **Users who last logged in 30 days ago**: This view will show only users who last logged in 30 days ago.
+
+Thanks to a combination of relative date filters, you can easily create views that are tailored to your needs.
+
+{% img src="/images/supamode/selected-saved-view.webp" alt="Selected Saved View" width="1724" height="292" /%}
+
+For example, you can save a view of the data that filters data for a specific user, and share this view with all accounts having the `Customer Support` role.
+
+{% img src="/images/supamode/create-saved-view.webp" alt="Create Saved View" width="1724" height="292" /%}
+
+## Pinned Columns
+
+The table view settings allow you to customize the table view to your liking. This is local to the user and won't affect other users. You can pin columns to the left of the table, and you can also hide columns.
+
+{% img src="/images/supamode/pinned-columns.webp" alt="Pinned Columns" width="1724" height="292" /%}
+
+## Batch Actions
+
+Batch actions allow you to perform actions on multiple records at once. For example, you can delete multiple records at once (at this time, only deletion is supported).
+
+{% img src="/images/supamode/batch-actions.png" alt="Batch Actions" width="1724" height="292" /%}

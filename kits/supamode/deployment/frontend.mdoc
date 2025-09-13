@@ -1,0 +1,84 @@
+---
+status: "published"
+title: "Deploying the Supamode frontend"
+label: "Frontend"
+order: 0
+description: "Learn how to deploy your Supamode frontend"
+---
+
+Supamode's front-end uses React Router 7 as its routing library - which means that you can deploy it to any platform since it's a simple static site with JavaScript.
+
+This makes deploying the Supamode frontend to any hosting platform or CDN pretty straightforward.
+
+For more information on how to deploy the Supamode frontend, please refer to the [Vite documentation](https://vite.dev/guide/static-deploy).
+
+## Environment variables
+
+The following environment variables are required to run the Supamode frontend. Please make sure to set them in your hosting platform's environment variables:
+
+```bash
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=
+VITE_SITE_URL=http://localhost:5173
+```
+
+In addition, you can set the following environment variables to configure the Supamode frontend:
+
+```bash
+VITE_OAUTH_PROVIDERS=google
+VITE_ENABLE_VERSION_CHECK=true
+```
+
+Let's go through each of these variables in more detail:
+
+### VITE_SUPABASE_URL
+
+The URL of your Supabase project. This is used to connect to your Supabase project and it's the exact same URL as the one you use to connect to your Supabase project in your code.
+
+### VITE_SUPABASE_ANON_KEY
+
+The anonymous key of your Supabase project. This is used to connect to your Supabase project. This is the same key as the one you use to connect to your Supabase project in your code.
+
+### VITE_SITE_URL
+
+The URL of your Supamode frontend depending on where you deploy it. Make sure to use HTTPS in the URL.
+
+### VITE_OAUTH_PROVIDERS
+
+This is used to configure the OAuth providers that are available to your users. You can set this to a comma-separated list of OAuth providers.
+
+For example, if you want to enable Google OAuth, you can set this to `google`. If you want to enable both Google and GitHub, you can set this to `google,github`.
+
+```bash
+VITE_OAUTH_PROVIDERS=google,github
+```
+
+### VITE_ENABLE_VERSION_CHECK
+
+This is used to enable the version check for your Supamode frontend. If you set this to `true`, the Supamode frontend will check for updates and notify you if there's a new version available. It will also poll your backend to understand if client and server versions are in sync.
+
+```bash
+VITE_ENABLE_VERSION_CHECK=true
+```
+
+## Deploying the Supamode frontend
+
+To deploy the Supamode frontend, you can use any platform that supports static site deployment. We recommend using a platform like [Vercel](https://vercel.com/) or [Netlify](https://www.netlify.com/) since they are easy to use and have a lot of features.
+
+### Creating a production build
+
+To create a production build of the Supamode frontend, you can run the following command:
+
+```bash
+pnpm --filter app build
+```
+
+This will create a `apps/app/dist` directory with the production build of the Supamode frontend, which you can then deploy to your chosen platform.
+
+## Proxying the Supamode backend
+
+To share cookies between the Supamode frontend and the Supamode backend, we need to have the same domain for both. We can do so by using a proxy server that redirects requests `/api` to the Supamode backend URL (which depends on where you deploy the Supamode backend).
+
+## Redirect 404s to the index page
+
+Since the Supamode frontend is a single-page application, we need to redirect all 404s to the index page. This depends on the platform you deploy the Supamode frontend to.

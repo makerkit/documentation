@@ -100,7 +100,6 @@ Makerkit is built on a few core principles:
  - The creator should be **available** - so you can get help when you need it
  - The documentation should be **up-to-date** - so you can get the help you need
 
-
 ## Who is this course for?
 
 This course is for **developers who want to build and launch a SaaS product quickly and have purchased a license**.
@@ -149,6 +148,14 @@ I suggest to install Docker Desktop or [Orbstack](https://orbstack.dev/) (a ligh
 
 NB: you don't need to know Docker to use Supabase, you simply need to have it running so that you can spin up the services locally.
 
+### Step 0: Set your git username
+
+Before you start, please set your git username from within the Makerkit Turbo repository. This needs to match the username you used to get access to the repository:
+
+```bash
+git config user.username "your-name"
+```
+
 ### Step 1: Clone the Makerkit Turbo repository
 
 {% alert type="warning" title="Have Github configured with SSH" %}
@@ -196,6 +203,10 @@ pnpm run supabase:web:start
 ```
 
 This will start the Supabase Docker container - and will load the Database migrations and seed data.
+
+{% alert type="warning" title="Give Docker enough resources" %}
+If the command above fails, you may need to give Docker more resources. Please refer to your Docker software's documentation for instructions on how to do this.
+{% /alert %}
 
 Next, we need to start the Next.js development server. To do this, run the following command:
 

@@ -32,10 +32,12 @@ You can now import this package into your project:
 pnpm add "@kit/posthog@workspace:*" --filter "@kit/analytics" -D
 ```
 
+### Client Side
+
 You can now use the PostHog plugin in the Analytics package. Update the `packages/analytics/src/index.ts` file as follows:
 
  ```tsx {% title="packages/analytics/src/index.ts" %}
-import { createPostHogAnalyticsService } from '@kit/posthog';
+import { createPostHogAnalyticsService } from '@kit/posthog/client';
 
 import { createAnalyticsManager } from './analytics-manager';
 import type { AnalyticsManager } from './types';
@@ -47,6 +49,36 @@ export const analytics: AnalyticsManager = createAnalyticsManager({
 });
 ```
 
+For client side usage, please use the `analytics` object from the `@kit/analytics` package.
+
+```tsx
+import { analytics } from '@kit/analytics';
+```
+
+### Server Side
+
+You can now use the PostHog plugin in the Analytics package. Update the `packages/analytics/src/server.ts` file as follows:
+
+ ```tsx {% title="packages/analytics/src/server.ts" %}
+
+import { createPostHogAnalyticsService } from '@kit/posthog/server';
+
+import { createAnalyticsManager } from './analytics-manager';
+import type { AnalyticsManager } from './types';
+
+export const analytics: AnalyticsManager = createAnalyticsManager({
+  providers: {
+    posthog: createPostHogAnalyticsService,
+  },
+});
+```
+
+For server side usage, please use the `analytics` object from the `@kit/analytics` package.
+
+```tsx
+import { analytics } from '@kit/analytics/server';
+```
+
 ## Configuration
 
 Please add the following environment variables to your `.env` file:
@@ -54,6 +86,11 @@ Please add the following environment variables to your `.env` file:
 ```bash
 NEXT_PUBLIC_POSTHOG_KEY=phc_your_key_here
 NEXT_PUBLIC_POSTHOG_HOST=https://eu.posthog.com
+```
+
+Optionally, add the Ingestion Rewrite for bypassing Blockers:
+
+```
 NEXT_PUBLIC_POSTHOG_INGESTION_URL=http://localhost:3000/ingest
 ```
 

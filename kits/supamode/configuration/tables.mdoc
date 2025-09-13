@@ -1,0 +1,96 @@
+---
+status: "published"
+title: "Configuring your Database tables"
+label: "Tables"
+order: 3
+description: "Understanding how to configure resources for the best user experience"
+---
+
+To get the best out of Supamode, you need to configure your database tables and its data types. Supamode makes many assumptions when syncing your database schema, but it's recommended to configure the tables to get the best user experience.
+
+## Managed Tables
+
+Supamode will index your database tables and their data types into an internal database table called `supamode.table_metadata`. This table is used to store the metadata of the tables and their data types.
+
+To sync your database schema into Supamode, you can use the `supamode.sync_managed_tables` function.
+
+### Sync your DB schema into Supamode
+
+To sync your database schema into Supamode, we provide a quick Postgres function that will sync your database schema into Supamode. 
+
+After pushing the Supamode migrations, you can run the following function to sync your database schema into Supamode:
+
+```sql
+-- Sync the whole "public" schema
+select supamode.sync_managed_tables('public');
+```
+
+The above function will sync all tables in the `public` schema. You can also sync a specific table by passing the table name as an argument:
+
+```sql
+-- Sync the "users" table
+select supamode.sync_managed_tables('public', 'users');
+```
+
+In addition, you can also sync tables in custom schemas and Supabase's internal schemas. For example, to sync the `users` table in the `auth` schema, you can run the following function:
+
+```sql
+-- Sync the "users" table in the "auth" schema
+select supamode.sync_managed_tables('auth', 'users');
+```
+
+We do recommend syncing the `auth.users` table, as it's the table that contains the user data and it's often referenced in the other tables.
+
+## Naming Resources
+
+Supamode will infer the display name of the table, based on the table name. For example, the table `users` will be displayed as `Users`. However, **we recommend** to configure the display name of the table to make it more readable and obvious to the non-technical users in your team.
+
+## Display Format
+
+The display format is essential to make the data more readable and obvious to the non-technical users in your team. 
+
+By default, Supamode will display references to other tables using the foreign key provided - but this is not always the best way to display the data. Instead, you can configure the display format to make it more readable.
+
+The display format accepts variables that will be replaced with the actual data. For example, if you have a table called `users` and you want to display the user's name, you can use the following display format:
+
+```
+{name}
+```
+
+You can also add some text to the display format:
+
+```
+{name} - {email}
+```
+
+As long as the variable is a valid column name in the table, it will be replaced with the actual data.
+
+### Handling null values
+
+You can also provide ways to handle null values in the display format. For example, if you want to display `N/A` when the value is null, you can use the following display format:
+
+```
+{name || 'N/A'}
+```
+
+or, you can use different variables to handle the null value:
+
+```
+{name || email}
+```
+
+When you define the display format of a table, users will always see the chosen format when viewing the data in Supamode. Neat, right?
+
+## Visibility
+
+Not all tables need to be visible to all users. For example, you might have a private table that contains sensitive data, or a table that is only used for internal purposes and will never be edited by the users.
+
+Pro Tip: hide the table if you don't need to customize it, to make the UI cleaner.
+
+## Searchability
+
+By default, Supamode will attempt to search all tables in the Global Search functionality. However, if a table has data that you don't need, **it's recommended to disable the search for that table**, to improve the search performance.
+
+## Ordering
+
+Ordering will be used to order the tables in the Supamode UI's left-hand sidebar. To update the ordering of the tables, use the drag and drop feature to reorder the tables.

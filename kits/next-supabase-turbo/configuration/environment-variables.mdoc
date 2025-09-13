@@ -270,10 +270,17 @@ Required variables for Supabase integration:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_SUPABASE_PUBLIC_KEY=your-public-key
+SUPABASE_SECRET_KEY=your-service-role-key
 SUPABASE_DB_WEBHOOK_SECRET=your-webhook-secret
 ```
+
+NB: if you're running a version prior to 2.12.0, you must use the older authentication keys:
+
+```bash
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+````
 
 ### NEXT_PUBLIC_SUPABASE_URL
 Your Supabase project URL.
@@ -281,14 +288,37 @@ Your Supabase project URL.
 NEXT_PUBLIC_SUPABASE_URL=https://yourproject.supabase.co
 ```
 
-### NEXT_PUBLIC_SUPABASE_ANON_KEY
-Your Supabase anonymous API key.
+### NEXT_PUBLIC_SUPABASE_PUBLIC_KEY
+Your Supabase public API key.
+
+```bash
+NEXT_PUBLIC_SUPABASE_PUBLIC_KEY=your-public-key
+```
+
+This key is available starting from Makerkit 2.12.0. If you're using a prior version, make sure to use `NEXT_PUBLIC_SUPABASE_ANON_KEY` instead.
+
+### NEXT_PUBLIC_SUPABASE_ANON_KEY (deprecated)
+
+Your Supabase anonymous API key. This key is deprecated. Use `NEXT_PUBLIC_SUPABASE_PUBLIC_KEY` instead.
+
 ```bash
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### SUPABASE_SERVICE_ROLE_KEY
-Your Supabase service role key (keep this secret!).
+### SUPABASE_SECRET_KEY
+
+Your Supabase secret key (keep this secret!).
+
+```bash
+SUPABASE_SECRET_KEY=your-service-role-key
+```
+
+This key is available starting from Makerkit 2.12.0. If you're using a prior version, make sure to use `SUPABASE_SERVICE_ROLE_KEY` instead.
+
+### SUPABASE_SERVICE_ROLE_KEY (deprecated)
+
+Your Supabase service role key (keep this secret!). This key is deprecated. Use `SUPABASE_SECRET_KEY` instead.
+
 ```bash
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```

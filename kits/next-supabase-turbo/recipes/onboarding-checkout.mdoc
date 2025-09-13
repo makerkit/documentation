@@ -812,14 +812,15 @@ Update the `apps/web/middleware.ts` file:
   pattern: new URLPattern({ pathname: '/home/*?' }),
   handler: async (req: NextRequest, res: NextResponse) => {
     const {
-      data: { user },
+      data,
     } = await getUser(req, res);
 
     const origin = req.nextUrl.origin;
     const next = req.nextUrl.pathname;
+    const claims = data?.claims;
 
     // If user is not logged in, redirect to sign in page.
-    if (!user) {
+    if (!claims) {
       const signIn = pathsConfig.auth.signIn;
       const redirectPath = `${signIn}?next=${next}`;
 
@@ -827,7 +828,7 @@ Update the `apps/web/middleware.ts` file:
     }
 
     // verify if user has completed onboarding
-    const isOnboarded = user?.app_metadata.onboarded;
+    const isOnboarded = claims.app_metadata.onboarded;
 
     // If user is logged in but has not completed onboarding,
     if (!isOnboarded) {
@@ -858,11 +859,13 @@ Also add the following pattern to make sure the user is authenticated when visit
   pattern: new URLPattern({ pathname: '/onboarding/*?' }),
   handler: async (req: NextRequest, res: NextResponse) => {
     const {
-      data: { user },
+      data,
     } = await getUser(req, res);
 
+    const claims = data?.claims;
+
     // If user is not logged in, redirect to sign in page.
-    if (!user) {
+    if (!claims) {
       const signIn = pathsConfig.auth.signIn;
       const redirectPath = `${signIn}?next=${next}`;
 
@@ -879,6 +882,14 @@ Also add the following pattern to make sure the user is authenticated when visit
       return NextResponse.redirect(
         new URL(pathsConfig.auth.verifyMfa, origin).href,
       );
+    }
+
+    // verify if user has completed onboarding
+    const isOnboarded = claims.app_metadata.onboarded;
+
+    // If user completed onboarding, redirect to home page
+    if (isOnboarded) {
+      return NextResponse.redirect(new URL(pathsConfig.app.home, origin).href);
     }
   },
 }

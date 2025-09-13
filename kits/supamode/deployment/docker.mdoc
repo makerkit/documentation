@@ -1,0 +1,45 @@
+---
+status: "published"
+title: "Deploying Supamode using Docker"
+label: "Docker"
+order: 2
+description: "Learn how to deploy your Supamode backend"
+---
+
+We provide a Dockerfile to run Supamode in a Docker container. This allows you to deploy Supamode on any platform that supports Docker, such as AWS, Google Cloud, or DigitalOcean.
+
+## Building and running the Docker image
+
+From the root of the Supamode repository, you can build the Docker image for the backend and frontend by running:
+
+```bash
+docker build -t supamode .
+```
+
+NB: you have to source the [build-time environment variables for the Vite frontend](./frontend.mdoc) to the Dockerfile in some way, for example by using the `--build-arg` flag.
+
+### Environment variables
+
+You can set the runtime environment variables for the Docker image by passing them to the `docker run` command, which are required to run the Supamode backend.
+
+Create a file named `.env.production` in the root of the Supamode repository and set the environment variables you need at runtime. These are defined at [./backend.mdoc](./backend.mdoc).
+
+### Running the Docker image
+
+Once you've built the Docker image, you can run it by running:
+
+```bash
+docker run supamode --env-file .env.production
+```
+
+### Using docker-compose
+
+Alternatively, you can also use the `docker-compose.yml` file in the root of the Supamode repository to build the Docker images for both the backend and frontend.
+
+```bash
+docker compose up
+```
+
+Once it's up and running, you can access the Supamode backend at `http://localhost:3000` and the frontend at `http://localhost:8080`.
+
+Services like Railway will automatically use Docker for deployment.

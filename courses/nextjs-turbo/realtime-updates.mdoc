@@ -56,18 +56,25 @@ While Supabase allows realtime functionality for all tables by default, it's a g
 
 To do so, you have two options:
 
-1. **Enable Realtime in your Schema**: You can enable realtime for all tables in your schema by running the following SQL command:
+1. **Enable Realtime in your Schema**: You can enable realtime for all tables in your schema by running the SQL command below
 2. **Enable Realtime in the Dashboard**: Alternatively, you can enable realtime for specific tables in the Supabase Dashboard.
 
 Since we need this to work locally, it makes sense for us to update our schema and enable realtime for the messages table.
 
+Open the existing migration file in the `apps/web/supabase/migrations` directory and append the following SQL command:
+
 ```sql
+-- Enable realtime for the messages table
 alter publication supabase_realtime add table messages;
 ```
 
-**Action**: please add the above to our migration file with our schema. If you don't want to reset your Database, you can run the command above directly from Supabase Studio, or you can enable it from the Dashboard itself.
-
 You can now see that we have enabled realtime for the messages table (and on the notifications table, which Makerkit does by default).
+
+Remember to reset the database and run the migrations again:
+
+```bash
+pnpm --filter web supabase db reset
+```
 
 ### Adding a Realtime subscription with Supabase Realtime
 

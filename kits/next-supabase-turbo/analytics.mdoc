@@ -10,6 +10,24 @@ collapsed: true
 
 Makerkit provides a powerful and flexible Analytics API that integrates seamlessly with the App Events system. This API allows you to track user behavior and app usage easily and consistently across your SaaS application.
 
+{% sequence %}
+
+[Core Concepts of the Analytics API](#core-concepts-of-the-analytics-api)
+
+[Using the Analytics API](#using-the-analytics-api)
+
+[Integration with App Events](#integration-with-app-events)
+
+[Extending the Analytics API](#extending-the-analytics-api)
+
+[Extending the Analytics API](#extending-the-analytics-api)
+
+[Server Side Usage](#server-side-usage)
+
+[Best Practices](#best-practices)
+
+{% /sequence %}
+
 ## Core Concepts of the Analytics API
 
 The Analytics API is built around three main concepts:
@@ -20,7 +38,7 @@ The Analytics API is built around three main concepts:
 
 ### Using the Analytics API
 
-The Analytics API is available through the `analytics` object imported from `@kit/analytics`.
+The Analytics API is available through the `analytics` object imported from `@kit/analytics`, which runs exclusively on the client side.
 
 #### Identifying Users
 
@@ -101,6 +119,14 @@ export function useMyAnalytics() {
     },
   };
 }
+```
+
+## Server Side Usage
+
+If you need to use the Analytics API on the server side (provided your analytics provider is server side compatible), you can use the `analytics` object from the `@kit/analytics/server` package.
+
+```tsx
+import { analytics } from '@kit/analytics/server';
 ```
 
 ## Best Practices

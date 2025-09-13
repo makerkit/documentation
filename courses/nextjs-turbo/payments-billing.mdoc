@@ -546,7 +546,9 @@ One useful pattern for storing feature limits is to **define a table in your dat
 
 ### A. Defining the feature limits table
 
-Let's define a feature limits table in our database that maps each feature to its limit for each plan. We will add this table to the existing migrations in our project.
+Let's define a feature limits table in our database that maps each feature to its limit for each plan.
+
+Add the below SQL to the existing migration file in the `apps/web/supabase/migrations` directory that we created earlier:
 
 ```sql {% title="migrations/<timestamp>_support-schema.sql" %}
 -- public.plans: table for subscription plans
@@ -575,7 +577,11 @@ create policy select_plans
 
 For unlimited tickets, you can set the `max_tickets` to `-1`. This way, you can easily check if a plan has unlimited tickets by comparing the `max_tickets` to `-1`.
 
-You can copy/paste this SQL code into your Supabase Studio SQL runner so that's applied to your database without needing a rest.
+Let's reset the database and run the migrations again:
+
+```bash
+pnpm --filter web supabase db reset
+```
 
 Now, let's also re-generate the types for our database schema:
 
@@ -589,6 +595,12 @@ This will generate the types for the `plans` table in our database.
 
 Now that we have the `plans` table in our database, we can add the plans for our Support Tickets SaaS. We'll add the Free Plan and the Starter Plan with their respective feature limits.
 
+{% alert type="info" title="Seed Data for Development" %}
+**Note:** This is seed data for development/testing. You can either:
+1. Add it to your `apps/web/supabase/seed.sql` file (recommended for development)
+2. Run it directly in Supabase Studio's SQL editor
+{% /alert %}
+
 ```sql {% title="apps/web/supabase/seed.sql" %}
 -- insert plans
 insert into public.plans (variant_id, name, max_tickets)
@@ -596,8 +608,6 @@ values
   ('starter-plan', 'Starter Plan', 1000),
   ('pro-plan', 'Pro Plan', -1);
 ```
-
-You can copy/paste this SQL code into your Supabase Studio SQL runner to add the plans to your database.
 
 NB: the values 'starter-plan' and 'pro-plan' should correspond to the actual price IDs in your payment provider's dashboard. In development, these correspond to the ones you use in the Test mode.
 

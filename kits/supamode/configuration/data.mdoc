@@ -1,0 +1,76 @@
+---
+status: "published"  
+title: "Configuring Your Tables' Data"  
+label: "Data"  
+order: 4  
+description: "Learn how to customize the display, search, filter, sort, and edit settings for each column in your Supamode resource."  
+---
+
+When you sync a table from your database into Supamode, the system will automatically infer most column types and basic attributes. However, you can fine-tune exactly how each column behaves and appears in your admin UI by editing its settings.
+
+{% img src="/images/supamode/edit-column-metadata.webp" alt="Edit Column Modal" width="1450" height="1800" /%}
+
+## Display Name & Description
+
+Use the **Display Name** field to give your column a human-friendly label in the UI, and the **Description** textarea to provide context to your editors.  
+- **Display Name** overrides the raw column name (e.g. `first_name` → “First Name”).  
+- **Description** appears below the label in both list and detail views to clarify what data belongs here.
+
+## UI Data Type
+
+The **UI Data Type** dropdown controls how Supamode renders this field:  
+- **Plain Text** vs **Long Text** vs **Markdown** for character data  
+- **Boolean**, **Integer**, **Float**, **Date/Time**, **List**, etc.  
+- Pick the type that best matches your underlying column to enable the correct input controls, validation, and formatting in forms.
+- More details on this topic can be found in the [Data Types](./data-types) section.
+
+## Visibility
+
+Use the **Visible in Table** and **Visible in Detail** toggles to control where a column appears:
+
+- **Visible in Table**: When enabled, this column shows up in your resource’s list (table) view. Hide columns here to declutter long lists or surface only the most critical fields at a glance.
+- **Visible in Detail**: When enabled, this column is included on the record detail (form) page. Hide technical or read-only fields from the edit form to simplify the authoring experience.
+
+## Searchability
+
+The **Searchable** toggle lets you decide whether this column should be included in the global search index:
+
+- When **Searchable** is on, Supamode will index this column’s contents and include it in full-text searches.
+- Use this for title, slug, or any field where end users need to find records by keyword.
+- **Make sure todisable search on large text fields or internal metadata** to save indexing time and reduce noise in search results.
+
+## Filtering
+
+Enable **Filterable** to expose this column as a filter control in the table toolbar:
+
+- When on, a dropdown or input for this column appears in the list view, letting you narrow down records by exact values or ranges.
+- Ideal for boolean flags (e.g. “Published”), enums (e.g. “Status”), and date fields (e.g. “Published At”).
+- Turn off filtering on columns that are not relevant for filtering.
+
+## Sorting
+
+Use the **Sortable** toggle to allow list-view sorting by this column:
+
+- When **Sortable** is enabled, clicking the column header in the table view will sort records ascending or descending.
+- Sortable fields should generally be columns with clear ordering semantics: dates, numbers, and short text (like titles or names).
+- Disabling sorting on columns that are not relevant for sorting.
+
+## Editability
+
+The **Editable** toggle controls whether users can change this field’s value in the detail form:
+
+- When **Editable** is on, the field is rendered as an editable input in your record form.
+- Turn off editability for read-only or system-managed columns (e.g. IDs, timestamps, audit logs). This is done by default during indexing, but you can override it by enabling the **Editable** toggle.
+- Non-editable fields still appear if **Visible in Detail** is enabled, but in a read-only state.
+
+## Ordering
+
+Use the drag handle to the left of each row in the column configuration table to change the order that columns appear in your list and detail views:
+
+1. **Drag & Drop** the row up or down to reposition the column.  
+2. Columns at the top are shown first in the table and detail UI.  
+3. Reordering helps surface your most important fields in a logical reading order and ensures forms flow intuitively.
+
+---
+
+With these settings in place, you have full control over which columns your users see, how they find data, and how they navigate and edit your records. Click **Save Changes** to apply your configuration.

@@ -1,17 +1,168 @@
 ---
 status: "published"
-title: "Technical Details of Supamode"
-label: "Technical Details"
+title: "Technical Overview of Supamode"
+label: "Technical Overview"
 order: 2
-description: "A detailed look at the technical details of Supamode"
+description: "A detailed look at the technical details of Supamode. Learn how the application is built and how it works."
 ---
 
-The Supamode app is built as a [Turborepo](https://turbo.build) monorepo, built on top of modern, battle-tested and popular technologies.
+Supamode is a comprehensive admin dashboard for Supabase projects, making it easy for non-developers to manage the database's data. This document explains the high-level architecture to help you understand how Supamode works and deploy it with confidence.
 
-The application is an SPA using React, backed by a Hono API.
+## Overview
 
-1. **SPA**: React Router 7 as client-side router
-2. **API**: Hono as Backend API
-3. **UI**: Shadcn UI for the UI components and Tailwind CSS for styling
-4. **ORM**: Drizzle for interacting with Supabase
-5. **Libraries**: React Query, Zod, Lucide React, Lexical, CodeMirror and other popular libraries
+Supamode consists of three main components:
+1. **React Frontend** (Vite + TypeScript) - The admin dashboard interface
+2. **Hono.js Backend API** - Type-safe API server with RPC capabilities  
+3. **Supabase Schema** - PostgreSQL with custom schema `supamode` for metadata and permissions
+
+## Architecture Diagram
+
+Below is a high-level architecture diagram of Supamode:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React App     │    │   Hono.js API   │    │   Supabase DB   │
+│   (Frontend)    │◄──►│   (Backend)     │◄──►│   PostgreSQL    │
+│                 │    │                 │    │                 │
+│ • Vite Build    │    │ • Type-safe RPC │    │ • Your Data     │
+│ • React Router  │    │ • Drizzle ORM   │    │ • Supamode      │
+│ • TanStack Query│    │ • Auth Handling │    │   Schema        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## How Supamode Indexes Your Tables
+
+### The Supamode Schema
+
+Supamode creates a dedicated `supamode` schema in your PostgreSQL database that contains metadata about your existing tables and columns. This schema includes:
+
+- **Table Metadata**: Information about which tables are visible in the admin panel
+- **Column Metadata**: Field types, display names, and visibility settings
+- **Permissions**: Role-based access control for tables and operations
+- **Audit Logs**: Track all changes made through the admin interface
+- **User Accounts**: Link Supabase Auth users to admin roles
+
+### Dynamic Table Discovery
+
+When you deploy Supamode:
+
+1. **Schema Introspection**: The system automatically discovers all tables and columns in your database using PostgreSQL's information schema
+2. **Metadata Storage**: Table and column information is stored in `supamode.table_metadata` and `supamode.column_metadata` tables
+3. **Permission Mapping**: Each table gets default permissions that can be customized per role
+4. **Syncing**: Schema changes can be synced to the admin interface with a simple button click.
+
+### Your Data Remains Untouched
+
+- Supamode **never modifies your existing schemas or data**
+- All metadata is stored separately in the `supamode` schema
+- Your application continues to work exactly as before
+- Supamode only adds read/write capabilities through the admin interface
+
+## Frontend Architecture
+
+### React Application (Vite)
+
+The frontend is a modern React application built with:
+
+- **Vite**: Fast build tool and development server
+- **React Router 7**: File-based routing with data loaders
+- **TypeScript**: Full type safety across the application
+- **Tailwind CSS v4**: Utility-first styling
+- **Shadcn/ui**: Consistent component library for the admin interface
+
+### Data Flow
+
+```
+User Interaction → React Component → TanStack Query → Hono RPC → Database
+                                  ↑
+                            Type-safe API calls
+```
+
+1. **User Actions**: Users interact with forms, tables, and buttons
+2. **React Components**: Handle UI state and user interactions
+3. **TanStack Query**: Manages server state, caching, and data fetching
+4. **Type-safe RPC**: Calls backend APIs with full TypeScript inference
+
+## Backend Architecture
+
+### Hono.js API Server
+
+The backend uses Hono.js, a fast web framework that provides:
+
+- **Type-safe RPC**: Client and server share the same TypeScript types
+- **Minimal Overhead**: Lightweight and performant
+- **Edge-ready**: Can deploy to various platforms (Node.js, Cloudflare Workers, etc.)
+
+### Service Layer Pattern
+
+```
+API Route → Service Class → Drizzle ORM → PostgreSQL
+```
+
+1. **API Routes**: Handle HTTP requests and validation
+2. **Service Classes**: Contain business logic and data operations
+3. **Drizzle ORM**: Type-safe database queries and migrations
+4. **PostgreSQL**: Your Supabase database with Row Level Security
+
+### Authentication & Security
+
+- **Supabase Auth**: Uses your existing Supabase authentication
+- **JWT Validation**: All API calls validate Supabase JWT tokens
+- **Row Level Security**: Database-level permissions protect your data
+- **Role-based Access**: Granular permissions for different user types
+
+## Database Security Architecture
+
+Supamode uses RLS to protect your data. It's a powerful feature that allows you to control access to your data based on the user's role.
+
+### Permission System
+
+- **Hierarchical Roles**: Admin, Manager, Editor, Viewer with different capabilities
+- **Table-level Permissions**: Control access to specific tables
+- **Column-level Permissions**: Hide sensitive fields from certain roles
+- **Operation Permissions**: Separate read, write, delete permissions
+
+### Audit logs
+
+Every action is logged:
+- Who performed the action
+- What data was changed
+- When the change occurred
+- IP address and user agent
+- Before/after values for updates
+
+## Deployment Architecture
+
+### Recommended Setup
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Vercel/Railway │    │  Vercel/Railway │    │   Supabase      │
+│   Frontend      │    │   Backend API   │    │   Database      │
+│                 │    │                 │    │                 │
+│ • Static Assets │    │ • Hono Server   │    │ • Supabase      │
+│ • React App     │    │ • Environment   │    │ • Auth          │
+│ • Edge Caching  │    │   Variables     │    │ • Storage       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+Vercel/Railway are fully supported, but you can deploy to any platform that supports Javascript/Docker applications, such as AWS, Fly.io, Digital Ocean, Cloudflare, etc.
+
+## Security & Compliance
+
+### Data Protection
+
+- **No Data Export**: Supamode doesn't store or export your data, it's all in your database.
+- **Audit Logging**: Complete trail of all administrative actions
+- **Role Separation**: Principle of least privilege enforced
+
+## Benefits of This Architecture
+
+1. **Non-intrusive**: Doesn't modify your existing database schema
+2. **Secure**: Multiple layers of security and access control
+3. **Scalable**: Each component can scale independently
+4. **Type-safe**: Full TypeScript coverage prevents runtime errors
+5. **Auditable**: Complete trail of all administrative actions
+6. **Flexible**: Customizable permissions and user interface
+7. **Maintainable**: Clean separation of concerns and modern tooling
+8. **Tests**: Large test suite to ensure reliability, both with Playwright and PgTap.

@@ -1,0 +1,108 @@
+---
+status: "published"
+title: "Configuring Data Types in Supamode"
+label: "Data Types"
+order: 5
+description: "Learn how to set up data types for your columns to get the best possible UX out of Supamode"
+---
+
+When Supamode syncs your table, it uses PostgreSQL metadata to pick a sensible default control for each column (e.g. a date picker for `timestamp` fields, a switch for `boolean`, etc.). 
+
+The **UI Data Type** dropdown in the column editor lets you override that default and choose exactly how your editors see and edit each value.
+
+Setting the correct UI data type is **essential to get the best user experience in Supamode** - since it will render the correct input control, validation rules, and table formatting.
+
+## Choosing a UI Data Type
+
+Open the **Edit Column** modal and find **UI Data Type**:
+
+{% img src="/images/supamode/ui-data-type-dropdown.png" alt="UI Data Type dropdown" width="1450" height="1800" /%}
+
+Here’s what each option does:
+
+### Plain Text
+
+A single-line text input.
+
+* Ideal for short strings (names, titles, slugs).
+* Renders as a truncated label in tables and as an `<input type="text">` in forms.
+
+### Long Text
+
+A multi-line textarea.
+
+* Good for body content, descriptions, or any free-form text.
+* Renders as a `<textarea>` with automatic resize in forms.
+
+### Email
+
+Validates and formats as an email address.
+
+* Renders as `<input type="email">`.
+* In the table, you get a copy-to-clipboard icon plus a mail icon.
+
+### URL
+
+Validates and formats as a URL.
+
+* Renders as `<input type="url">`.
+* In the table, you see a link icon and can copy the URL.
+
+### Color
+
+Renders a color-picker input.
+
+* Backed by `<input type="color">` plus a swatch preview.
+* Stored as a hex/RGB string.
+
+### Markdown
+
+Renders a rich Markdown editor.
+
+* Supports live preview and basic toolbar (bold, links, lists).
+* Stored as a raw Markdown string.
+
+### HTML
+
+Renders a WYSIWYG HTML editor.
+
+* Full rich-text editing (formatting, links, embeds).
+* Stored as sanitized HTML.
+
+### Address
+
+Breaks out into separate sub-fields: street, city, state, zip, country.
+
+* Persists as a JSON object.
+* Editors get individual inputs for each part of the address.
+
+### Phone
+
+Renders as `<input type="tel">`.
+
+* Basic validation for phone patterns.
+* Copy-to-clipboard support in the table.
+
+### File / Image / Audio / Video
+
+Unified file uploader for any media.
+* Integrates with Supabase's storage.
+* Drag & drop or browse your file.
+* Stores an object with URL, filename, size, etc.
+* Renders previews for images and video thumbnails.
+
+### Currency / Percentage (advanced)
+
+* **Currency** lets you pick a currency code (USD, EUR, etc.) and formats values accordingly.
+* **Percentage** adds a “%” suffix in both table and form.
+
+---
+
+#### When to override the inferred type
+
+* **Data requires special formatting** (e.g. slugs as URLs, colors as hex swatches).
+* **You need validation** (email/URL patterns, numeric ranges).
+* **Rich editing** (Markdown or HTML) for content fields.
+* **Compound data** (addresses, file metadata).
+
+Once you’ve picked the right UI Data Type, hit **Save Changes**. Supamode will render your column with the matching input control, validation rules, and table formatting—giving your editors a flawless experience every time.

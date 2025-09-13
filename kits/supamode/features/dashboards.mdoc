@@ -1,0 +1,304 @@
+---
+status: "published"
+title: "Custom Dashboards"
+label: "Dashboards"
+order: 0
+description: "Learn how to create custom dashboards to visualize your data and share them with your team"
+---
+
+Custom Dashboards in Supamode provide a powerful way to create personalized, interactive analytics interfaces tailored to your specific data visualization needs. Instead of being limited to pre-built views, you can build your own dashboards with drag-and-drop widgets, custom layouts, and real-time data visualization.
+
+## Getting Started
+
+### Creating Your First Dashboard
+
+When you first access the Dashboards section, you'll see an empty state that encourages you to create your first dashboard.
+
+{% img src="/images/supamode/empty-dashboards.webp" alt="Empty Dashboards State" width="1920" height="1080" /%}
+
+Click the **"Create Dashboard"** button to start building your first dashboard.
+
+### Dashboard Creation Dialog
+
+The dashboard creation dialog allows you to set up your dashboard with a name and optional role-based sharing permissions.
+
+{% img src="/images/supamode/create-dashboard-dialog.webp" alt="Create Dashboard Dialog" width="1920" height="1080" /%}
+
+**Key features:**
+- **Name**: Give your dashboard a descriptive name (e.g., "Users", "Sales Analytics", "System Health")
+- **Share with Roles**: Optionally share the dashboard with specific roles like "Customer Support" with defined permission levels (View, Edit)
+- **Role Management**: Add multiple roles with different access levels using the "Add Role" button
+
+## Widget Types
+
+Supamode supports three main types of widgets, each designed for different data visualization needs:
+
+### 1. Chart Widgets
+
+Chart widgets are perfect for displaying trends and comparisons with various visualization types including bar charts, line graphs, and area charts. They're ideal for showing data like sales over time, user growth, or performance metrics.
+
+#### Chart Type Selection
+
+When creating a chart widget, you'll first choose what story you want to tell with your data:
+
+{% img src="/images/supamode/dashboard-chart-widget.webp" alt="Chart Widget Type Selection" width="1920" height="1080" /%}
+
+**Available Chart Types:**
+- **Compare values (Bar chart)**: Best for comparing categories side-by-side (e.g., Sales by region, products by rating, users by plan)
+- **Show trends over time (Line chart)**: Perfect for tracking changes and patterns (e.g., Revenue growth, user signups over months, website traffic)
+- **Show cumulative totals (Area chart)**: Great for showing accumulation or composition (e.g., Total revenue over time, stacked user types, budget vs spending)
+
+Each chart type includes helpful examples and use cases to guide your selection.
+
+#### Chart Configuration
+
+Once you've selected your chart type, you'll configure the specific data relationships:
+
+{% img src="/images/supamode/dashboard-chart-widget-config.webp" alt="Chart Widget Configuration" width="1920" height="1080" /%}
+
+**Chart Configuration Options:**
+
+**What story do you want to tell?**
+- Select from predefined chart types like "Show trends over time (Line chart)"
+- Each type is optimized for specific data storytelling scenarios
+
+**What data do you want to show?**
+- **What do you want to compare?**: Choose the category field (e.g., "Created At" for time-based comparisons)
+- **What do you want to measure?**: Select the metric to visualize (e.g., "Count of records")
+
+**Chart Value Calculations:**
+- **Count how many**: Count the number of records in each category (recommended for most use cases)
+- **Advanced Options**: Select specific columns for more complex calculations
+- **Intelligent Guidance**: The system explains that "Only 'Count' works when measuring all records" and suggests selecting specific columns for additional options
+
+**Chart Preview:**
+- **"This will show"** section provides a preview of what your chart will display
+- Real-time feedback helps ensure your configuration produces the desired visualization
+
+This guided approach makes it easy to create meaningful charts without needing to understand complex data visualization concepts.
+
+### 2. Metric Widgets 
+
+Metric widgets display single key performance indicators (KPIs) calculated from your data. Examples include "Total Users: 1,247", "Average Order Value: $85.50", or "New Sign-ups This Month: 342". These widgets can include trend comparison capabilities.
+
+### 3. Table Widgets
+
+Table widgets show your data in rows and columns, similar to the powerful tables in the Resources pages. They include sorting, filtering, and detailed record viewing capabilities - perfect for displaying lists of customers, orders, or any detailed records.
+
+#### Table Widget Configuration
+
+Table widgets offer extensive customization options to display exactly the data you need:
+
+{% img src="/images/supamode/dashboard-table-widget.webp" alt="Table Widget Configuration" width="1920" height="1080" /%}
+
+**Table Configuration Features:**
+
+**Data Source Selection:**
+- **Schema & Table**: Choose from your database schemas and tables (e.g., "public" schema, "Posts" table)
+- **Flexible Data Access**: Connect to any table in your database for comprehensive data display
+
+**Column Selection:**
+- **All Columns by Default**: Initially displays all available columns from the selected table
+- **Selective Display**: Click on specific columns to show only the ones you need
+- **Column Types**: View column metadata including:
+  - **Id** (uuid): Unique identifiers
+  - **Slug** (character varying): URL-friendly identifiers
+  - **Title** (character varying): Text content
+  - **Status** (user-defined): Custom status fields
+  - **Content** (text): Large text content
+- **Smart Filtering**: Easily identify and select the most relevant columns for your use case
+
+**Sorting Options:**
+- **Optional Sorting**: Configure default sort order for your table
+- **Sort by Column**: Choose any column as the primary sort field
+- **Flexible Display**: Option to display with no default sorting
+
+#### Multiple Widgets Dashboard
+
+Supamode dashboards truly shine when you combine multiple widget types to create comprehensive analytical views:
+
+{% img src="/images/supamode/dashboard-multiple-widgets.webp" alt="Dashboard with Multiple Widgets" width="1920" height="1080" /%}
+
+**Powerful Multi-Widget Capabilities:**
+
+**Chart and Table Combination:**
+- **"Posts over time" Chart Widget**: Line chart showing posting trends with real-time data updates
+- **"Posts Table" Widget**: Comprehensive table view with full Data Explorer functionality
+
+**Table Widget Power Features:**
+- **Search Functionality**: Built-in search bar to quickly find specific records
+- **Multiple Columns**: Display comprehensive data including:
+  - **Id**: Unique record identifiers with copy functionality
+  - **Title**: Full record titles (e.g., "Hello Supabase", "PostgreSQL Tips")
+  - **Slug**: URL-friendly identifiers
+  - **Content Markdown**: Preview of content with markdown formatting
+  - **Status**: Visual status indicators (Published, Draft) with color coding
+  - **Author**: User information with external links
+- **Pagination**: Handle large datasets with "1 of 201" style pagination controls
+- **Interactive Elements**: Clickable elements and external link indicators
+- **Real-time Updates**: Both widgets show "Updated less than a minute ago" timestamps
+
+**Dashboard Integration Benefits:**
+- **Unified View**: Combine high-level trends (charts) with detailed data (tables) in one interface
+- **Data Explorer Functionality**: Table widgets provide the same powerful capabilities as the standalone Data Explorer
+- **Cross-Widget Insights**: Correlate chart trends with detailed table data for comprehensive analysis
+- **Efficient Workflow**: Switch between overview and details without leaving the dashboard
+
+This multi-widget approach transforms your dashboard into a comprehensive data analysis workspace, combining the best of both visualization and detailed data exploration in a single, unified interface.
+
+## Creating Widgets
+
+### Widget Creation Wizard
+
+The widget creation process is guided through a 4-step wizard that makes it easy to build exactly the widget you need.
+
+{% img src="/images/supamode/create-widget.webp" alt="Create Widget Type Selection" width="1920" height="1080" /%}
+
+**Step 1: Widget Information**
+- **Widget Name**: Provide a descriptive name (e.g., "User Registration Stats")
+- **Widget Type**: Choose between Chart Widget (selected), Metric Widget, or Table Widget
+- Each type includes helpful descriptions of their use cases
+
+### Data Source Configuration
+
+**Step 2: Data Source**
+Configure which data your widget will display by selecting:
+- **Schema**: Choose the database schema (e.g., "public")
+- **Table**: Select the specific table (e.g., "Posts")
+
+{% img src="/images/supamode/metric-widget-config.webp" alt="Metric Widget Configuration" width="1920" height="1080" /%}
+
+For Metric widgets, you'll also configure:
+- **Calculation Type**: Choose what to calculate (Count records, Sum values, Average, etc.)
+- **Trend Comparison**: Enable to show change over time periods
+- **Number Formatting**: Choose how to display the metric value
+
+### Data Filters
+
+**Step 3: Data Filters**
+Apply filters to focus your widget on specific data subsets. The system provides intelligent performance recommendations.
+
+{% img src="/images/supamode/widget-filters.webp" alt="Widget Data Filters" width="1920" height="1080" /%}
+
+**Features:**
+- **Performance Tips**: Automatic suggestions like adding time filters ("last 30 days") to improve query performance
+- **Filter Options**: Add filters for any column with appropriate operators
+- **Date Filters**: Built-in support for relative date ranges (Last 30 days, This month, etc.)
+- **Clear Filters**: Easy option to remove all applied filters
+
+### Preview and Create
+
+**Step 4: Preview & Create**
+Before finalizing, preview your widget with live data to ensure it displays exactly what you expect.
+
+{% img src="/images/supamode/widget-preview.jpg" alt="Widget Preview" width="1920" height="1080" /%}
+
+The preview shows:
+- **Widget Preview**: Live data display with metric/table/chart view options
+- **Basic Information**: Confirms widget name, type, and configuration
+- **Data Source**: Displays schema, table, and active filter count
+- **Widget Configuration**: Shows metric calculation details
+
+## Dashboard Management
+
+### Dashboard Tabs and Navigation
+
+Supamode allows you to create multiple dashboards and organize them using tabs for easy navigation between different views. Each dashboard can focus on different aspects of your data or serve different audiences.
+
+{% img src="/images/supamode/dashboard-tabs.webp" alt="Dashboard Tabs Navigation" width="1920" height="1080" /%}
+
+**Dashboard Tab Features:**
+- **Multiple Dashboards**: Create separate dashboards like "Posts" and "Users" for different data sets
+- **Tab Navigation**: Easily switch between dashboards using the tab interface
+- **Dashboard Actions**: Right-click or use the dropdown menu to access dashboard management options:
+  - **Rename Dashboard**: Update the dashboard name to better reflect its content
+  - **Delete Dashboard**: Remove dashboards you no longer need
+- **Empty State Guidance**: New or empty dashboards show helpful guidance with "Add widgets to start visualizing your data"
+- **Quick Widget Addition**: Each dashboard has its own "Add Widget" button for easy expansion
+
+This tabbed interface makes it simple to organize different analytical views while maintaining a clean, professional interface.
+
+### Dashboard Grid Layout
+
+Once created, your dashboard uses a fully customizable grid layout that persists across sessions and is completely responsive.
+
+{% img src="/images/supamode/dashboard-editing.webp" alt="Dashboard in Edit Mode" width="1920" height="1080" /%}
+
+**Edit Mode Features:**
+- **Discard Changes**: Abandon any unsaved modifications
+- **Exit & Save**: Save your layout and exit edit mode
+- **Grid Manipulation**: Drag and resize widgets as needed
+- **Real-time Updates**: Widgets show live data with update timestamps
+
+### Viewing Dashboards
+
+In view mode, your dashboard displays clean, professional widgets with live data.
+
+{% img src="/images/supamode/dashboard-with-widget.webp" alt="Dashboard with Widget" width="1920" height="1080" /%}
+
+**View Mode Features:**
+- **Add Widget**: Quickly add new widgets to expand your dashboard
+- **Edit**: Enter edit mode to modify layout or widget configurations
+- **Live Data**: Widgets automatically update with fresh data
+- **Responsive Design**: Layout adapts to different screen sizes
+
+### Widget Actions and Management
+
+Each widget includes a context menu with powerful management options for real-time control and customization:
+
+{% img src="/images/supamode/dashboard-widget-actions.webp" alt="Widget Actions Menu" width="1920" height="1080" /%}
+
+**Widget Action Menu Features:**
+
+**Refresh Data**
+- **Manual Refresh**: Force immediate data refresh for any widget
+- **Cache Override**: Bypass cached data to get the most current information
+- **Real-time Control**: Useful when you need instant data updates for critical decisions
+- **Performance Optimization**: Widgets use intelligent caching to improve performance while allowing manual refresh when needed
+
+**Edit Widget**
+- **Configuration Changes**: Modify widget settings, data sources, and filters
+- **Visual Updates**: Adjust chart types, column selections, or metric calculations
+- **Live Preview**: See changes immediately as you modify widget settings
+- **Non-destructive Editing**: Test changes without losing your original configuration
+
+**Delete Widget**
+- **Clean Removal**: Safely remove widgets you no longer need
+- **Layout Adjustment**: Dashboard grid automatically adjusts when widgets are removed
+- **Confirmation Process**: Prevent accidental deletion with user confirmation
+
+**Smart Caching System:**
+- **Automatic Caching**: Widgets cache data to provide fast loading times
+- **Intelligent Updates**: System automatically refreshes data at appropriate intervals
+- **On-Demand Refresh**: Users can force refresh when immediate data is critical
+- **Performance Balance**: Optimal balance between speed and data freshness
+
+This widget management system ensures that your dashboards remain both performant and current, giving you control over when to prioritize speed (cached data) versus freshness (manual refresh).
+
+## Sharing and Collaboration
+
+Custom Dashboards support role-based sharing, allowing you to collaborate with team members while maintaining appropriate access controls.
+
+**Sharing Features:**
+- **Role-based Access**: Share with specific roles (e.g., Customer Support, Management)
+- **Permission Levels**: Set View or Edit permissions for different roles
+- **Team Collaboration**: Multiple users can view and interact with shared dashboards
+- **Access Control**: Maintain data security with granular permissions
+
+## Best Practices
+
+### Performance Optimization
+- Add time-based filters (e.g., "last 30 days") to improve query performance
+- Use specific filters to reduce dataset size for large tables
+- Monitor widget update times and optimize slow-loading widgets
+
+### Dashboard Design
+- Group related widgets logically
+- Use consistent naming conventions for widgets and dashboards
+- Consider your audience when designing shared dashboards
+- Balance information density with readability
+
+### Data Management
+- Regularly review and update filters to ensure relevant data
+- Use descriptive widget names that clearly indicate their purpose
+- Consider creating separate dashboards for different use cases or audiences

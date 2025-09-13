@@ -1,0 +1,47 @@
+---
+status: "published"
+title: "Configuring Storage in Supamode"
+label: "Storage"
+order: 6
+description: "Learn how to configure the storage of your files in Supamode and how to use it in your application."
+---
+
+Supamode integrates with Supabase's storage to provide a seamless experience for your users.
+
+## Configuring Storage Data Types
+
+In the previous section, we saw how to configure the data types of the columns in your tables. Whenever you configure a data type that is a file, image, audio, or video, Supamode will automatically connect the column to Supabase's storage, so that it will insert it into the storage bucket that you have configured.
+
+{% img src="/images/supamode/storage-file-configuration.webp" alt="Storage Data Types" width="1450" height="1800" /%}
+
+## Bucket Name
+
+The first thing you need to do is to configure the bucket name in which you want to store the files. This depends on the bucket name that you have configured in Supabase and must be set up in Supabase before you can use it in Supamode.
+
+## Storage Path Template
+
+The storage path template is the path in which the files will be stored in the storage bucket. It is a template that will be replaced with the actual data when the file is inserted.
+
+You can build a dynamic path template by using the following variables:
+
+- `{{timestamp}}`: The current timestamp
+- `{{filename}}`: The filename of the file
+- `{{extension}}`: The extension of the file
+
+In addition, you can use any column name from the table to build the path template. For example, if you have a column called `user_id` and you want to store the files in the `users/{{user_id}}` folder, you can set the storage path template to `users/{{user_id}}`.
+
+**Important**: if the template doesn't provide an extension in the template, it's assumed the path is a folder and therefore the original filename will be used.
+
+For maximum flexibility, always specify filename and extension in the template:
+
+```
+users/{{user_id}}/{{filename}}.{{extension}}
+```
+
+### Max File Size
+
+This is a client-side only check that will prevent the user from uploading a file that is larger than the configured max file size. The same setting must be configured in Supabase's storage settings to also validate the file size on the server-side.
+
+### Replace Existing Files
+
+When enabled, the file will be replaced if it already exists in the storage bucket.

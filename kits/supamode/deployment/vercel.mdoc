@@ -1,0 +1,69 @@
+---
+status: "published"
+title: "Deploying Supamode to Vercel"
+label: "Vercel"
+order: 5
+description: "Learn how to deploy Supamode to Vercel"
+---
+
+We provide first-class support for deploying Supamode to Vercel.
+
+To deploy Supamode to Vercel, you have to connect your Supamode project to your Vercel account and create two projects using the same repository:
+
+1. **Vite APP**: This is the main project that will be deployed to Vercel.
+2. **Hono API**: This is the API project that will be deployed to Vercel.
+
+Each project has its own `vercel.json` file that defines the build and deployment process.
+
+### Connecting your Supamode project to your Vercel account
+
+For each project, you have to:
+
+1. Go to the [Vercel dashboard](https://vercel.com/dashboard) and click on "New Project".
+2. Select "Import" and then "Import Git Repository".
+3. Enter the URL of your Supamode repository and click "Import".
+4. Wait for Vercel to build your project.
+5. Once the build is complete, you can access your Supamode project at the URL provided by Vercel.
+6. Set `apps/api` as the root directory for the API project, and set `apps/app` as the root directory for the Vite APP project.
+
+{% alert type="warning" %}
+Make sure the Framework Preset is set to "Other" for the API project. Vercel may prefill it with "Hono" which is not correct for our setup.
+{% /alert %}
+
+### Environment variables
+
+Please set the required environment variables for your project.
+
+#### Client environment variables
+
+Please refer to the [Environment variables](./frontend) section for the list of environment variables to set in the Vite APP project.
+
+#### Server environment variables
+
+Please refer to the [Environment variables](./backend) section for the list of environment variables to set in the Hono API project.
+
+### Drizzle Connection String
+
+Please make sure to set the Drizzle connection string in the environment variables. To find the connection string, you can go to the Supabase Project, click on "Connect" in the top header, and then click on "ORM" and choose "Drizzle".
+
+Choose the "Use Shared connection pooler (supports both IPv4/IPv6)" option. This is because Vercel only supports IPv4.
+
+Then, you can copy the connection string and set it in the environment variables of the Hono API project.
+
+### Setting the Proxy URL in the Vite APP project
+
+At `apps/app/vercel.json`, you need to replace the `<api-project-url>` (provided as an example) with the URL of the Hono API project that you deployed in Vercel.
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "<api-project-url>/:path*"
+    },
+    { "source": "/:path*", "destination": "/" }
+  ]
+}
+```
+
+NB: You need to replace `<api-project-url>` with the URL of the Hono API project that you deployed in Vercel.

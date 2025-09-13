@@ -1,0 +1,45 @@
+---
+status: "published"
+title: "Deploying Supamode"
+label: "Overview"
+order: -1
+description: "Learn how to deploy your Supamode application"
+---
+
+Supamode is a modular application that can be deployed in a number of different ways.
+
+Supamode has two main components:
+
+- **API**: The Supamode backend built with [Hono](https://hono.dev/)
+- **App**: The Supamode frontend built with Vite and React Router 7 as a single-page application
+
+You can either deploy the API and App separately or together. We provide three first-class deployment options (and more are coming soon):
+
+1. [Docker](./docker.mdoc): Deploy the Supamode API and App together using the Supamode Docker image. This allows you to deploy Supamode to any platform that supports Docker, such as AWS, Google Cloud, or DigitalOcean, Fly.io, and soon Cloudflare Containers.
+2. [Vercel](./vercel.mdoc): Deploy the Supamode API and App together using [Vercel](https://vercel.com/)
+3. [Railway](./railway.mdoc): Deploy the Supamode API and App together using [Railway](https://railway.app/)
+
+You can also deploy Supamode to any other hosting providers such as Render, Netlify, and others, but we do not officially support them. Generally speaking, you can deploy Supamode to any platform that supports server-side JavaScript, such as Node.js, Bun, Deno, Supabase Edge Functions, and Cloudflare Workers - which makes Supamode deployable pretty much anywhere.
+
+## Proxying requests to the API
+
+Deploying Supamode is very straightforward; the only thing to keep in mind is that we need to proxy requests to the API from the App. Our existing deployment options do this for you, but if you're deploying Supamode to a different platform, you'll need to proxy requests to the API from the App.
+
+Basically, requests made in the Vite frontend to the `/api/*` routes need to be proxied to the API. For example, in Nginx, we can do this by adding the following to the `location /api/` block:
+
+```
+location /api/ {
+    # Allow only common REST verbs
+    if ($request_method !~ ^(GET|HEAD|POST|PUT|PATCH|DELETE|OPTIONS)$) {
+        return 405;
+    }
+
+    # Remove /api prefix before forwarding (matches your Vite config)
+    rewrite ^/api/(.*)$ /$1 break;
+
+    # Proxy to backend (set via environment variable)
+    proxy_pass ${API_URL};
+}
+```
+
+This will proxy requests to the API from the App to the API - and you can apply the same logic to any other proxy server.

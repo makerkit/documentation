@@ -1,0 +1,68 @@
+---
+status: "published"
+title: "Deploying Supamode to Railway"
+label: "Railway"
+order: 4
+description: "Learn how to deploy Supamode to Railway"
+---
+
+[Railway](https://railway.com?referralCode=RmCO-Z)* is a platform that allows you to deploy your Supamode project to a cloud server. It's a great way to get started with Supamode, as it provides a simple way to deploy the full project (backend and frontend).
+
+### Push to your own Github repository
+
+The first step is to push your own Supamode copy to a private repository on GitHub. 
+
+### Create a new project on Railway
+
+You can then create a new project on Railway and link it to your GitHub repository.
+
+### Set up the Project
+
+Railway will automatically build and deploy your project thanks to the Dockerfile in the root of the Supamode repository. However, you need to set up the environment variables for your project. 
+
+#### Create a public endpoint to your project
+
+One of the variables requires the URL to the project, which you don't have yet because you haven't created the project yet (unless you're deploying to a custom domain).
+
+Make sure to map the endpoint to port 80, which is where Nginx will listen for requests and serve the frontend.
+
+### Setup API proxy
+
+You need to set up a proxy to the API running at port 3000. To do so, click on "Add TCP Proxy" and set the following port: 3000.
+
+Now, copy the URL of the proxy and set it as the `API_URL` environment variable.
+
+### Set up the environment variables
+
+After creating a public endpoint in your Railway project, you can set up the environment variables for your project:
+
+```bash
+# Frontend variables / Build time
+VITE_SITE_URL="https://<your-project-name>.up.railway.app"
+VITE_SUPABASE_URL="https://<your-supabase-project-name>.supabase.co"
+VITE_SUPABASE_ANON_KEY="ey****"
+
+# Backend variables / Runtime
+SERVICE_ROLE_KEY="ey****"
+APP_URL="https://<your-project-name>.up.railway.app"
+SUPABASE_URL="https://<your-supabase-project-name>.supabase.co"
+SUPABASE_ANON_KEY="ey****"
+SUPABASE_DATABASE_URL="postgresql://postgres.****:****@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+API_URL="<proxy-url>"
+```
+
+The variables prefixed with `VITE_` are used by the frontend, while the others for the backend.
+
+If you're using Turnstile Captcha, also add the following variables:
+
+```bash
+VITE_CAPTCHA_SITE_KEY="0x4AAAAAA"
+CAPTCHA_SECRET_TOKEN="0x4AAAAAA"
+```
+
+### Deploy the schema to your Supabase project
+
+Once set up, make sure to redeploy your project. If you haven't done yet, make sure to [deploy the schema to your Supabase project](./schema).
+
+---
+* The link above contains a referral code.

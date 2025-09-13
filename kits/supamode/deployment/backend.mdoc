@@ -1,0 +1,127 @@
+---
+status: "published"
+title: "Deploying the Supamode backend"
+label: "Backend"
+order: 1
+description: "Learn how to deploy your Supamode backend"
+---
+
+The Supamode backend uses [Hono](https://hono.dev/) as its framework. 
+
+Hono can be deployed to virtually any platform that runs server-side JavaScript, such as Node.js, Bun, Deno, Supabase Edge Functions, and Cloudflare Workers - which makes Supamode deployable pretty much anywhere.
+
+In terms of hosting providers, we recommend easy-to-use platforms like [Vercel](https://vercel.com/) and [Railway](https://railway.app/) - however, you can also deploy to any platform that supports server-side JavaScript.
+
+## Environment variables
+
+The following environment variables are required to run the Supamode backend. Please make sure to set them in your hosting platform's environment variables:
+
+```bash
+APP_URL=http://localhost:5173
+SUPABASE_URL=http://localhost:54321
+SUPABASE_ANON_KEY=
+SERVICE_ROLE_KEY=
+# Grab this from the Supabase Settings -> Connect -> ORM -> Drizzle
+SUPABASE_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
+```
+
+Let's go through each of these variables in more detail:
+
+### APP_URL
+
+This is the URL of your Supamode frontend, as you've defined it in the `VITE_SITE_URL` environment variable in your Supamode frontend.
+
+### SUPABASE_URL
+
+The URL of your Supabase project. This is used to connect to your Supabase project and it's the exact same URL as the one you use to connect to your Supabase project in your code.
+
+### SUPABASE_ANON_KEY
+
+The anonymous key of your Supabase project. This is used to connect to your Supabase project. This is the same key as the one you use to connect to your Supabase project in your code.
+
+### SERVICE_ROLE_KEY
+
+The service role key of your Supabase project. This is used to connect to your Supabase project as the service role. This is the same key as the one you use to connect to your Supabase project in your code.
+
+### SUPABASE_DATABASE_URL
+
+This is the connection string to your Supabase database that Drizzle uses to connect to your Supabase database. You find this in the Supabase Settings.
+
+This value may need the password to be escaped using the `encodeURIComponent` function, as it may contain special characters and can break the connection string.
+
+## Deploying the Supamode backend
+
+We provide various commands to run Supamode with various configurations:
+
+### Running the backend with Node.js
+
+To run the backend with Node.js, you can run the following commands:
+
+First, build the backend:
+
+```
+pnpm --filter api run build
+```
+
+Then, run the Node.js API using the built files:
+
+```bash
+pnpm run start
+```
+
+### Running the backend with Bun
+
+To run the backend with Bun, you can run the following command:
+
+```bash
+pnpm run dev:bun
+```
+
+### Running the backend with other platforms
+
+[Hono](https://hono.dev) provides a lot of information on how to deploy Hono
+applications to various platforms. Please check out the [Hono documentation]
+(https://hono.dev/docs/getting-started/basic) for more information as to how
+to deploy the Hono API to your preferred platform.
+
+## Proxying the API
+
+Using a proxy is required for passing cookies to the API. Below are some examples of how to proxy the API to your preferred platform.
+
+### Vite (development only)
+
+In Vite (during development), we use the `proxy` option to proxy the API to the backend.
+
+This will automatically rewrite the path from `/api/...` to `http://localhost:3000/...` once the request is made to the API server. The API server runs at port 3000 by default, but the front-end will call the API at `/api/...`.
+
+```ts
+proxy: {
+    '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        // rewrite the path to remove the /api prefix once the request is made to the API server
+    rewrite: (path) => path.replace(/^\/api/, ''),
+},
+```
+
+### Docker
+
+The Docker image uses Nginx to proxy the API. If you deploy your Supamode instance using the provided Docker image, this is already configured for you.
+
+### Nginx
+
+We provide a simple Nginx configuration file in the `apps/api/nginx.conf.template` file. You can use it to proxy the API to your preferred platform. 
+
+It is used by default when using Supamode's Docker image.
+
+### Vercel
+
+If you deploy your Supamode frontend to Vercel, you can proxy the API to your Supamode backend using [Vercel's proxy feature](https://vercel.com/guides/vercel-reverse-proxy-rewrites-external).
+
+### Netlify
+
+If you use Netlify to deploy your Supamode frontend, you can proxy the API to your Supamode backend using [Netlify's proxy feature](https://docs.netlify.com/routing/redirects/rewrites-proxies/).
+
+### Railway
+
+Railway uses Docker to deploy the Supamode backend. If you deploy your Supamode backend to Railway, this is already configured for you. For more information, please check out the [Railway documentation](./railway).

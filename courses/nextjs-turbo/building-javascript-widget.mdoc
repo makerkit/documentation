@@ -74,10 +74,10 @@ As you may have noticed, we have been using a monorepo structure to manage our N
 
 Since our component needs dependencies (such as Rollup and all its dependencies) and will be fairly decoupled from the main project, it makes sense to create a new package for it. We can still use the UI components from the main project, but the widget will be a standalone package.
 
-To create a new package, we will use the `turbo gen package` command. This command will create a new package in the `packages` directory.
+To create a new package, we will use the `pnpm turbo gen package` command. This command will create a new package in the `packages` directory.
 
 ```bash
-turbo gen package
+pnpm turbo gen package
 ```
 
 Please follow the prompts to create a new package. You can name the package `ticket-widget`, and you can skip the dependencies prompt for now.
@@ -1043,7 +1043,7 @@ Finally, we create the `index.tsx` file that will render the `WidgetContainer` c
 ```tsx {% title="packages/ticket-widget/src/index.tsx" %}
 import { Suspense } from 'react';
 
-import { hydrateRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 
 import Widget from './components';
 import { IFrame } from './components/iframe';
@@ -1066,23 +1066,27 @@ function onReady() {
   try {
     const element = document.createElement('div');
     const accountId = getAccountId();
+    const root = createRoot(element);
 
-    const component = (
-      <IFrame>
-        <Suspense fallback={null}>
-          <style suppressHydrationWarning>{styles}</style>
-          <Widget accountId={accountId} />
-        </Suspense>
-      </IFrame>
-    );
-
-    hydrateRoot(element, component);
+    root.render(<Component accountId={accountId} />);
 
     document.body.appendChild(element);
   } catch (error) {
     console.warn(`Could not initialize Widget`);
     console.warn(error);
   }
+}
+
+
+function Component({ accountId }: { accountId: string }) {
+  return (
+    <IFrame>
+      <Suspense fallback={null}>
+        <style suppressHydrationWarning>{styles}</style>
+        <Widget accountId={accountId} />
+      </Suspense>
+    </IFrame>
+  );
 }
 
 function getAccountId() {
@@ -1160,7 +1164,7 @@ For simplicity, here is the `package.json` file that you can replace:
   "scripts": {
     "clean": "rm -rf .turbo node_modules",
     "lint": "eslint .",
-    "format": "prettier --check \"**/*.{mjs,ts,md,json}\"",
+    "format": "prettier --check \"src/**/*.{mjs,ts,md,json}\"",
     "typecheck": "tsc --noEmit",
     "build": "rollup -c ./rollup.config.mjs",
     "build:production": "rollup -c ./rollup.config.mjs --environment=production",
@@ -1180,25 +1184,25 @@ For simplicity, here is the `package.json` file that you can replace:
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-terser": "latest",
     "@rollup/plugin-typescript": "^11.1.6",
-    "@types/node": "^20.14.6",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "dotenv": "^16.3.1",
-    "eslint": "^8.57.0",
-    "lucide-react": "^0.399.0",
-    "prettier": "^3.3.2",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "@types/node": "^24.3.0",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "dotenv": "17.2.1",
+    "eslint": "^9.33.0",
+    "lucide-react": "^0.540.0",
+    "prettier": "^3.6.2",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "rollup": "^4.9.6",
     "rollup-plugin-inject-process-env": "latest",
     "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-postcss": "latest",
     "rollup-plugin-tsconfig-paths": "^1.5.2",
     "rollup-plugin-visualizer": "latest",
-    "tailwindcss": "3.4.4",
+    "tailwindcss": "4.1.12",
     "tailwindcss-animate": "^1.0.7",
     "tslib": "^2.8.1",
-    "typescript": "^5.5.2"
+    "typescript": "^5.9.2"
   },
   "prettier": "@kit/prettier-config"
 }
@@ -1317,6 +1321,40 @@ export default {
     visualizer(),
   ],
 };
+```
+
+Also create the PostCSS configuration file `postcss.config.js` in the `ticket-widget` package.
+
+```js {% title="packages/ticket-widget/postcss.config.js" %}
+module.exports = {
+    plugins: {
+        '@tailwindcss/postcss': {},
+    },
+};
+```
+
+Create a `global.d.ts` file with the following:
+
+```ts {% title="packages/ticket-widget/global.d.ts" %}
+declare module '*.css';
+```
+
+Update the `tsconfig.json` file to:
+
+```json {% title="packages/ticket-widget/tsconfig.json" %}
+{
+  "extends": "@kit/tsconfig/base.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "node_modules/.cache/tsbuildinfo.json",
+    "jsx": "react-jsx",
+    "paths": {
+      "tslib": ["node_modules/tslib/tslib.es6.d.ts"]
+    }
+  },
+  "include": ["./src"],
+  "files": ["./index.ts", "global.d.ts"],
+  "exclude": ["node_modules"]
+}
 ```
 
 We have to pass certain environment variables to the Rollup configuration. These variables will be used to configure the widget, such as the widget name and CSS URL.

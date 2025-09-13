@@ -1,0 +1,777 @@
+---
+status: "published"
+title: "Storage Explorer API"
+label: "Storage Explorer API"
+order: 2
+description: "Use the Storage Explorer API to fetch data from the storage with ease"
+---
+
+The `StorageService` is a comprehensive service for managing Supabase storage operations with security-first design.
+
+It provides secure file and folder management with comprehensive permission checks, path validation, and bulk operations support.
+
+## Table of Contents
+
+1. [Basic Setup](#basic-setup)
+2. [Core Features](#core-features)
+3. [Security & Permissions](#security--permissions)
+4. [Core Methods](#core-methods)
+5. [File Operations](#file-operations)
+6. [Folder Operations](#folder-operations)
+7. [URL Generation](#url-generation)
+8. [Batch Operations](#batch-operations)
+9. [Error Handling](#error-handling)
+10. [Examples](#examples)
+
+## Basic Setup
+
+```typescript
+import { createStorageService } from '@kit/storage-explorer';
+import { Context } from 'hono';
+
+// Create service instance
+const storageService = createStorageService(context);
+```
+
+## Core Features
+
+### Security-First Design
+- **Path Validation**: Prevents directory traversal attacks
+- **Permission Checks**: Validates user permissions before operations
+- **Bulk Permission Validation**: Optimized permission checking for multiple files
+- **Safety Limits**: Prevents abuse with file count limits
+
+### File Type Detection
+- **Automatic Classification**: Images, videos, documents, code, archives
+- **Preview Generation**: Signed URLs for private files
+- **Public URL Support**: Efficient URL generation for public buckets
+
+### Performance Optimizations
+- **Batch Processing**: Handles multiple files efficiently
+- **Parallel Operations**: Uses Promise.all for concurrent operations
+- **Smart Pagination**: Efficient content listing with metadata
+
+## Security & Permissions
+
+### Path Security
+
+All file paths are validated and normalized to prevent attacks:
+
+```typescript
+// Automatically validates and normalizes paths
+const result = await storageService.renameFile({
+  bucket: 'documents',
+  fromPath: 'folder/../sensitive.txt',  // Blocked
+  toPath: 'folder/document.txt'         // Allowed
+});
+```
+
+### Permission Model
+
+The service integrates with Supamode's permission system:
+
+- **Read (select)**: View files and folders
+- **Write (insert)**: Upload new files
+- **Update**: Rename and modify files
+- **Delete**: Remove files and folders
+
+### Bulk Permission Validation
+
+Optimized permission checking for multiple files:
+
+```typescript
+// Efficiently validates permissions for multiple files
+const permissions = await storageService.getUserPermissions({
+  bucket: 'documents',
+  path: 'folder/'
+});
+```
+
+## Core Methods
+
+### 1. Get Storage Buckets
+
+Retrieve all storage buckets the user has access to.
+
+```typescript
+async getBuckets(): Promise<Bucket[]>
+```
+
+**Returns:**
+```typescript
+interface Bucket {
+  id: string;
+  name: string;
+  public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+```
+
+**Example:**
+```typescript
+const buckets = await storageService.getBuckets();
+console.log(buckets); // [{ id: '1', name: 'documents', public: false, ... }]
+```
+
+### 2. Get Bucket Contents
+
+List files and folders in a bucket with comprehensive metadata.
+
+```typescript
+async getBucketContents(params: {
+  bucket: string;
+  path?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{
+  contents: StorageFile[];
+  pagination: PaginationInfo;
+}>
+```
+
+**Parameters:**
+- `bucket`: Storage bucket name
+- `path`: Folder path (optional, defaults to root)
+- `search`: Search term for filtering files
+- `page`: Page number for pagination
+- `limit`: Number of items per page
+
+**Returns:**
+```typescript
+interface StorageFile {
+  name: string;
+  id: string | null;
+  updated_at: string | null;
+  created_at: string | null;
+  last_accessed_at: string | null;
+  metadata: Record<string, unknown> | null;
+  isDirectory: boolean;
+  fileType: string;
+  publicUrl?: string;
+  previewUrl?: string;
+  permissions: {
+    canRead: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+    canUpload: boolean;
+  };
+}
+```
+
+**Example:**
+```typescript
+const result = await storageService.getBucketContents({
+  bucket: 'documents',
+  path: 'reports/',
+  search: 'annual',
+  page: 1,
+  limit: 25
+});
+
+console.log(result.contents);    // Array of files and folders
+console.log(result.pagination);  // Pagination metadata
+```
+
+### 3. Get User Permissions
+
+Check user permissions for a specific bucket and path.
+
+```typescript
+async getUserPermissions(params: {
+  bucket: string;
+  path: string;
+}): Promise<{
+  canRead: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  canUpload: boolean;
+}>
+```
+
+**Example:**
+```typescript
+const permissions = await storageService.getUserPermissions({
+  bucket: 'documents',
+  path: 'reports/sensitive.pdf'
+});
+
+if (permissions.canRead) {
+  // User can view this file
+}
+```
+
+## File Operations
+
+### 1. Rename File
+
+Rename or move a file or folder.
+
+```typescript
+async renameFile(params: {
+  bucket: string;
+  fromPath: string;
+  toPath: string;
+}): Promise<{ success: boolean }>
+```
+
+**Security Features:**
+- Path validation and normalization
+- Permission checks for both source and destination
+- Prevents directory traversal attacks
+
+**Example:**
+```typescript
+const result = await storageService.renameFile({
+  bucket: 'documents',
+  fromPath: 'reports/draft.pdf',
+  toPath: 'reports/final.pdf'
+});
+
+if (result.success) {
+  console.log('File renamed successfully');
+}
+```
+
+### 2. Delete Files
+
+Delete single or multiple files and folders.
+
+```typescript
+async deleteFile(params: {
+  bucket: string;
+  paths: string[];
+}): Promise<{ success: boolean }>
+```
+
+**Security Features:**
+- Batch path validation (max 50 files)
+- Bulk permission validation
+- Recursive folder deletion with safety limits
+- Protection against excessive deletion (max 1000 files)
+
+**Example:**
+```typescript
+const result = await storageService.deleteFile({
+  bucket: 'documents',
+  paths: [
+    'reports/old-report.pdf',
+    'temp/',  // Deletes entire folder
+    'drafts/notes.txt'
+  ]
+});
+
+if (result.success) {
+  console.log('Files deleted successfully');
+}
+```
+
+### 3. Get Download URL
+
+Generate download URLs for files.
+
+```typescript
+async getDownloadUrl(params: {
+  bucket: string;
+  path: string;
+}): Promise<string>
+```
+
+**Features:**
+- Automatic detection of public vs private buckets
+- Signed URL generation for private files
+- Public URL generation for public buckets
+
+**Example:**
+```typescript
+const downloadUrl = await storageService.getDownloadUrl({
+  bucket: 'documents',
+  path: 'reports/annual-report.pdf'
+});
+
+// Use URL for download
+window.open(downloadUrl, '_blank');
+```
+
+## Folder Operations
+
+### 1. Create Folder
+
+Create new folders with proper security validation.
+
+```typescript
+async createFolder(params: {
+  bucket: string;
+  folderName: string;
+  parentPath?: string;
+}): Promise<{ success: boolean }>
+```
+
+**Security Features:**
+- Folder name validation
+- Path normalization
+- Permission validation for target location
+- Prevents overwriting existing folders
+
+**Example:**
+```typescript
+const result = await storageService.createFolder({
+  bucket: 'documents',
+  folderName: 'Q4-Reports',
+  parentPath: 'reports/2024'
+});
+
+if (result.success) {
+  console.log('Folder created successfully');
+}
+```
+
+### 2. Batch Folder Processing
+
+The service handles recursive folder operations efficiently:
+
+```typescript
+// Deleting a folder with contents
+const result = await storageService.deleteFile({
+  bucket: 'documents',
+  paths: ['reports/2023/']  // Deletes folder and all contents
+});
+```
+
+**Safety Features:**
+- Batch processing with size limits
+- Progress tracking for large operations
+- Error handling for individual file failures
+- Protection against infinite loops
+
+## URL Generation
+
+### 1. Public URLs
+
+Generate public URLs for files in public buckets.
+
+```typescript
+async getPublicUrl(params: {
+  bucket: string;
+  path: string;
+}): Promise<string>
+```
+
+**Example:**
+```typescript
+const publicUrl = await storageService.getPublicUrl({
+  bucket: 'public-assets',
+  path: 'images/logo.png'
+});
+
+// URL can be used directly in <img> tags
+```
+
+### 2. Signed URLs
+
+Generate temporary signed URLs for private files.
+
+```typescript
+async getSignedUrl(params: {
+  bucket: string;
+  path: string;
+  expiresIn?: number;
+}): Promise<string>
+```
+
+**Parameters:**
+- `expiresIn`: Expiration time in seconds (default: 3600 = 1 hour)
+
+**Example:**
+```typescript
+const signedUrl = await storageService.getSignedUrl({
+  bucket: 'private-documents',
+  path: 'contracts/agreement.pdf',
+  expiresIn: 7200  // 2 hours
+});
+
+// URL expires after 2 hours
+```
+
+## Batch Operations
+
+### Bulk Permission Checking
+
+Efficiently check permissions for multiple files:
+
+```typescript
+// Automatically used by getBucketContents
+const contents = await storageService.getBucketContents({
+  bucket: 'documents',
+  path: 'reports/'
+});
+
+// Each file includes permission information
+contents.contents.forEach(file => {
+  console.log(file.name, file.permissions);
+});
+```
+
+### Bulk File Operations
+
+Handle multiple files in single operations:
+
+```typescript
+// Delete multiple files efficiently
+const result = await storageService.deleteFile({
+  bucket: 'documents',
+  paths: [
+    'temp/file1.txt',
+    'temp/file2.txt',
+    'temp/file3.txt',
+    'temp/folder/',
+    'drafts/old-notes.txt'
+  ]
+});
+```
+
+## Error Handling
+
+### Common Error Types
+
+```typescript
+try {
+  await storageService.deleteFile({
+    bucket: 'documents',
+    paths: ['protected/file.txt']
+  });
+} catch (error) {
+  if (error.message.includes('permission')) {
+    // Handle permission error
+    console.error('No permission to delete file');
+  } else if (error.message.includes('Too many files')) {
+    // Handle batch size limit
+    console.error('Too many files to delete at once');
+  } else {
+    // Handle other errors
+    console.error('Storage operation failed:', error.message);
+  }
+}
+```
+
+### Validation Errors
+
+```typescript
+try {
+  await storageService.renameFile({
+    bucket: 'documents',
+    fromPath: '../../../etc/passwd',  // Invalid path
+    toPath: 'normal-file.txt'
+  });
+} catch (error) {
+  // Path validation error
+  console.error('Invalid file path:', error.message);
+}
+```
+
+### Permission Errors
+
+```typescript
+try {
+  await storageService.createFolder({
+    bucket: 'restricted',
+    folderName: 'new-folder'
+  });
+} catch (error) {
+  // Permission validation error
+  console.error('No permission to create folder:', error.message);
+}
+```
+
+## Examples
+
+### Example 1: File Manager Interface
+
+```typescript
+class FileManager {
+  constructor(private storageService: StorageService) {}
+  
+  async loadFolderContents(bucket: string, path: string = '/') {
+    const result = await this.storageService.getBucketContents({
+      bucket,
+      path,
+      page: 1,
+      limit: 50
+    });
+    
+    return {
+      files: result.contents.filter(item => !item.isDirectory),
+      folders: result.contents.filter(item => item.isDirectory),
+      pagination: result.pagination
+    };
+  }
+  
+  async searchFiles(bucket: string, searchTerm: string) {
+    return await this.storageService.getBucketContents({
+      bucket,
+      search: searchTerm,
+      limit: 20
+    });
+  }
+  
+  async uploadFile(bucket: string, path: string, file: File) {
+    // Check upload permission first
+    const permissions = await this.storageService.getUserPermissions({
+      bucket,
+      path
+    });
+    
+    if (!permissions.canUpload) {
+      throw new Error('No permission to upload to this location');
+    }
+    
+    // Upload logic would go here
+    // This service focuses on management, not upload
+  }
+  
+  async deleteSelected(bucket: string, selectedPaths: string[]) {
+    // Validate permissions for all selected items
+    const permissionChecks = await Promise.all(
+      selectedPaths.map(path => 
+        this.storageService.getUserPermissions({ bucket, path })
+      )
+    );
+    
+    const canDeleteAll = permissionChecks.every(p => p.canDelete);
+    if (!canDeleteAll) {
+      throw new Error('Insufficient permissions to delete some files');
+    }
+    
+    return await this.storageService.deleteFile({
+      bucket,
+      paths: selectedPaths
+    });
+  }
+  
+  async createNewFolder(bucket: string, folderName: string, parentPath?: string) {
+    return await this.storageService.createFolder({
+      bucket,
+      folderName,
+      parentPath
+    });
+  }
+  
+  async renameItem(bucket: string, fromPath: string, newName: string) {
+    // Calculate new path
+    const pathParts = fromPath.split('/');
+    pathParts[pathParts.length - 1] = newName;
+    const toPath = pathParts.join('/');
+    
+    return await this.storageService.renameFile({
+      bucket,
+      fromPath,
+      toPath
+    });
+  }
+}
+```
+
+### Example 2: Document Management System
+
+```typescript
+class DocumentManager {
+  constructor(private storageService: StorageService) {}
+  
+  async getDocumentsByType(bucket: string, fileType: string) {
+    const allContents = await this.storageService.getBucketContents({
+      bucket,
+      limit: 100
+    });
+    
+    return allContents.contents.filter(file => 
+      !file.isDirectory && file.fileType === fileType
+    );
+  }
+  
+  async getRecentDocuments(bucket: string, days: number = 7) {
+    const allContents = await this.storageService.getBucketContents({
+      bucket,
+      limit: 100
+    });
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return allContents.contents.filter(file => {
+      if (file.isDirectory || !file.updated_at) return false;
+      return new Date(file.updated_at) > cutoffDate;
+    });
+  }
+  
+  async organizeDocuments(bucket: string) {
+    const allContents = await this.storageService.getBucketContents({
+      bucket,
+      limit: 1000
+    });
+    
+    const documentsByType = allContents.contents
+      .filter(file => !file.isDirectory)
+      .reduce((acc, file) => {
+        if (!acc[file.fileType]) {
+          acc[file.fileType] = [];
+        }
+        acc[file.fileType].push(file);
+        return acc;
+      }, {} as Record<string, typeof allContents.contents>);
+    
+    // Create folders for each type
+    for (const fileType of Object.keys(documentsByType)) {
+      try {
+        await this.storageService.createFolder({
+          bucket,
+          folderName: fileType
+        });
+      } catch (error) {
+        // Folder might already exist
+        console.log(`Folder ${fileType} already exists`);
+      }
+    }
+    
+    return documentsByType;
+  }
+  
+  async generateShareableLink(bucket: string, path: string, expiresIn: number = 3600) {
+    const permissions = await this.storageService.getUserPermissions({
+      bucket,
+      path
+    });
+    
+    if (!permissions.canRead) {
+      throw new Error('No permission to share this file');
+    }
+    
+    return await this.storageService.getSignedUrl({
+      bucket,
+      path,
+      expiresIn
+    });
+  }
+  
+  async bulkDownloadUrls(bucket: string, paths: string[]) {
+    const urls = await Promise.all(
+      paths.map(async path => {
+        try {
+          const url = await this.storageService.getDownloadUrl({
+            bucket,
+            path
+          });
+          return { path, url, success: true };
+        } catch (error) {
+          return { 
+            path, 
+            url: null, 
+            success: false, 
+            error: error.message 
+          };
+        }
+      })
+    );
+    
+    return urls;
+  }
+}
+```
+
+### Example 3: Media Gallery
+
+```typescript
+class MediaGallery {
+  constructor(private storageService: StorageService) {}
+  
+  async getImageGallery(bucket: string, path: string = '/') {
+    const contents = await this.storageService.getBucketContents({
+      bucket,
+      path,
+      limit: 100
+    });
+    
+    const images = contents.contents.filter(file => 
+      file.fileType === 'image' && file.permissions.canRead
+    );
+    
+    return images.map(image => ({
+      name: image.name,
+      url: image.publicUrl || image.previewUrl,
+      thumbnail: image.previewUrl,
+      metadata: image.metadata,
+      canDelete: image.permissions.canDelete
+    }));
+  }
+  
+  async getVideoGallery(bucket: string, path: string = '/') {
+    const contents = await this.storageService.getBucketContents({
+      bucket,
+      path,
+      limit: 50
+    });
+    
+    return contents.contents.filter(file => 
+      file.fileType === 'video' && file.permissions.canRead
+    );
+  }
+  
+  async organizeMediaByDate(bucket: string) {
+    const allMedia = await this.storageService.getBucketContents({
+      bucket,
+      limit: 1000
+    });
+    
+    const mediaFiles = allMedia.contents.filter(file => 
+      ['image', 'video'].includes(file.fileType)
+    );
+    
+    const mediaByDate = mediaFiles.reduce((acc, file) => {
+      if (!file.created_at) return acc;
+      
+      const date = new Date(file.created_at);
+      const yearMonth = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      
+      if (!acc[yearMonth]) {
+        acc[yearMonth] = [];
+      }
+      acc[yearMonth].push(file);
+      
+      return acc;
+    }, {} as Record<string, typeof mediaFiles>);
+    
+    return mediaByDate;
+  }
+  
+  async cleanupOldMedia(bucket: string, daysOld: number = 30) {
+    const allMedia = await this.storageService.getBucketContents({
+      bucket,
+      limit: 1000
+    });
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+    
+    const oldMedia = allMedia.contents.filter(file => {
+      if (file.isDirectory || !file.created_at) return false;
+      return new Date(file.created_at) < cutoffDate && file.permissions.canDelete;
+    });
+    
+    if (oldMedia.length === 0) {
+      return { deleted: 0, message: 'No old media found' };
+    }
+    
+    const paths = oldMedia.map(file => file.name);
+    const result = await this.storageService.deleteFile({
+      bucket,
+      paths
+    });
+    
+    return {
+      deleted: oldMedia.length,
+      success: result.success,
+      files: oldMedia.map(f => f.name)
+    };
+  }
+}
+```

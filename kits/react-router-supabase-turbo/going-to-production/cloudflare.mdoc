@@ -56,8 +56,6 @@ LOGGER=console
 The Stripe client is not compatible with Cloudflare by default, so we must add `Stripe.createFetchHttpClient()` as property to the Stripe SDK:
 
 ```tsx {% title="packages/billing/stripe/src/services/stripe-sdk.ts" %}
-import 'server-only';
-
 import { StripeServerEnvSchema } from '../schema/stripe-server-env.schema';
 
 const STRIPE_API_VERSION = '2025-03-31.basil';

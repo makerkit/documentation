@@ -1,0 +1,25 @@
+---
+status: "published"
+title: "Cannot sign in"
+label: "Cannot sign in"
+order: 0
+description: "Understanding how to troubleshoot the issue where you cannot sign in"
+---
+
+If you cannot sign in, there are a variety of reasons why this may happen.
+
+## Fix 1. Check your credentials
+
+Make sure you're using the correct email and password / credentials.
+
+## Fix 2. Does user have admin access?
+
+Make sure the user you're trying to sign in as has admin access in Supamode. Your database administrator can check this in the [Users Explorer](../features/users-explorer).
+
+## Fix 3. Captcha
+
+If your Supabase project has captcha enabled, make sure you also set the `VITE_CAPTCHA_SITE_KEY` environment variable in your frontend and `CAPTCHA_SECRET_KEY` in your backend environment variables.
+
+### Fix 4. Double check your Supabase Anon Key
+
+Make sure your Supamode project is using the correct Supabase Anon Key connected to your Supabase project.

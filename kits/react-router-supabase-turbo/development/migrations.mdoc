@@ -31,20 +31,19 @@ create table if not exists public.integrations (
 
 Now, you want this schema to be applied to your local Supabase instance so you can start using it and test it out. We can now use Supabase's diffing feature to generate a migration file for us.
 
+To diff the schema, run the following command:
+
 ```bash
-pnpm --filter web run supabase:stop
 pnpm --filter web run supabase:db:diff
 ```
 
-These two commands will respectively:
+This command will generate the migration file using the diffing feature using the default `migra` tool.
 
-1. Stop the Supabase service
-2. Generate the migration file
-
-The migration file will be created in the `apps/web/supabase/migrations` directory. Now, we want to restart Supabase with the `no-backup` flag to avoid restoring the database from the backup.
+The migration file will be created in the `apps/web/supabase/migrations` directory. Next, start Supabase and reset the database to apply the changes.
 
 ```bash
-pnpm run supabase:web:start --no-backup
+pnpm run supabase:web:start
+pnpm run supabase:web:reset
 ```
 
 ## Pushing the migration to the remote Supabase instance

@@ -1,0 +1,430 @@
+---
+status: "published"
+title: "Writing Plugins to extend Supamode"
+label: "Writing Plugins"
+order: 5
+description: "Writing Plugins to extend Supamode with your own data types and UI components"
+---
+
+This guide explains how to create full-stack plugins for Supamode that add custom Data Types with server-side data transformation and client-side UI rendering.
+
+{% alert type="warning" title="This API is a work in progress" %}
+This feature is still in development and not yet in the main branch, and the API is subject to change.
+{% /alert %}
+
+## Plugin Architecture Overview
+
+Supamode uses a **bidirectional plugin architecture** that separates client and server concerns while maintaining seamless data flow:
+
+```
+┌─────────────────┐    Data Flow    ┌──────────────────┐
+│   ServicePlugin │ ────────────→   │  DataTypePlugin  │
+│   (Server-Side) │                 │  (Client-Side)   │
+│                 │                 │                  │
+│ • Data Transform│                 │ • UI Rendering   │
+│ • Batch Process │                 │ • Form Inputs    │
+│ • Database APIs │                 │ • Configuration  │
+└─────────────────┘                 └──────────────────┘
+```
+
+## Type Safety in Plugins
+
+Supamode's plugin system supports full TypeScript type safety. You can specify input and output types for your plugins, ensuring type-safe data transformation and rendering.
+
+## Creating a Plugin with Turbo Generator
+
+### Step 1: Generate Plugin Package
+
+Use Turbo's generator to scaffold a new plugin package:
+
+```bash
+# From project root
+turbo gen plugin
+```
+
+This creates a new package structure:
+
+```
+packages/plugins/user-status/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts
+```
+
+### Step 2: Add Package to your apps
+
+Add the plugin to your apps, so we can import it in our code.
+
+```bash
+pnpm add "@kit/plugins-user-status@workspace:*" --filter @kit/app
+pnpm add "@kit/plugins-user-status@workspace:*" --filter @kit/api
+```
+
+## Plugin Implementation
+
+### ServicePlugin (Server-Side)
+
+The server plugin transforms raw data into formatted data for the UI with full type safety:
+
+```typescript
+// packages/plugins/user-badge/src/server/user-badge-server.ts
+import type {
+  DataTypeServicePlugin,
+  ColumnDataTransformer,
+} from "@kit/plugins/server";
+import { PluginTypes } from "@kit/plugins/shared";
+
+// Define your input type - what comes from the database
+type UserBadgeInput = {
+  value: string; // User ID from the database column
+};
+
+// Define your output type - what your plugin returns
+type UserBadgeOutput = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  status: "active" | "inactive" | "pending";
+};
+
+// Transform function with type-safe input and output
+const transformUserBadge: ColumnDataTransformer<
+  UserBadgeInput,
+  UserBadgeOutput
+> = async (
+  data, // Array of UserBadgeInput objects
+  context // Access to database, config, etc.
+) => {
+  // Extract user IDs from input data
+  const userIds = data.map((item) => item.value);
+
+  // Batch fetch to avoid N+1 queries - CRITICAL FOR PERFORMANCE!
+  const users = await context.serviceContext.drizzleClient
+    .select()
+    .from(userTable)
+    .where(inArray(userTable.id, userIds));
+
+  // Transform to your output format with full type safety
+  const result = data.map(({ value }) => {
+    const user = users.find((u) => u.id === value);
+    return {
+      id: value,
+      name: user?.name || "Unknown User",
+      email: user?.email || "",
+      avatarUrl: user?.avatar_url || null,
+      status: user?.status || "pending",
+    };
+  });
+
+  return result;
+};
+
+// Define your service plugin with type parameters
+export const userBadgeServerPlugin: DataTypeServicePlugin<
+  UserBadgeInput,
+  UserBadgeOutput
+> = {
+  id: "user-badge-server", // Unique server plugin ID
+  type: PluginTypes.SERVICE, // Plugin type
+  name: "User Badge Server", // Human-readable name
+  description: "Fetches and transforms user data for badge display",
+
+  supportedDataTypes: ["user-badge"], // Data types this plugin handles
+  transformer: transformUserBadge, // Your transform function
+
+  metadata: {
+    version: "1.0.0",
+    author: "Your Team",
+  },
+};
+```
+
+### DataTypePlugin (Client-Side)
+
+The client plugin renders the formatted data from the server with type-safe
+value handling.
+
+The client plugin needs the following methods:
+
+- `renderCell`: renders the value of a column within a tabular view
+- `renderInput`: renders the input for editing/creating the value of the column
+- `renderField`: renders the value of the column when viewing the full record
+- `renderConfig`: renders the configuration of the field when editing its
+metadata. Allows you to add configuration to the column.
+
+```typescript
+// packages/plugins/user-badge/src/client/user-badge-client.tsx
+import type { DataTypePlugin } from '@kit/plugins/client';
+import { PluginTypes } from '@kit/plugins/shared';
+
+// Import the output type from your server plugin
+import type { UserBadgeOutput } from '../server/user-badge-server';
+
+// Define your client plugin with the output type
+export const userBadgeDataTypePlugin: DataTypePlugin<UserBadgeOutput> = {
+  id: 'user-badge',                    // Unique client plugin ID
+  type: PluginTypes.DATA_TYPE,         // Plugin type
+  name: 'User Badge',                  // Human-readable name for UI
+  description: 'Displays user information as a badge with status',
+
+  compatibleTypes: ['uuid', 'text'],   // PostgreSQL column types this works with
+
+  dataType: {
+    label: 'User Badge',               // Label shown in settings UI
+    value: 'user-badge',               // Internal value (matches server supportedDataTypes)
+  },
+
+  servicePluginId: 'user-badge-server', // Links to server plugin
+
+  // Render in table cells - value is type-safe!
+  renderCell: ({ value }) => {
+    if (!value) return <span className="text-muted-foreground">-</span>;
+
+    // TypeScript knows value is UserBadgeOutput
+    return (
+      <div className="flex items-center gap-2">
+        {value.avatarUrl && (
+          <img
+            src={value.avatarUrl}
+            alt={value.name}
+            className="w-6 h-6 rounded-full"
+          />
+        )}
+        <div className="flex items-center gap-1">
+          <span>{value.name}</span>
+          <StatusIndicator status={value.status} />
+        </div>
+      </div>
+    );
+  },
+
+  // Render in detail view - value is type-safe!
+  renderField: ({ value }) => {
+    if (!value) return <div className="text-muted-foreground">No user data</div>;
+
+    return (
+      <div className="p-4 border rounded-lg">
+        <div className="flex items-center gap-3">
+          {value.avatarUrl && (
+            <img
+              src={value.avatarUrl}
+              alt={value.name}
+              className="w-12 h-12 rounded-full"
+            />
+          )}
+          <div>
+            <div className="font-semibold">{value.name}</div>
+            <div className="text-sm text-muted-foreground">{value.email}</div>
+            <div className="flex items-center gap-1 mt-1">
+              <StatusIndicator status={value.status} />
+              <span className="text-xs capitalize">{value.status}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  },
+
+  // Form input for editing - handles raw string values
+  renderInput: ({ field }) => {
+    // In forms, we work with raw IDs (strings), not transformed objects
+    return (
+      <div className="space-y-2">
+        <input
+          type="text"
+          value={typeof field.value === 'string' ? field.value : field.value?.id || ''}
+          onChange={(e) => field.onChange(e.target.value)}
+          onBlur={field.onBlur}
+          placeholder="Enter User ID"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          Enter a valid user ID
+        </p>
+      </div>
+    );
+  },
+
+  metadata: {
+    version: '1.0.0',
+    author: 'Your Team',
+  },
+};
+
+// Helper component for status indicator
+const StatusIndicator = ({ status }: { status: string }) => {
+  const colors = {
+    active: 'bg-green-500',
+    inactive: 'bg-gray-400',
+    pending: 'bg-yellow-500',
+  };
+
+  return (
+    <div
+      className={`w-2 h-2 rounded-full ${colors[status as keyof typeof colors] || colors.pending}`}
+    />
+  );
+};
+```
+
+## Registration Process
+
+### Step 1: Register Plugin Instances
+
+#### Server Registration
+
+In the `apps/api/src/plugins/index.ts` file, register the plugin with type safety:
+
+```typescript
+// apps/api/src/plugins/index.ts
+import { servicePluginRegistry } from "@kit/plugins/server";
+import { userBadgeServerPlugin } from "@kit/plugins-user-badge/server";
+
+export function registerPlugins() {
+  // Register with full type inference
+  servicePluginRegistry.register(userBadgeServerPlugin);
+}
+```
+
+#### Client Registration
+
+Next, register the plugin in the client app:
+
+```typescript
+// apps/app/src/plugins/index.ts
+import { clientPluginRegistry } from "@kit/plugins/client";
+import { userBadgeDataTypePlugin } from "@kit/plugins-user-badge/client";
+
+export function registerPlugins() {
+  // Register with full type inference
+  clientPluginRegistry.register(userBadgeDataTypePlugin);
+}
+```
+
+## Type Safety Benefits
+
+The updated plugin system provides several type safety benefits:
+
+### 1. Input/Output Type Validation
+
+```typescript
+// TypeScript ensures your transformer returns the correct type
+const transformer: ColumnDataTransformer<InputType, OutputType> = async (data) => {
+  // data is InputType[]
+  const result: OutputType[] = /* transform logic */;
+  return result; // Must return OutputType[]
+};
+```
+
+### 2. Type-Safe Rendering
+
+```typescript
+// In your render functions, TypeScript knows the exact type
+renderCell: ({ value }) => {
+  // value is UserBadgeOutput - no type assertions needed!
+  return <span>{value.name}</span>; // TypeScript validates property access
+};
+```
+
+### 3. Generic Plugin Support
+
+If you don't need type safety, you can omit type parameters:
+
+```typescript
+// Plugin without specific types - uses 'unknown'
+export const myPlugin: DataTypeServicePlugin = {
+  // ... plugin definition
+};
+```
+
+## Complete Working Example
+
+Here's how the complete user badge plugin works with type safety:
+
+### 1. Column Configuration
+
+Configure a column to use your plugin:
+
+1. Navigate to Settings → Resources → Your Table
+2. Select the user ID column
+3. Change "UI Data Type" to "User Badge"
+4. Save configuration
+
+### 2. Type-Safe Data Flow
+
+```
+Database Column: user_id (string)
+     ↓
+[{value: 'uuid1'}, {value: 'uuid2'}, {value: 'uuid3'}]  ← Type: UserBadgeInput[]
+     ↓
+ServicePlugin.transformer()  ← Batch fetch and transform
+     ↓
+[{id: 'uuid1', name: 'John', email: 'john@example.com', status: 'active'}, ...]  ← Type: UserBadgeOutput[]
+     ↓
+DataTypePlugin.renderCell()  ← Type-safe rendering
+     ↓
+<div>👤 John ✅</div>  ← Final UI with full type safety
+```
+
+## Best Practices
+
+### Define Clear Input/Output Types
+
+```typescript
+// ✅ GOOD - Clear, specific types
+type ProductInput = { value: string };
+type ProductOutput = {
+  id: string;
+  name: string;
+  price: { amount: number; currency: string };
+};
+
+// ❌ BAD - Using 'any' or unclear types
+type ProductData = any;
+```
+
+### Handle Edge Cases
+
+```typescript
+renderCell: ({ value }) => {
+  // Always handle null/undefined
+  if (!value) return <span className="text-muted-foreground">-</span>;
+
+  // Type-safe property access
+  return <div>{value.name}</div>;
+};
+```
+
+## Advanced Features
+
+### Configuration Support
+
+Add configuration options to your plugins:
+
+```typescript
+// Server plugin with configuration
+export const configurablePlugin: DataTypeServicePlugin<Input, Output> = {
+  // ... other properties
+
+  configSchema: {
+    showEmail: { type: "boolean", default: true },
+    statusColors: {
+      type: "object",
+      default: { active: "green", inactive: "gray" },
+    },
+  },
+
+  transformer: async (data, context) => {
+    const config = context.config as PluginConfig;
+    // Use config.showEmail, config.statusColors, etc.
+  },
+};
+```
+
+### Registration Issues
+
+1. Ensure plugins are registered before use
+2. Check that servicePluginId matches server plugin ID
+3. Verify supportedDataTypes matches dataType.value

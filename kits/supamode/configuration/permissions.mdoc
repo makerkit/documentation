@@ -1,347 +1,139 @@
 ---
 status: "published"
-title: "Understanding Supamode's Permission System 🔐"
-label: "Permission System"
-order: 0
-description: "A comprehensive guide to Supamode's role-based access control system"
+title: "Creating and assigning permissions using the Supamode UI"
+label: "Roles and Permissions"
+order: 3
+description: "Learn how to create and assign roles, permissions and permission groups"
 ---
 
-In this comprehensive guide, we'll explore Supamode's straightforward yet powerful role-based access control (RBAC) system, designed to give you granular control over who can access what in your Supabase application.
+The easiest way to create and assign permissions is to use the Supamode UI. To do so, you need to be signed in as a Super Admin user.
 
-## Key Learning Objectives:
+We assume you are the database admin/developer of the Supabase project, have used one of the pre-defined seed files to assign yourself a Super Admin role, and are signed in as that user - so that you have the required permissions to create and assign permissions.
 
-- Master the four core components of Supamode's permission architecture
-- Implement secure, multi-layered access verification
-- Design scalable permission structures for your organization
-- Deploy production-ready access control using seed templates
+## Creating a new role
 
----
+Roles are foundational to the Supamode permission system. Each account in Supamode has exactly one role (or none). Roles dictate the permissions that an account has and their level of access to the application as defined by your settings.
 
-# The Four Core Components of Supamode 🏗️
+### Roles List
 
-Supamode's access control system is built around four interconnected components that work together to create secure, manageable permissions.
+At `/settings/permissions?tab=roles` you can see the list of roles that are currently defined in the application.
 
-1. **Accounts**: User accounts linked with Supabase's auth users
-2. **Roles**: Roles that define authority levels. You can assign one role to each account.
-3. **Permissions**: Fine-grained access rights that control what actions
-users can perform. There are two types of permissions: system permissions and data permissions.
-   - **System Permissions**: Control access to Supamode's administrative interface and system functions.
-   - **Data Permissions**: Control access to your actual application data with incredible granularity.
-4. **Permission Groups**: Optional logical bundles of related permissions for
-easier role management. A role can have multiple permission groups assigned
-to it.
+{% img src="/images/supamode/roles.webp" alt="Roles List" width="1724" height="292" /%}
 
-Example:
-1. **Account**: A user has an account in Supamode, which is linked to their
-Supabase auth
-user.
-2. **Role**: The user is assigned a role, such as "Content Editor", which
-defines their authority level. All roles have a priority, which determines their authority level.
-3. **Permissions**: The "Content Editor" role has permissions like "Create Blog Posts" and "Edit Own Blog Posts", which define what actions the user can perform.
-4. **Permission Groups**: The "Content Editor" role is part of a "Content
-Management" permission group, which bundles related permissions together for easier management.
-
-## 1. Accounts: Your Identity Foundation 👤
+You can click on a role to view its details.
 
-**What it is:** The bridge between Supabase's authentication system and Supamode's permission management.
-
-```typescript
-// Account Structure
-{
-  id: "uuid-account-id",
-  auth_user_id: "uuid-from-supabase-auth", // Links to auth.users
-  is_active: true
-}
-```
-
-**Key Concept:** Every authenticated user gets exactly one Supamode account. The account is necessary for being assigned roles and permissions, and it allows you to store additional metadata about the user.
-
-Accounts with status `is_active: false` are considered deactivated and
-cannot perform any actions in Supamode. This is useful for managing user access without deleting accounts.
-
-## 2. Roles: Authority Levels 👑
-
-Roles define the authority levels within your application, allowing you to control what users can do based on their assigned role.
-
-A user can have a single role, which is assigned to their account. Roles are defined by their name, description, priority, and optional metadata.
-
-```typescript
-// Role Structure
-{
-  name: "Content Manager",
-  description: "Manages blog posts and user content",
-  priority: 70, // Higher = more authority
-  metadata: {
-    department: "Marketing"
-  }
-}
-```
-
-**Visual Hierarchy:**
-
-```
-Super Admin (Priority: 100)    ← Ultimate system control
-├── Admin (Priority: 90)       ← System administration
-├── Manager (Priority: 70)     ← Content management
-├── Editor (Priority: 60)      ← Content editing
-└── Viewer (Priority: 50)      ← Read-only access
-```
-
-**Key Concept:** Roles have priorities that determine authority levels, but **do not inherit permissions**. Each role must be explicitly assigned its own permissions.
-
-A role with a higher priority **can perform actions** on roles that have lower priority, such as assigning them a different role, editing their account, and so on. However, they also must have the required permissions to modify accounts.
-
-Supamode does not define any roles by default, allowing you to create a custom hierarchy that fits your application's needs.
-
-## 3. Permissions: Granular Access Rights 🎯
-
-**What it is:** The atomic units of access control that define specific actions on specific resources.
-
-Supamode uses **two distinct permission types**:
-
-- **System Permissions**: Control access to Supamode's administrative interface and system functions.
-- **Data Permissions**: Control access to your actual application data with incredible granularity.
-
-### System Permissions: Administrative Control
-
-Control access to Supamode's administrative interface and system functions.
-
-```typescript
-// System Permission Example
-{
-  permission_type: "system",
-  name: "Manage User Accounts",
-  system_resource: "account",    // What system resource
-  action: "update",              // What action is allowed
-  description: "Can modify user account details"
-}
-```
-
-**Available System Resources:**
-- `account` - Managing user accounts in Supamode
-- `role` - Creating and editing roles
-- `permission` - Managing permission definitions
-- `auth_user` - Managing auth accounts in Supabase (e.g., creating users, banning accounts, etc.)
-- `table` - Database table configuration
-- `log` - System audit log access
-
-Normally, **you would grant this sort of permissions to high-level roles** like Admin or Super Admin, who need to manage the entire system.
-
-### Data Permissions: Application Content Control
-
-Control access to your actual application data with incredible granularity.
-
-```typescript
-// Table-Level Data Permission
-{
-  permission_type: "data",
-  name: "Edit Blog Posts",
-  scope: "table",
-  schema_name: "public",
-  table_name: "blog_posts",
-  action: "update"
-}
-
-// Schema-Wide Data Permission
-{
-  permission_type: "data",
-  name: "Read All Public Data",
-  scope: "table",
-  schema_name: "public",
-  table_name: "*",              // Wildcard for all tables
-  action: "select"
-}
-```
-
-**Granularity Levels:**
-```
-Schema Level:   public.* (entire schema)
-├── Table Level:  public.blog_posts (specific table)
-└── Column Level: public.users.email (specific column)
-```
-
-This is the permission type you'll use most often, which grants read/write access to specific tables or columns.
-
-For example, you might have permissions like:
-- **"Read All Blog Posts"** - View all blog content for Content Management role
-- **"Create Blog Posts"** - Allow content creators to add new posts
-- **"Manage all data"** - Full access to all data in the application, typically reserved for Super Admins
-- **"Readonly"** - Read-only access to all data in the application, typically reserved for Viewer role
-
-## 4. Permission Groups: Logical Organization 📦
-
-**What it is:** Bundles of related permissions that make role management
-intuitive and scalable. Permission groups are fully optional, but they can greatly simplify your permission management.
-
-```typescript
-// Content Management Group
-{
-  name: "Content Management",
-  description: "All permissions needed for content creators",
-  permissions: [
-    "Read All Blog Posts",
-    "Create Blog Posts",
-    "Edit Own Blog Posts",
-    "Upload Media Files",
-    "Moderate Comments"
-  ]
-}
-```
-
-**Strategic Grouping Examples:**
-- **"Content Management"** → Blog editing, media upload, comment moderation
-- **"User Administration"** → Account creation, role assignment, access reviews
-- **"Customer Support"** → Ticket access, user lookup, limited account editing
-
-**Benefits:**
-- **Simplified Role Creation** - Assign entire groups instead of individual permissions
-- **Consistent Access Patterns** - Related permissions stay together
-- **Easier Maintenance** - Update group once, affects all roles using it
-
-### Why Use Permission Groups?
-
-While users can only have a single role, a role can have multiple permission groups assigned to it. This allows you to create complex permission structures without overwhelming individual roles with too many permissions.
-
----
-
-# How Components Work Together 🔗
-
-Here's how these components interact to create a complete access control system:
-
-## The Permission Assignment Flow
-
-```
-graph TB
-    A[User Login] --> B[Account Lookup]
-    B --> C[Role Assignment Check]
-    C --> D[Permission Resolution]
-    D --> E[Access Decision]
-
-    subgraph "Permission Sources"
-        F[Direct Role Permissions]
-        G[Permission Group Permissions]
-    end
-
-    D --> F
-    D --> G
-```
-
----
-
-# Multi-Layer Security Verification: Defense in Depth 🛡️
-
-Supamode implements three security layers to ensure comprehensive protection at every access point.
-
-## Understanding the Security Layers
-
-### Layer 1: JWT Token Validation (Lightning Fast) ⚡
-
-**Purpose:** High-speed filtering of obviously invalid requests
-**Performance:** Microsecond response times, no database queries
-
-```sql
-select supamode.check_admin_access();
-```
-
-This functions checks the `app_metadata` field of the JWT token to ensure
-the user is an admin. We do so by checking if the `app_metadata` field
-contains the `admin_access` key set to `true`.
-
-The is a preliminary, lightweight check that quickly filters out requests
-from users who are not admins.
-
-This check is done both:
-- **On the API-side** - The Hono API middleware runs this check before every request
-- **On the DB-side** - The Supabase function `supamode.check_admin_access()`
-gets checked on every execution of a remote procedure call (RPC).
-
-### Layer 2: Database Permission Resolution (Comprehensive) 🗄️
-
-**Purpose:** Deep, context-aware permission verification
-
-```sql
--- Deep permission verification with complete context
-SELECT supamode.has_permission(
-  $current_user_account_id,
-  $permission_id
-) AS permission_granted;
-```
-
-**The Resolution Process:**
-1. **Account Lookup** - Match JWT user to Supamode account
-2. **Role Collection** - Gather all assigned roles
-3. **Permission Aggregation** - Collect permissions from:
-- Direct role assignments
-- Permission group memberships
-4. **Override Application** - Apply account-specific grants/denials
-5. **Final Decision** - Boolean result with full audit trail
-
-### Layer 3: Multi-Factor Authentication (optional, but recommended) 🔐
-
-Optionally, you can enforce MFA for all users, which is recommended for all
-applications.
-
-If enabled, users must complete an additional authentication step before
-signing in and being able to access the Supamode interface/data.
-
----
-
-# Permission Resolution in Detail 🔍
-
-Understanding how Supamode resolves permissions is crucial for designing effective access control.
-
-## The Permission Resolution Algorithm
-
-```
-flowchart TD
-    A[User Makes Request] --> B[Check Account-Level Denials]
-    B --> C{Explicit Denial?}
-    C -->|Yes| D[Access Denied]
-    C -->|No| E[Check Permission Sources]
-
-    E --> F[Direct Account Permissions]
-    E --> G[Role-Based Permissions]
-    E --> H[Permission Group Permissions]
-
-    F --> I{Any Grant Found?}
-    G --> I
-    H --> I
-
-    I -->|Yes| J[Access Granted]
-    I -->|No| K[Access Denied]
-```
-
-## Permission Override System
-
-Supamode supports account-specific permission overrides for exceptional cases:
-
-```sql
--- Grant temporary admin access to a user
-INSERT INTO supamode.account_permissions (
-    account_id,
-    permission_id,
-    is_grant,
-    valid_until,
-    metadata
-) VALUES (
-    'user-account-id',
-    (SELECT id FROM supamode.permissions WHERE name = 'Manage All Data'),
-    true,
-    '2025-12-31 23:59:59',
-    '{"reason": "Temporary migration assistance"}'::jsonb
-);
-```
-
-**Override Use Cases:**
-- **Temporary Access** - Consultant needs admin access for 2 weeks
-- **Emergency Permissions** - Support agent needs elevated access for critical issue
-- **Access Revocation** - Suspend specific permissions for user under review
-
----
-
-In the next steps, we will learn about:
-
-1. **Templates**: Using the existing templates to deploy Supamode
-2. **Your own schema setup**: Customizing the permission system to fit your
-needs
-3. **Mock Data**: Adding mock data for development purposes
+{% img src="/images/supamode/role-details.webp" alt="Role Details" width="1724" height="292" /%}
+
+In the role details page, you can see the permissions and the permission groups that are assigned to the role.
+
+Roles can have assigned to the both permissions and permission groups:
+- **Permissions**: Permissions are the individual access rights that an account can have. For example, the ability to view a table, or to create a new record in a table.
+- **Permission Groups**: Permission groups are collections of permissions that can be assigned to a role. For example, the ability to view all tables, or to create a new record in all tables.
+
+### Creating a new role
+
+To create a new role, click on the **New Role** button at the top right of the page.
+
+{% img src="/images/supamode/create-role-dialog.webp" alt="New Role" width="1724" height="292" /%}
+
+The dialog allows you to create a new role with a name and a description, and a rank.
+
+#### Role rank
+
+The rank is used to determine the hierarchy of the role in the application. The rank is unique for each role. A role with a lower rank than another role cannot action an account with the higher rank role.
+
+## Permissions
+
+Once you've created a role, you can assign permissions to it. Let's start by creating a new permission.
+
+### Creating a new permission
+
+To create a new permission, click on the **New Permission** button at the top right of the page from the "Permissions" tab at '/settings/permissions?tab=permissions'.
+
+{% img src="/images/supamode/create-permission-dialog.webp" alt="New Permission" width="1724" height="292" /%}
+
+When you open the dialog, you can see the following fields:
+
+- **Name**: The name of the permission.
+- **Description**: The description of the permission.
+- **Type**: The type of the permission (System or Data)
+- **Scope**: The scope of the permission.
+- **Action**: The action of the permission.
+
+#### System Permissions
+
+System Permissions are permissions related to the application itself, such as the ability to view the settings page, or to create a new role.
+
+#### Data Permissions
+
+Data Permissions are permissions related to the data in the application, such as the ability to view a table, or to create a new record in a table.
+
+When you select Type as "Data", you can see the following new scope fields:
+
+- **Table**: The scope of the permission is a table (for accessing data in the table)
+- **Storage**: The scope of the permission is a storage bucket (for accessing files in the storage bucket)
+
+##### Table Permissions
+
+When you select Table as the scope, you can see the following new fields:
+
+- **Schema**: The schema of the table.
+- **Table**: The table of the permission.
+
+Both fields support the `*` wildcard, so you can select all tables in a schema, or all tables in the entire database (not recommended).
+
+You can also select the action of the permission.
+
+- **Action**: The action of the permission, which can be one of the following:
+  - **Select**: The ability to read the table.
+  - **Delete**: The ability to delete the table.
+  - **Insert**: The ability to create a new record in the table.
+  - **Update**: The ability to update an existing record in the table.
+  - **All**: The ability to do all of the above, by using the `*` wildcard.
+
+{% img src="/images/supamode/data-permission-form.webp" alt="Data Permission Form" width="1724" height="292" /%}
+
+##### Storage Permissions
+
+When you select Storage as the scope, you can see the following new fields:
+
+- **Storage Bucket**: The bucket of the permission.
+- **Storage Path Pattern**: The path of the permission. This supports the `*` wildcard, so you can select all files in a bucket, or all files in the entire storage bucket (not recommended). It works exactly like `%` in SQL. To select all files under a specific path, you can use `%path%`, such as `/users/*` will select all files under the `/users/` path. To give permissions to all files in a bucket, use the wildcard `*` as the path.
+- **Action**: The action of the permission, just like the table permissions.
+
+{% img src="/images/supamode/storage-permission-form.webp" alt="Storage Permission Form" width="1724" height="292" /%}
+
+### Assigning permissions to a role
+
+To assign a permission to a role, you have two options:
+
+1. **Direct Assignment**: Assign a permission directly to the role
+2. **Permission Group Assignment**: Assign a permission group to the role
+
+Permission groups are collections of permissions that can be assigned to a role, so you can batch them together for different roles.
+
+#### Direct Assignment
+
+To assign a permission directly to a role, navigate to a role from the roles tab at '/settings/permissions?tab=roles' and you can click on the **Manage Permissions** button at the top right of the page.
+
+{% img src="/images/supamode/manage-permissions.webp" alt="Manage Permissions" width="1724" height="292" /%}
+
+From the same page, you can also assign a permission group to the role by clicking on the **Manage Permission Groups** button at the top right of the page.
+
+{% img src="/images/supamode/manage-permissions-group.webp" alt="Manage Permissions Group" width="1724" height="292" /%}
+
+#### Permission Group Assignment
+
+To assign a permissions to a permission group, you can create a new permission group from the "Permission Groups" tab at '/settings/permissions?tab=permission-groups' or select an existing permission group from the list.
+
+{% img src="/images/supamode/permission-groups.webp" alt="Permission Groups" width="1724" height="292" /%}
+
+Once you've selected a permission group, you can see the details of the permission group, including the permissions and the roles that are assigned to it.
+
+{% img src="/images/supamode/permission-group-details.webp" alt="Permission Group Details" width="1724" height="292" /%}
+
+You can assign permissions to it by clicking on the **Manage Permissions** button at the top right of the page.
+
+{% img src="/images/supamode/manage-group-permissions.webp" alt="Manage Group Permissions" width="1724" height="292" /%}
+
+After assigning permissions to a permission group, make sure that the role you've also added the permission group to the role you want to customize.

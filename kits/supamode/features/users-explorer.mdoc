@@ -1,0 +1,52 @@
+---
+status: "published"
+title: "Users Explorer"
+label: "Users Explorer"
+order: 0
+description: "Learn how to use the Users Explorer to manage your users in Supamode."
+---
+
+The Users Explorer is a feature that allows you to explore the users of your application that exist in Supabase. It is very similar to the [Users](https://supabase.com/docs/guides/auth/managing-users) section in Supabase, but it integrates with Supamode's permission system to only allow the actions that are allowed by the user's role.
+
+{% img src="/images/supamode/users-explorer.webp" alt="Users Explorer" width="1450" height="1800" /%}
+
+### Accessing the Users Explorer
+
+To access the Users Explorer, you need to go to the **Users** section in the Supamode UI. At this time, this is the default page that you will see when you access the Supamode UI.
+
+### Filtering Users
+
+The Users Explorer allows you to filter the users using a neat full-text search bar at the very top of the page.
+
+## User Details
+
+When you click on a user, you will see the user details page. This page will show you the user's details, including their role, permissions, and other information.
+
+{% img src="/images/supamode/user-detail.webp" alt="User Details" width="1450" height="1800" /%}
+
+### Limitations to what users can do
+
+By default, users cannot perform actions on users that are Supamode accounts. However, users with the required permissions can perform the following actions on normal application users:
+
+- View user details
+- Delete user
+- Suspend user
+- Unsuspend user
+- Reset user password
+- Invite user
+- Create User
+- Send a recovery link to the user
+
+## Permissions
+
+Users require the following permissions to perform the actions on normal application users:
+
+- **Viewing users**: `System` Permission for `Auth User` with `Select` action.
+- **Editing users**: `System` Permission for `Auth User` with `Update` action.
+- **Deleting users**: `System` Permission for `Auth User` with `Delete` action.
+- **Suspending users**: `System` Permission for `Auth User` with `Update` action.
+- **Unsuspending users**: `System` Permission for `Auth User` with `Update` action.
+- **Resetting user passwords**: `System` Permission for `Auth User` with `Update` action.
+- **Inviting users**: `System` Permission for `Auth User` with `Insert` action.
+- **Creating users**: `System` Permission for `Auth User` with `Insert` action.
+- **Sending recovery links to users**: `System` Permission for `Auth User` with `Update` action.

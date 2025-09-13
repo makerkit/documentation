@@ -14,10 +14,6 @@ description: "How to configure one-off payments in Makerkit for products that ar
 
 {% /sequence %}
 
-{% alert type="warning" title="One off payments and subscriptions cannot coexist" %}
-At this time, one off payments and subscriptions cannot coexist. If you enable one off payments, you will not be able to use subscriptions.
-{% /alert %}
-
 While not exactly a common SaaS billing mode, Makerkit offers support for one-off payments.
 
 You can use the tables `orders` and `orders_items` to store single orders for products not recurring in nature. You can use this in two ways:
@@ -63,7 +59,9 @@ export default createBillingSchema({
 
 When a products gets purchased, Makerkit will create an order in the `orders` table and an order item in the `orders_items` table. You can use this data to fulfill the order and grant access to the product.
 
-## Setting the billing mode
+## Setting the billing mode (prior to Makerkit 2.12.0)
+
+NB: the below only applies to versions prior to 2.12.0. Otherwise, you can use one-off orders and subscriptions together.
 
 If you would like to switch from `subscriptions` to `orders` as your primary billing mechanism, you can do so by setting the following environment variable:
 

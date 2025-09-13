@@ -1,0 +1,831 @@
+---
+status: "published"
+title: "Audit Logs API"
+label: "Audit Logs API"
+order: 4
+description: "Use the Audit Logs API to manage audit logs"
+---
+
+The `AuditLogsService` is a specialized service for retrieving and analyzing audit logs in Supamode. 
+
+It provides comprehensive audit trail functionality with advanced filtering, pagination, and detailed log analysis capabilities. The service is designed for security monitoring, compliance reporting, and system activity tracking.
+
+## Table of Contents
+
+1. [Basic Setup](#basic-setup)
+2. [Core Concepts](#core-concepts)
+3. [Log Retrieval Methods](#log-retrieval-methods)
+4. [Filtering & Search](#filtering--search)
+5. [Pagination](#pagination)
+6. [Log Analysis](#log-analysis)
+7. [Security Features](#security-features)
+8. [Error Handling](#error-handling)
+9. [Examples](#examples)
+
+## Basic Setup
+
+```typescript
+import { createAuditLogsService } from '@kit/audit-logs';
+import { Context } from 'hono';
+
+// Create service instance
+const auditLogsService = createAuditLogsService(context);
+```
+
+## Core Concepts
+
+### Audit Log Structure
+
+```typescript
+interface AuditLog {
+  id: string;
+  accountId: string | null;
+  userId: string | null;
+  operation: string;
+  resourceType: string | null;
+  resourceId: string | null;
+  oldValues: Record<string, unknown> | null;
+  newValues: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+```
+
+### Filtering Capabilities
+
+- **Author filtering**: By user ID or account ID (exact or partial match)
+- **Action filtering**: By operation type (single or multiple actions)
+- **Date range filtering**: By start and end dates
+- **Combined filtering**: Multiple filters can be applied simultaneously
+
+### Pagination Support
+
+- **Configurable page size**: Default 25 items per page
+- **Page-based navigation**: Standard pagination with page numbers
+- **Total count tracking**: Provides total records for pagination UI
+- **Efficient querying**: Uses database-level pagination for performance
+
+## Log Retrieval Methods
+
+### 1. Get Audit Logs
+
+Retrieve audit logs with optional filtering and pagination.
+
+```typescript
+async getAuditLogs({
+  page = 1,
+  limit = 25,
+  filters
+}: {
+  page?: number;
+  limit?: number;
+  filters?: {
+    author?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+}): Promise<PaginatedAuditLogs>
+```
+
+**Parameters:**
+- `page`: Page number (1-based, default: 1)
+- `limit`: Items per page (default: 25)
+- `filters`: Optional filters object
+
+**Returns:**
+```typescript
+interface PaginatedAuditLogs {
+  logs: AuditLog[];
+  pageSize: number;
+  pageIndex: number; // 0-based
+  pageCount: number;
+  total: number;
+}
+```
+
+**Example:**
+```typescript
+// Get all audit logs (first page)
+const logs = await auditLogsService.getAuditLogs({});
+
+console.log(`Found ${logs.total} total logs`);
+console.log(`Showing page ${logs.pageIndex + 1} of ${logs.pageCount}`);
+console.log(`Logs:`, logs.logs);
+```
+
+### 2. Get Audit Logs by Account ID
+
+Retrieve audit logs for a specific account.
+
+```typescript
+async getAuditLogsByAccountId({
+  accountId,
+  page = 1,
+  limit = 25
+}: {
+  accountId: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedAuditLogs>
+```
+
+**Parameters:**
+- `accountId`: The account ID to filter by
+- `page`: Page number (default: 1)
+- `limit`: Items per page (default: 25)
+
+**Example:**
+```typescript
+const accountLogs = await auditLogsService.getAuditLogsByAccountId({
+  accountId: 'account-123',
+  page: 1,
+  limit: 50
+});
+
+console.log(`Account has ${accountLogs.total} audit log entries`);
+```
+
+### 3. Get Audit Log Details
+
+Retrieve detailed information about a specific audit log entry.
+
+```typescript
+async getAuditLogDetails({ id }: { id: string }): Promise<{
+  log: AuditLog;
+  user: {
+    email: string;
+    id: string;
+  } | null;
+}>
+```
+
+**Parameters:**
+- `id`: The audit log ID
+
+**Returns:**
+```typescript
+interface AuditLogDetails {
+  log: AuditLog;
+  user: {
+    email: string;
+    id: string;
+  } | null;
+}
+```
+
+**Example:**
+```typescript
+const details = await auditLogsService.getAuditLogDetails({
+  id: 'audit-log-456'
+});
+
+console.log('Log details:', details.log);
+console.log('User info:', details.user);
+```
+
+## Filtering & Search
+
+### Author Filtering
+
+Filter logs by user ID or account ID with support for both exact and partial matching.
+
+```typescript
+// Exact UUID match
+const exactLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    author: '12345678-1234-1234-1234-123456789012'
+  }
+});
+
+// Partial match (searches both user_id and account_id)
+const partialLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    author: '1234' // Matches any UUID containing '1234'
+  }
+});
+```
+
+### Action Filtering
+
+Filter logs by operation type with support for single or multiple actions.
+
+```typescript
+// Single action
+const loginLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    action: 'user.login'
+  }
+});
+
+// Multiple actions (comma-separated)
+const userActionLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    action: 'user.login,user.logout,user.create'
+  }
+});
+```
+
+### Date Range Filtering
+
+Filter logs by date range with automatic end-of-day handling.
+
+```typescript
+// Date range filtering
+const dateRangeLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    startDate: '2024-01-01',
+    endDate: '2024-01-31'
+  }
+});
+
+// Only start date (from date onwards)
+const fromDateLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    startDate: '2024-01-01'
+  }
+});
+
+// Only end date (up to date)
+const toDateLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    endDate: '2024-01-31'
+  }
+});
+```
+
+### Combined Filtering
+
+Combine multiple filters for precise log retrieval.
+
+```typescript
+const combinedLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    author: 'user-123',
+    action: 'user.update,user.delete',
+    startDate: '2024-01-01',
+    endDate: '2024-01-31'
+  }
+});
+```
+
+## Pagination
+
+### Basic Pagination
+
+```typescript
+// Get first page
+const page1 = await auditLogsService.getAuditLogs({
+  page: 1,
+  limit: 25
+});
+
+// Get second page
+const page2 = await auditLogsService.getAuditLogs({
+  page: 2,
+  limit: 25
+});
+
+console.log(`Total pages: ${page1.pageCount}`);
+console.log(`Current page: ${page1.pageIndex + 1}`);
+```
+
+### Pagination with Filtering
+
+```typescript
+const paginatedFilteredLogs = await auditLogsService.getAuditLogs({
+  page: 1,
+  limit: 10,
+  filters: {
+    action: 'user.login'
+  }
+});
+```
+
+### Custom Page Sizes
+
+```typescript
+// Large page size for exports
+const exportLogs = await auditLogsService.getAuditLogs({
+  page: 1,
+  limit: 1000
+});
+
+// Small page size for real-time monitoring
+const realtimeLogs = await auditLogsService.getAuditLogs({
+  page: 1,
+  limit: 5
+});
+```
+
+## Log Analysis
+
+### Transaction Support
+
+All queries use database transactions for consistency and performance.
+
+```typescript
+// The service automatically uses transactions
+const logs = await auditLogsService.getAuditLogs({
+  filters: { action: 'user.create' }
+});
+
+// Transaction ensures consistent total count and log data
+console.log(`Consistent results: ${logs.logs.length} logs from ${logs.total} total`);
+```
+
+### Efficient Querying
+
+The service uses optimized database queries with proper indexing.
+
+```typescript
+// Efficient UUID matching
+const exactMatch = await auditLogsService.getAuditLogs({
+  filters: { author: '12345678-1234-1234-1234-123456789012' }
+});
+
+// Efficient partial text search
+const partialMatch = await auditLogsService.getAuditLogs({
+  filters: { author: '1234' }
+});
+```
+
+## Security Features
+
+### Permission-Based Access
+
+All audit log access is subject to Row Level Security (RLS) policies.
+
+```typescript
+// Only authorized users can access audit logs
+try {
+  const logs = await auditLogsService.getAuditLogs({});
+  console.log('Access granted:', logs.total);
+} catch (error) {
+  console.error('Access denied:', error.message);
+}
+```
+
+### SQL Injection Protection
+
+The service properly escapes all user inputs to prevent SQL injection.
+
+```typescript
+// Safe handling of user input
+const userInput = "'; DROP TABLE users; --";
+const safeLogs = await auditLogsService.getAuditLogs({
+  filters: {
+    author: userInput // Properly escaped
+  }
+});
+```
+
+## Error Handling
+
+### Common Error Scenarios
+
+```typescript
+try {
+  const logs = await auditLogsService.getAuditLogs({
+    page: 1,
+    limit: 25
+  });
+} catch (error) {
+  if (error.message.includes('permission')) {
+    console.error('Access denied to audit logs');
+  } else if (error.message.includes('not found')) {
+    console.error('Audit log not found');
+  } else {
+    console.error('Audit log retrieval failed:', error.message);
+  }
+}
+```
+
+### Validation Errors
+
+```typescript
+try {
+  const details = await auditLogsService.getAuditLogDetails({
+    id: 'invalid-id'
+  });
+} catch (error) {
+  if (error.message.includes('User not found')) {
+    console.error('Audit log entry not found');
+  }
+}
+```
+
+## Examples
+
+### Example 1: Security Monitoring Dashboard
+
+```typescript
+class SecurityMonitor {
+  constructor(private auditLogsService: AuditLogsService) {}
+  
+  async getSecurityOverview(timeRange: { start: string; end: string }) {
+    // Get login activities
+    const loginLogs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'user.login,user.logout',
+        startDate: timeRange.start,
+        endDate: timeRange.end
+      },
+      limit: 1000
+    });
+    
+    // Get failed login attempts
+    const failedLogins = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'user.login_failed',
+        startDate: timeRange.start,
+        endDate: timeRange.end
+      },
+      limit: 1000
+    });
+    
+    // Get admin activities
+    const adminLogs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'admin.user_create,admin.user_delete,admin.user_ban',
+        startDate: timeRange.start,
+        endDate: timeRange.end
+      },
+      limit: 1000
+    });
+    
+    return {
+      totalLogins: loginLogs.total,
+      failedLogins: failedLogins.total,
+      adminActions: adminLogs.total,
+      recentActivities: loginLogs.logs.slice(0, 10),
+      suspiciousActivities: failedLogins.logs.slice(0, 10),
+      adminActivities: adminLogs.logs.slice(0, 10)
+    };
+  }
+  
+  async detectSuspiciousActivity(userId: string) {
+    const last24Hours = new Date();
+    last24Hours.setHours(last24Hours.getHours() - 24);
+    
+    const userLogs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        author: userId,
+        startDate: last24Hours.toISOString()
+      },
+      limit: 1000
+    });
+    
+    const suspiciousPatterns = {
+      multipleFailedLogins: 0,
+      unusualActions: 0,
+      offHoursActivity: 0
+    };
+    
+    userLogs.logs.forEach(log => {
+      if (log.operation.includes('login_failed')) {
+        suspiciousPatterns.multipleFailedLogins++;
+      }
+      
+      if (log.operation.includes('admin.') || log.operation.includes('delete')) {
+        suspiciousPatterns.unusualActions++;
+      }
+      
+      const logHour = new Date(log.createdAt).getHours();
+      if (logHour < 6 || logHour > 22) {
+        suspiciousPatterns.offHoursActivity++;
+      }
+    });
+    
+    return {
+      userId,
+      totalActivities: userLogs.total,
+      suspiciousPatterns,
+      riskScore: this.calculateRiskScore(suspiciousPatterns),
+      recentLogs: userLogs.logs.slice(0, 5)
+    };
+  }
+  
+  private calculateRiskScore(patterns: any): number {
+    let score = 0;
+    score += patterns.multipleFailedLogins * 2;
+    score += patterns.unusualActions * 3;
+    score += patterns.offHoursActivity * 1;
+    return Math.min(score, 10); // Cap at 10
+  }
+}
+```
+
+### Example 2: Compliance Reporting
+
+```typescript
+class ComplianceReporter {
+  constructor(private auditLogsService: AuditLogsService) {}
+  
+  async generateComplianceReport(dateRange: { start: string; end: string }) {
+    const report = {
+      period: dateRange,
+      dataAccess: await this.getDataAccessLogs(dateRange),
+      userManagement: await this.getUserManagementLogs(dateRange),
+      systemChanges: await this.getSystemChangeLogs(dateRange),
+      export: await this.getExportActivities(dateRange)
+    };
+    
+    return this.formatComplianceReport(report);
+  }
+  
+  private async getDataAccessLogs(dateRange: { start: string; end: string }) {
+    const logs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'data.select,data.export,data.view',
+        startDate: dateRange.start,
+        endDate: dateRange.end
+      },
+      limit: 10000
+    });
+    
+    return {
+      total: logs.total,
+      breakdown: this.groupByOperation(logs.logs),
+      topUsers: this.getTopUsers(logs.logs),
+      sensitiveAccess: logs.logs.filter(log => 
+        log.metadata?.sensitive || log.resourceType === 'pii'
+      )
+    };
+  }
+  
+  private async getUserManagementLogs(dateRange: { start: string; end: string }) {
+    const logs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'user.create,user.update,user.delete,user.ban',
+        startDate: dateRange.start,
+        endDate: dateRange.end
+      },
+      limit: 10000
+    });
+    
+    return {
+      total: logs.total,
+      breakdown: this.groupByOperation(logs.logs),
+      adminActions: logs.logs.filter(log => 
+        log.operation.includes('admin.')
+      )
+    };
+  }
+  
+  private async getSystemChangeLogs(dateRange: { start: string; end: string }) {
+    const logs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'system.config,system.permission,system.role',
+        startDate: dateRange.start,
+        endDate: dateRange.end
+      },
+      limit: 10000
+    });
+    
+    return {
+      total: logs.total,
+      breakdown: this.groupByOperation(logs.logs),
+      criticalChanges: logs.logs.filter(log => 
+        log.operation.includes('permission') || log.operation.includes('role')
+      )
+    };
+  }
+  
+  private async getExportActivities(dateRange: { start: string; end: string }) {
+    const logs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'data.export,file.download',
+        startDate: dateRange.start,
+        endDate: dateRange.end
+      },
+      limit: 10000
+    });
+    
+    return {
+      total: logs.total,
+      breakdown: this.groupByOperation(logs.logs),
+      largeExports: logs.logs.filter(log => 
+        log.metadata?.size && log.metadata.size > 1000000
+      )
+    };
+  }
+  
+  private groupByOperation(logs: AuditLog[]) {
+    const grouped: Record<string, number> = {};
+    logs.forEach(log => {
+      grouped[log.operation] = (grouped[log.operation] || 0) + 1;
+    });
+    return grouped;
+  }
+  
+  private getTopUsers(logs: AuditLog[]) {
+    const userCounts: Record<string, number> = {};
+    logs.forEach(log => {
+      const userId = log.userId || log.accountId;
+      if (userId) {
+        userCounts[userId] = (userCounts[userId] || 0) + 1;
+      }
+    });
+    
+    return Object.entries(userCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([userId, count]) => ({ userId, count }));
+  }
+  
+  private formatComplianceReport(report: any) {
+    return {
+      summary: {
+        totalLogs: report.dataAccess.total + report.userManagement.total + report.systemChanges.total,
+        period: report.period,
+        generatedAt: new Date().toISOString()
+      },
+      sections: {
+        dataAccess: report.dataAccess,
+        userManagement: report.userManagement,
+        systemChanges: report.systemChanges,
+        exports: report.export
+      }
+    };
+  }
+}
+```
+
+### Example 3: Real-time Log Monitoring
+
+```typescript
+class LogMonitor {
+  constructor(private auditLogsService: AuditLogsService) {}
+  
+  async startMonitoring(config: {
+    alertThresholds: {
+      failedLogins: number;
+      adminActions: number;
+      dataExports: number;
+    };
+    checkInterval: number;
+  }) {
+    console.log('Starting audit log monitoring...');
+    
+    setInterval(async () => {
+      await this.performMonitoringCheck(config.alertThresholds);
+    }, config.checkInterval);
+  }
+  
+  private async performMonitoringCheck(thresholds: any) {
+    const last5Minutes = new Date();
+    last5Minutes.setMinutes(last5Minutes.getMinutes() - 5);
+    
+    // Check for failed logins
+    const failedLogins = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'user.login_failed',
+        startDate: last5Minutes.toISOString()
+      },
+      limit: 100
+    });
+    
+    if (failedLogins.total > thresholds.failedLogins) {
+      await this.sendAlert('High number of failed logins detected', {
+        count: failedLogins.total,
+        threshold: thresholds.failedLogins,
+        logs: failedLogins.logs.slice(0, 5)
+      });
+    }
+    
+    // Check for admin actions
+    const adminActions = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'admin.user_delete,admin.user_ban,admin.permission_change',
+        startDate: last5Minutes.toISOString()
+      },
+      limit: 100
+    });
+    
+    if (adminActions.total > thresholds.adminActions) {
+      await this.sendAlert('High number of admin actions detected', {
+        count: adminActions.total,
+        threshold: thresholds.adminActions,
+        logs: adminActions.logs.slice(0, 5)
+      });
+    }
+    
+    // Check for data exports
+    const dataExports = await this.auditLogsService.getAuditLogs({
+      filters: {
+        action: 'data.export,file.download',
+        startDate: last5Minutes.toISOString()
+      },
+      limit: 100
+    });
+    
+    if (dataExports.total > thresholds.dataExports) {
+      await this.sendAlert('High number of data exports detected', {
+        count: dataExports.total,
+        threshold: thresholds.dataExports,
+        logs: dataExports.logs.slice(0, 5)
+      });
+    }
+  }
+  
+  async getActivitySummary(userId: string, hours: number = 24) {
+    const since = new Date();
+    since.setHours(since.getHours() - hours);
+    
+    const userLogs = await this.auditLogsService.getAuditLogs({
+      filters: {
+        author: userId,
+        startDate: since.toISOString()
+      },
+      limit: 1000
+    });
+    
+    const summary = {
+      totalActivities: userLogs.total,
+      timeRange: `${hours} hours`,
+      activities: this.categorizeActivities(userLogs.logs),
+      timeline: this.createTimeline(userLogs.logs),
+      riskIndicators: this.identifyRiskIndicators(userLogs.logs)
+    };
+    
+    return summary;
+  }
+  
+  private categorizeActivities(logs: AuditLog[]) {
+    const categories = {
+      authentication: 0,
+      dataAccess: 0,
+      userManagement: 0,
+      systemChanges: 0,
+      other: 0
+    };
+    
+    logs.forEach(log => {
+      if (log.operation.includes('login') || log.operation.includes('auth')) {
+        categories.authentication++;
+      } else if (log.operation.includes('data.') || log.operation.includes('select')) {
+        categories.dataAccess++;
+      } else if (log.operation.includes('user.')) {
+        categories.userManagement++;
+      } else if (log.operation.includes('system.') || log.operation.includes('admin.')) {
+        categories.systemChanges++;
+      } else {
+        categories.other++;
+      }
+    });
+    
+    return categories;
+  }
+  
+  private createTimeline(logs: AuditLog[]) {
+    const timeline = logs.map(log => ({
+      time: log.createdAt,
+      operation: log.operation,
+      resource: log.resourceType,
+      metadata: log.metadata
+    }));
+    
+    return timeline.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  }
+  
+  private identifyRiskIndicators(logs: AuditLog[]) {
+    const indicators = {
+      offHoursActivity: 0,
+      adminActions: 0,
+      dataExports: 0,
+      failedActions: 0
+    };
+    
+    logs.forEach(log => {
+      const logHour = new Date(log.createdAt).getHours();
+      if (logHour < 6 || logHour > 22) {
+        indicators.offHoursActivity++;
+      }
+      
+      if (log.operation.includes('admin.')) {
+        indicators.adminActions++;
+      }
+      
+      if (log.operation.includes('export') || log.operation.includes('download')) {
+        indicators.dataExports++;
+      }
+      
+      if (log.operation.includes('failed') || log.operation.includes('error')) {
+        indicators.failedActions++;
+      }
+    });
+    
+    return indicators;
+  }
+  
+  private async sendAlert(message: string, details: any) {
+    console.log(`ALERT: ${message}`, details);
+    // Implementation would send actual alerts (email, Slack, etc.)
+  }
+}
+```
+
+This comprehensive documentation provides everything developers need to effectively use the AuditLogsService for audit trail management, security monitoring, and compliance reporting in their applications.

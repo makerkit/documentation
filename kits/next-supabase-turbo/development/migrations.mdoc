@@ -50,14 +50,10 @@ Now, you want this schema to be applied to your local Supabase instance so you c
 We can now use Supabase's diffing feature to generate a migration file for us.
 
 ```bash
-pnpm --filter web run supabase:stop     # Stop the Supabase service
 pnpm --filter web run supabase:db:diff -f <filename>  # Generate the migration file using the diffing feature
 ```
 
-These two commands will respectively:
-
-1. Stop the Supabase service
-2. Generate the migration file using the diffing feature
+This command will generate the migration file using the diffing feature using the default `migra` tool.
 
 The migration file will be created in the `apps/web/supabase/migrations` directory.
 

@@ -44,17 +44,24 @@ This sequence of events raises some questions about our data model, such as:
 
 We will be revisiting our data model to handle the status of the support ticket and the replies to the support ticket, as we've mentioned in the Database module.
 
-### Updating the Schema to handle the status of the Support Ticket
+### Understanding the Ticket Status Handling in Our Schema
 
 As we've just mentioned, handling the flow of a support ticket **in a consistent manner** database-wise is very important, and ultimately a requirement for a good user experience.
 
-We will now be updating the schema so that we can handle the status of a ticket using constraints and triggers, which Postgres provides us to enforce data integrity.
+{% alert type="info" title="Already Implemented!" %}
+**Important Note for Beginners:** The trigger code shown below is already part of your database schema from the "Database" lesson. You **do not** need to create a new migration or run this SQL again - it's shown here for educational purposes to explain how the status handling works.
 
-#### Handling the Status of the Ticket using Triggers
+If you followed the Database lesson and ran the full migration, this trigger is already active in your database!
+{% /alert %}
 
-Next, we add a trigger to handle the status of the ticket. We will be using the `handle_ticket_status_change` function to handle the status of the ticket.
+#### How the Status Trigger Works (Review)
+
+In the previous Database lesson, we added a trigger to handle the status of tickets. Let's review how it works to understand what happens when we update ticket statuses in our application:
 
 ```sql
+-- This code is already in your database from the Database lesson!
+-- DO NOT run this again - it's shown here for reference only
+
 -- Function to handle status changes
 create or replace function kit.handle_ticket_status_change()
 returns trigger
@@ -94,7 +101,7 @@ when (old.status is distinct from new.status)
 execute function kit.handle_ticket_status_change();
 ```
 
-The trigger above does the following:
+The trigger above (which is already in your database) does the following:
 1. We created a new function `handle_ticket_status_change` that handles the status changes of the ticket. The function sets the `closed_by`, `closed_at`, `resolved_by`, and `resolved_at` fields based on the status of the ticket.
 2. We created a new trigger `handle_ticket_status_change_trigger` that executes the `handle_ticket_status_change` function before updating the status of the ticket.
 

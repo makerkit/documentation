@@ -1,0 +1,891 @@
+---
+status: "published"
+title: "Understanding Supamode's Permission System 🔐"
+label: "RBAC System"
+order: 0
+description: "A comprehensive guide to Supamode's role-based access control system"
+---
+
+In this comprehensive guide, we'll explore Supamode's straightforward yet powerful role-based access control (RBAC) system, designed to give you granular control over who can access what in your Supabase application.
+
+This guide helps you understand better how Supamode's permission system works but [I recommend using the Supamode UI to create and assign permissions](./permissions) instead - and to [get started using a predefined Template](./permissions-templates) to set up your permissions.
+
+## The Basics
+
+Supamode's access control system is built around four interconnected components that work together to create secure, manageable permissions.
+
+1. **Accounts**: User accounts linked with Supabase's auth users
+2. **Roles**: Roles that define authority levels. You can assign one role to each account.
+3. **Permissions**: Fine-grained access rights that control what actions
+users can perform. There are two types of permissions: system permissions and data permissions.
+    - **System Permissions**: Control access to Supamode's administrative interface and system functions.
+    - **Data Permissions**: Control access to your actual application data with incredible granularity.
+4. **Permission Groups**: Optional logical bundles of related permissions for
+easier role management. A role can have multiple permission groups assigned
+to it.
+
+Example:
+1. **Account**: A user has an account in Supamode, which is linked to their
+Supabase auth
+user.
+2. **Role**: The user is assigned a role, such as "Content Editor", which
+defines their authority level. All roles have a rank, which determines their authority level.
+3. **Permissions**: The "Content Editor" role has permissions like "Create Blog Posts" and "Edit Own Blog Posts", which define what actions the user can perform.
+4. **Permission Groups**: The "Content Editor" role is part of a "Content
+Management" permission group, which bundles related permissions together for easier management.
+
+## 1. Accounts: Your Identity Foundation 👤
+
+**What it is:** The bridge between Supabase's authentication system and Supamode's permission management.
+
+```typescript
+// Account Structure
+{
+  id: "uuid-account-id",
+  auth_user_id: "uuid-from-supabase-auth", // Links to auth.users
+  is_active: true
+}
+```
+
+**Key Concept:** Every authenticated user gets exactly one Supamode account. The account is necessary for being assigned roles and permissions, and it allows you to store additional metadata about the user.
+
+Accounts with status `is_active: false` are considered deactivated and
+cannot perform any actions in Supamode. This is useful for managing user access without deleting accounts.
+
+## 2. Roles: Authority Levels 👑
+
+Roles define the authority levels within your application, allowing you to control what users can do based on their assigned role.
+
+A user can have a single role, which is assigned to their account. Roles are defined by their name, description, rank, and optional metadata.
+
+```typescript
+// Role Structure
+{
+  name: "Content Manager",
+  description: "Manages blog posts and user content",
+  rank: 70, // Higher = more authority
+}
+```
+
+**Visual Hierarchy:**
+
+```
+Super Admin (Rank: 100)    ← Ultimate system control
+├── Admin (Rank: 90)       ← System administration
+├── Manager (Rank: 70)     ← Content management
+├── Editor (Rank: 60)      ← Content editing
+└── Viewer (Rank: 50)      ← Read-only access
+```
+
+**Key Concept:** Roles have priorities that determine authority levels, but **do not inherit permissions**. Each role must be explicitly assigned its own permissions.
+
+A role with a higher rank **can perform actions** on roles that have lower rank, such as assigning them a different role, editing their account, and so on. However, they also must have the required permissions to modify accounts.
+
+Supamode does not define any roles by default, allowing you to create a custom hierarchy that fits your application's needs.
+
+## 3. Permissions: Granular Access Rights 🎯
+
+**What it is:** The atomic units of access control that define specific actions on specific resources.
+
+Supamode uses **two distinct permission types**:
+
+- **System Permissions**: Control access to Supamode's administrative interface and system functions.
+- **Data Permissions**: Control access to your actual application data with incredible granularity.
+
+### System Permissions: Administrative Control
+
+Control access to Supamode's administrative interface and system functions.
+
+```typescript
+// System Permission Example
+{
+  permission_type: "system",
+  name: "Manage User Accounts",
+  system_resource: "account",    // What system resource
+  action: "update",              // What action is allowed
+  description: "Can modify user account details"
+}
+```
+
+**Available System Resources:**
+- `account` - Managing user accounts in Supamode
+- `role` - Creating and editing roles
+- `permission` - Managing permission definitions
+- `auth_user` - Managing auth accounts in Supabase (e.g., creating users, banning accounts, etc.)
+- `table` - Database table configuration
+- `log` - System audit log access
+- `system_setting` - System settings access
+
+Normally, **you would grant this sort of permissions to high-level roles** like Admin or Super Admin, who need to manage the entire system.
+
+### Data Permissions: Application Content Control
+
+Control access to your actual application data with incredible granularity.
+
+```typescript
+// Table-Level Data Permission
+{
+  permission_type: "data",
+  name: "Edit Blog Posts",
+  scope: "table",
+  schema_name: "public",
+  table_name: "blog_posts",
+  action: "update"
+}
+
+// Schema-Wide Data Permission
+{
+  permission_type: "data",
+  name: "Read All Public Data",
+  scope: "table",
+  schema_name: "public",
+  table_name: "*",              // Wildcard for all tables
+  action: "select"
+}
+```
+
+**Granularity Levels:**
+```
+Schema Level:   public.* (entire schema)
+├── Table Level:  public.blog_posts (specific table)
+└── Column Level: public.users.email (specific column)
+```
+
+This is the permission type you'll use most often, which grants read/write access to specific tables or columns.
+
+For example, you might have permissions like:
+- **"Read All Blog Posts"** - View all blog content for Content Management role
+- **"Create Blog Posts"** - Allow content creators to add new posts
+- **"Manage all data"** - Full access to all data in the application, typically reserved for Super Admins
+- **"Readonly"** - Read-only access to all data in the application, typically reserved for Viewer role
+
+## 4. Permission Groups: Logical Organization 📦
+
+**What it is:** Bundles of related permissions that make role management
+intuitive and scalable. Permission groups are fully optional, but they can greatly simplify your permission management.
+
+```typescript
+// Content Management Group
+{
+  name: "Content Management",
+  description: "All permissions needed for content creators",
+  permissions: [
+    "Read All Blog Posts",
+    "Create Blog Posts",
+    "Edit Own Blog Posts",
+    "Upload Media Files",
+    "Moderate Comments"
+  ]
+}
+```
+
+**Strategic Grouping Examples:**
+- **"Content Management"** → Blog editing, media upload, comment moderation
+- **"User Administration"** → Account creation, role assignment, access reviews
+- **"Customer Support"** → Ticket access, user lookup, limited account editing
+
+**Benefits:**
+- **Simplified Role Creation** - Assign entire groups instead of individual permissions
+- **Consistent Access Patterns** - Related permissions stay together
+- **Easier Maintenance** - Update group once, affects all roles using it
+
+### Why Use Permission Groups?
+
+While users can only have a single role, a role can have multiple permission groups assigned to it. This allows you to create complex permission structures without overwhelming individual roles with too many permissions.
+
+## Multi-Layer Security Verification: Defense in Depth 🛡️
+
+Supamode implements three security layers to ensure comprehensive protection at every access point.
+
+### Layer 1: JWT Token Validation (Lightning Fast) ⚡
+
+**Purpose:** High-speed filtering of obviously invalid requests
+**Performance:** Microsecond response times, no database queries
+
+```sql
+select supamode.check_supamode_access();
+```
+
+This functions checks the `app_metadata` field of the JWT token to ensure
+the user is an admin. We do so by checking if the `app_metadata` field
+contains the `supamode_access` key set to `true`.
+
+The is a preliminary, lightweight check that quickly filters out requests
+from users who are not admins.
+
+This check is done both:
+- **On the API-side** - The Hono API middleware runs this check before every request
+- **On the DB-side** - The Supabase function `supamode.verify_supamode_access()`
+gets checked on every execution of a remote procedure call (RPC).
+
+### Layer 2: Database Permission Resolution (Comprehensive) 🗄️
+
+**Purpose:** Deep, context-aware permission verification
+
+```sql
+-- Deep permission verification with complete context
+SELECT supamode.has_permission(
+  $current_user_account_id,
+  $permission_id
+) AS permission_granted;
+```
+
+### Layer 3: Multi-Factor Authentication (optional, but recommended) 🔐
+
+Optionally, you can enforce MFA for all users, which is recommended for all
+applications.
+
+If enabled, users must complete an additional authentication step before
+signing in and being able to access the Supamode interface/data.
+
+## Creating a seed file with permissions
+
+Supamode uses a **builder pattern** to construct permission structures programmatically:
+
+```typescript
+// Core Architecture
+const app = new SupamodeSeedGenerator();
+
+// 1. Create entities
+const role = Role.create({ app, id: 'custom_role', config: {...} });
+const permission = Permission.create({ app, id: 'custom_perm', config: {...} });
+
+// 2. Establish relationships
+role.addPermission(permission);
+
+// 3. Generate SQL
+const sql = app.generateSql();
+```
+
+**Key Benefits:**
+- **Type Safety** - TypeScript ensures correct configuration
+- **Relationship Validation** - Prevents orphaned permissions
+- **SQL Generation** - Automatically creates deployment scripts
+- **Reusability** - Seed templates can be shared across projects
+
+## Seed File Structure
+
+Every seed file follows this consistent pattern:
+
+```typescript
+// 1. Import the generator classes
+import { Account, Permission, PermissionGroup, Role, SupamodeSeedGenerator } from '../generator';
+
+// 2. Initialize the generator
+const app = new SupamodeSeedGenerator();
+
+// 3. Define your structure (accounts, roles, permissions, groups)
+// ... your custom definitions ...
+
+// 4. Export the configured generator
+export default app;
+```
+
+## Building Your First Custom Seed 🚀
+
+Let's create a practical example: a **content management system** with editorial workflows.
+
+## Step 1: Define Your Business Requirements
+
+**Scenario:** Online magazine with the following roles:
+- **Editor-in-Chief** - Full editorial control
+- **Senior Editor** - Manages content and junior staff
+- **Staff Writer** - Creates and edits own content
+- **Freelancer** - Limited content creation
+- **Subscriber** - Read-only access to published content
+
+## Step 2: Create the Seed File
+
+1. Create `packages/schema/src/templates/editorial-seed.ts`
+2. Add the following code to define roles, permissions, and groups:
+
+```typescript
+import {
+  Account,
+  Permission,
+  PermissionGroup,
+  Role,
+  SupamodeSeedGenerator,
+} from '../generator';
+
+const app = new SupamodeSeedGenerator();
+
+// ========================================
+// SECTION 1: DEFINE ROLES
+// ========================================
+
+const editorInChiefRole = Role.create({
+  app,
+  id: 'editor_in_chief',
+  config: {
+    name: 'Editor-in-Chief',
+    description: 'Full editorial control and staff management',
+    rank: 95, // High authority
+    metadata: {
+      department: 'Editorial',
+      can_publish: true
+    }
+  },
+});
+
+const seniorEditorRole = Role.create({
+  app,
+  id: 'senior_editor',
+  config: {
+    name: 'Senior Editor',
+    description: 'Content oversight and team coordination',
+    rank: 80,
+    metadata: {
+      department: 'Editorial',
+      can_assign_stories: true
+    }
+  },
+});
+
+const staffWriterRole = Role.create({
+  app,
+  id: 'staff_writer',
+  config: {
+    name: 'Staff Writer',
+    description: 'Full-time content creator',
+    rank: 60,
+    metadata: {
+      employment_type: 'full_time'
+    }
+  },
+});
+
+const freelancerRole = Role.create({
+  app,
+  id: 'freelancer',
+  config: {
+    name: 'Freelancer',
+    description: 'Contract-based content contributor',
+    rank: 40,
+    metadata: {
+      employment_type: 'contract'
+    }
+  },
+});
+
+const subscriberRole = Role.create({
+  app,
+  id: 'subscriber',
+  config: {
+    name: 'Subscriber',
+    description: 'Registered reader with premium access',
+    rank: 20
+  },
+});
+```
+
+## Step 3: Create Business-Specific Permissions
+
+Now, let's define the permissions that align with our editorial workflow.
+
+```typescript
+// ========================================
+// SECTION 2: CONTENT PERMISSIONS
+// ========================================
+
+// Article Management
+const createArticles = Permission.createDataPermission({
+  app,
+  id: 'create_articles',
+  name: 'Create Articles',
+  description: 'Can create new article drafts',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'articles',
+  action: 'insert'
+});
+
+const editOwnArticles = Permission.createDataPermission({
+  app,
+  id: 'edit_own_articles',
+  name: 'Edit Own Articles',
+  description: 'Can edit articles they authored',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'articles',
+  action: 'update',
+  conditions: { author_id: '$CURRENT_USER_ID' } // Row-level security
+});
+
+const editAllArticles = Permission.createDataPermission({
+  app,
+  id: 'edit_all_articles',
+  name: 'Edit All Articles',
+  description: 'Can edit any article regardless of author',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'articles',
+  action: 'update'
+});
+
+const publishArticles = Permission.createDataPermission({
+  app,
+  id: 'publish_articles',
+  name: 'Publish Articles',
+  description: 'Can change article status to published',
+  scope: 'column',
+  schema_name: 'public',
+  table_name: 'articles',
+  column_name: 'status',
+  action: 'update',
+  conditions: { status: { $in: ['draft', 'review', 'published'] } }
+});
+
+// User Management Permissions
+const manageEditorialStaff = Permission.createSystemPermission({
+  app,
+  id: 'manage_editorial_staff',
+  resource: 'account',
+  action: 'update',
+  name: 'Manage Editorial Staff',
+  description: 'Can update staff member accounts and assignments'
+});
+
+const viewAnalytics = Permission.createDataPermission({
+  app,
+  id: 'view_analytics',
+  name: 'View Analytics',
+  description: 'Access to content performance metrics',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'article_analytics',
+  action: 'select'
+});
+```
+
+## Step 4: Organize with Permission Groups
+
+Permission groups help us manage related permissions together, making it easier to assign them to roles.
+
+```typescript
+// ========================================
+// SECTION 3: PERMISSION GROUPS
+// ========================================
+
+const editorialManagementGroup = PermissionGroup.create({
+  app,
+  id: 'editorial_management',
+  config: {
+    name: 'Editorial Management',
+    description: 'Full editorial oversight and staff management',
+  },
+});
+
+editorialManagementGroup.addPermissions([
+  createArticles,
+  editAllArticles,
+  publishArticles,
+  manageEditorialStaff,
+  viewAnalytics
+]);
+
+const contentCreationGroup = PermissionGroup.create({
+  app,
+  id: 'content_creation',
+  config: {
+    name: 'Content Creation',
+    description: 'Core content creation and editing capabilities',
+  },
+});
+
+contentCreationGroup.addPermissions([
+  createArticles,
+  editOwnArticles,
+  viewAnalytics
+]);
+
+const readOnlyGroup = PermissionGroup.create({
+  app,
+  id: 'subscriber_access',
+  config: {
+    name: 'Subscriber Access',
+    description: 'Read access to published content',
+  },
+});
+
+// Only published articles for subscribers
+const readPublishedArticles = Permission.createDataPermission({
+  app,
+  id: 'read_published_articles',
+  name: 'Read Published Articles',
+  description: 'Can view published articles only',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'articles',
+  action: 'select',
+  conditions: { status: 'published' }
+});
+
+readOnlyGroup.addPermissions([readPublishedArticles]);
+```
+
+## Step 5: Assign Groups to Roles
+
+Now that we have our roles, permissions, and groups defined, we can assign them to the appropriate roles.
+
+```typescript
+// ========================================
+// SECTION 4: ROLE ASSIGNMENTS
+// ========================================
+
+// Editor-in-Chief gets full editorial management
+editorInChiefRole.addPermissionGroup({ group: editorialManagementGroup });
+
+// Senior Editors get content creation + some management permissions
+seniorEditorRole.addPermissionGroup({ group: contentCreationGroup });
+seniorEditorRole.addPermission(editAllArticles); // Can edit any article
+seniorEditorRole.addPermission(publishArticles); // Can publish
+
+// Staff Writers get core content creation
+staffWriterRole.addPermissionGroup({ group: contentCreationGroup });
+
+// Freelancers get limited content creation (no analytics)
+freelancerRole.addPermission(createArticles);
+freelancerRole.addPermission(editOwnArticles);
+
+// Subscribers get read-only access
+subscriberRole.addPermissionGroup({ group: readOnlyGroup });
+```
+
+## Step 6: Create Test Accounts
+
+We can now create test accounts for our test users. We can either reference existing accounts by passing their IDs, or create new ones directly in the seed file.
+
+- if we pass an `ID` - we expect the user to exist in the database
+- if the `ID` does not exist, we will create a new account with the provided metadata.
+
+```typescript
+// ========================================
+// SECTION 5: TEST ACCOUNTS
+// ========================================
+
+const editorAccount = Account.create({
+  app,
+  id: '550e8400-e29b-41d4-a716-446655440001',
+  config: {
+    metadata: {
+      display_name: 'Sarah Johnson',
+      email: 'sarah.johnson@magazine.com',
+      department: 'Editorial',
+      hire_date: '2023-01-15'
+    },
+  },
+});
+
+const writerAccount = Account.create({
+  app,
+  id: '550e8400-e29b-41d4-a716-446655440002',
+  config: {
+    metadata: {
+      display_name: 'Mike Chen',
+      email: 'mike.chen@magazine.com',
+      department: 'Editorial',
+      specialization: 'Technology'
+    },
+  },
+});
+
+const freelancerAccount = Account.create({
+  app,
+  id: '550e8400-e29b-41d4-a716-446655440003',
+  config: {
+    metadata: {
+      display_name: 'Alex Rivera',
+      email: 'alex.rivera@freelance.com',
+      contract_type: 'per_article'
+    },
+  },
+});
+
+// Assign roles to accounts
+editorAccount.assignRole(editorInChiefRole);
+writerAccount.assignRole(staffWriterRole);
+freelancerAccount.assignRole(freelancerRole);
+
+export default app;
+```
+
+---
+
+# Advanced Permission Patterns 🎯
+
+Now let's explore sophisticated patterns for complex business requirements.
+
+## Time-Based Access Control
+
+Perfect for temporary permissions or seasonal access:
+
+```typescript
+// Temporary elevated access for special projects
+const specialProjectRole = Role.create({
+  app,
+  id: 'special_project_lead',
+  config: {
+    name: 'Special Project Lead',
+    description: 'Temporary leadership role for Q4 campaign',
+    rank: 85,
+    valid_from: new Date('2025-10-01'),
+    valid_until: new Date('2025-12-31'), // Expires automatically
+    metadata: {}
+  },
+});
+```
+
+## Conditional Permissions with Row-Level Security
+
+Implement sophisticated access patterns:
+
+```typescript
+// Writers can only edit articles in 'draft' or 'revision' status
+const editDraftArticles = Permission.createDataPermission({
+  app,
+  id: 'edit_draft_articles',
+  name: 'Edit Draft Articles',
+  description: 'Can edit articles that are not yet published',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'articles',
+  action: 'update',
+  conditions: {
+    author_id: '$CURRENT_USER_ID',
+    status: { $in: ['draft', 'revision'] },
+    created_at: { $gte: '$CURRENT_DATE - INTERVAL 30 days' } // Recent articles only
+  }
+});
+```
+
+## Permission Overrides for Exceptional Cases
+
+Handle special circumstances gracefully:
+
+```typescript
+// Grant temporary admin access to a writer for migration
+writerAccount.grantPermission({
+  permission: editAllArticles,
+  valid_until: new Date('2025-03-31'),
+  metadata: {
+    reason: 'Database migration assistance',
+    approved_by: 'editor_in_chief',
+    ticket_id: 'MAINT-2025-001'
+  }
+});
+
+// Revoke specific permission (emergency access control)
+freelancerAccount.denyPermission({
+  permission: createArticles,
+  valid_until: new Date('2025-02-15'),
+  metadata: {
+    reason: 'Contract dispute - suspend access pending resolution',
+    approved_by: 'legal_department'
+  }
+});
+```
+
+---
+
+# Business-Specific Seed Examples 📊
+
+## E-Commerce Platform Seed
+
+```typescript
+// Roles for online store management
+const storeManagerRole = Role.create({
+  app,
+  id: 'store_manager',
+  config: {
+    name: 'Store Manager',
+    description: 'Full store operations management',
+    rank: 90
+  }
+});
+
+// Inventory permissions
+const manageInventory = Permission.createDataPermission({
+  app,
+  id: 'manage_inventory',
+  name: 'Manage Inventory',
+  description: 'Full inventory control including stock levels',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'products',
+  action: '*'
+});
+
+// Customer service permissions
+const viewCustomerOrders = Permission.createDataPermission({
+  app,
+  id: 'view_customer_orders',
+  name: 'View Customer Orders',
+  description: 'Access customer order history for support',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: 'orders',
+  action: 'select',
+  conditions: {
+    status: { $in: ['pending', 'processing', 'shipped'] }
+  }
+});
+```
+
+## Healthcare System Seed
+
+```typescript
+// HIPAA-compliant role structure
+const doctorRole = Role.create({
+  app,
+  id: 'doctor',
+  config: {
+    name: 'Doctor',
+    description: 'Licensed physician with patient care access',
+    rank: 85,
+    metadata: {
+      license_required: true,
+      hipaa_certified: true
+    }
+  }
+});
+
+// Restricted patient data access
+const viewPatientRecords = Permission.createDataPermission({
+  app,
+  id: 'view_patient_records',
+  name: 'View Patient Records',
+  description: 'Access to assigned patient medical records',
+  scope: 'table',
+  schema_name: 'medical',
+  table_name: 'patient_records',
+  action: 'select',
+  conditions: {
+    // Only patients assigned to this doctor
+    assigned_doctor_id: '$CURRENT_USER_ID',
+    // Only active cases
+    case_status: 'active'
+  }
+});
+```
+
+## SaaS Multi-Tenant Seed
+
+```typescript
+// Tenant-isolated permissions
+const tenantAdminRole = Role.create({
+  app,
+  id: 'tenant_admin',
+  config: {
+    name: 'Tenant Administrator',
+    description: 'Admin access within tenant boundary',
+    rank: 80
+  }
+});
+
+const manageTenantData = Permission.createDataPermission({
+  app,
+  id: 'manage_tenant_data',
+  name: 'Manage Tenant Data',
+  description: 'Full access to tenant-specific data',
+  scope: 'table',
+  schema_name: 'public',
+  table_name: '*',
+  action: '*',
+  conditions: {
+    // Tenant isolation
+    tenant_id: '$CURRENT_USER_TENANT_ID'
+  }
+});
+```
+
+# Best Practices for Custom Seeds 📋
+
+## 1. Planning Your Permission Structure
+
+**Start with User Stories:**
+```markdown
+As a [role], I need to [action] so that [business value]
+
+Examples:
+- As a Staff Writer, I need to create article drafts so that I can contribute content
+- As a Senior Editor, I need to publish articles so that content goes live
+- As a Freelancer, I need to edit my drafts so that I can refine my work
+```
+
+**Map Business Processes:**
+- Who creates content?
+- Who approves it?
+- Who can publish it?
+- What are the approval workflows?
+
+## 2. Naming Conventions
+
+**Consistent Naming Patterns:**
+```typescript
+// Role naming: [Level]_[Function]
+'senior_editor', 'staff_writer', 'content_manager'
+
+// Permission naming: [Action]_[Resource]
+'create_articles', 'publish_content', 'manage_users'
+
+// Group naming: [Domain]_[Scope]
+'editorial_management', 'content_creation', 'user_administration'
+```
+
+## 3. Security Considerations
+
+**Principle of Least Privilege:**
+```typescript
+// ❌ Avoid: Too broad permissions
+const badPermission = Permission.createDataPermission({
+  name: 'Manage Everything',
+  action: '*',
+  table_name: '*' // Too permissive!
+});
+
+// ✅ Good: Specific, scoped permissions
+const goodPermission = Permission.createDataPermission({
+  name: 'Edit Own Articles',
+  action: 'update',
+  table_name: 'articles',
+  conditions: { author_id: '$CURRENT_USER_ID' }
+});
+```
+
+**Always Include Time Bounds for Elevated Access:**
+```typescript
+// Temporary elevated permissions should always expire
+const tempAdminAccess = {
+  valid_until: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+  metadata: { reason: 'Emergency system maintenance' }
+};
+```
+
+## Best Practices
+
+Here are some best practices for assigning permissions to roles.
+
+### System Permissions should only be assigned to high-level roles
+
+System permissions are powerful and should only be assigned to high-level roles. These allow users to create new roles, permissions, and permission groups - so they must be limited to trusted users, and ideally only to the very highest level of authority in your organization.
+
+When in doubt, do not assign system permissions other than yourself or your employer's account.
+
+### Data Permissions should be assigned to roles that need them
+
+Data permissions are used to control access to specific data in the database. They should be assigned to roles that need them.
+
+### Permission Groups should be used to group related permissions
+
+Permission groups are used to group related permissions together. They should be used to group related permissions together.
+
+### Always include time bounds for time-based permissions
+
+Sometimes, you hire a person to do a job for a limited time. You can use time-based permissions to grant them access to the system for a limited time.
+
+
+
+
+
+
